@@ -29,5 +29,6 @@ I think specifically this is for running unit tests, so not sure if it'll have e
 ## Building (attempt 2)
 
 ```bash
-FLAVOUR=simd TARGET_TYPE=Debug ./shell/build.sh
+FLAVOUR=simd TARGET_TYPE=Debug ./shell/0_build_makefile.sh
+FLAVOUR=simd TARGET_TYPE=Debug ./shell/1_build_wasm.sh
 ```

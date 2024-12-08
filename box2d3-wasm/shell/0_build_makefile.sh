@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# FLAVOUR=simd TARGET_TYPE=Debug ./shell/build.sh
+# FLAVOUR=simd TARGET_TYPE=Debug ./shell/0_build_makefile.sh
 set -eo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BOX2D_DIR="$(realpath "$DIR/../../box2d")"
@@ -17,11 +17,16 @@ NC='\033[0m' # No Color
 #   exit 1
 # fi
 
+CMAKE_OPTS=()
 CMAKE_CXX_FLAGS=()
 case "$FLAVOUR" in
   standard)
+    # maybe we don't need to disable SIMD? seems to compile fine
+    # CMAKE_OPTS=(${CMAKE_OPTS[@]} -DBOX2D_ENABLE_SIMD=OFF)
     ;;
   simd)
+    # this is ON by default but let's be explicit
+    CMAKE_OPTS=(${CMAKE_OPTS[@]} -DBOX2D_ENABLE_SIMD=ON)
     CMAKE_CXX_FLAGS=(${CMAKE_CXX_FLAGS[@]} -msimd128)
     ;;
   *)
@@ -52,6 +57,7 @@ emcmake cmake \
 -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS[@]}" \
 -B"cmake-build" \
 -S"$BOX2D_DIR" \
+"${CMAKE_OPTS[@]}" \
 -DBOX2D_VALIDATE=OFF \
 -DBOX2D_SAMPLES=OFF \
 -DBOX2D_UNIT_TESTS=OFF \
