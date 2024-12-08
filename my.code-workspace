@@ -1,0 +1,17 @@
+{
+    "folders": [
+      {
+        "name": "box2cpp",
+        "path": "box2cpp",
+      },
+      {
+        "name": "box2d",
+        "path": "box2d",
+      },
+      {
+        "name": "box2d3-wasm",
+        "path": "box2d3-wasm"
+      }
+    ]
+  }
+  

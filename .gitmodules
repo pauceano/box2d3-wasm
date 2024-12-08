@@ -2,3 +2,7 @@
 	path = box2d
 	url = https://github.com/Birch-san/box2d.git
 	branch = embuild
+[submodule "box2cpp"]
+	path = box2cpp
+	url = https://github.com/Birch-san/box2cpp.git
+	branch = birch
