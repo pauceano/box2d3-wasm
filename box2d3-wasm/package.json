@@ -1,0 +1,17 @@
+{
+  "name": "box2d3-wasm",
+  "version": "1.0.0",
+  "description": "Let's try and use box2d v3 on the web.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Alex Birch",
+  "repository": {
+    "url": "https://github.com/Birch-san/box2d3-wasm.git",
+    "directory": "box2d3-wasm"
+  },
+  "license": "MIT",
+  "dependencies": {
+  }
+}

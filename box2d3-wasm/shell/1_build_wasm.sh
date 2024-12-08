@@ -106,14 +106,16 @@ mkdir -p "$UMD_DIR" "$ES_DIR"
 # LINK_OPTS=(--post-link "$BARE_WASM" --post-js "$DIR/build/common/box2d_glue.js" --post-js "$DIR/glue_stub.js" ${EMCC_OPTS[@]})
 LINK_OPTS=(--post-link "$BARE_WASM")
 
-ES_FILE="$ES_DIR/$BASENAME.js"
->&2 echo -e "${Blue}Building ES module, $ES_DIR/$BASENAME.{js,wasm}${NC}"
+ES_FILE="$ES_DIR/$BASENAME.mjs"
+ES_TSD="$ES_DIR/$BASENAME.d.ts"
+>&2 echo -e "${Blue}Building ES module, $ES_DIR/$BASENAME.{mjs,wasm}${NC}"
 set -x
-emcc "${LINK_OPTS[@]}" -s EXPORT_ES6=1 -o "$ES_FILE"
+emcc "${LINK_OPTS[@]}" -s EXPORT_ES6=1 -o "$ES_FILE" --emit-tsd "$ES_TSD"
 { set +x; } 2>&-
 >&2 echo -e "${Green}Successfully built $ES_DIR/$BASENAME.{js,wasm}${NC}\n"
 
 UMD_FILE="$UMD_DIR/$BASENAME.js"
+UMD_TSD="$UMD_DIR/$BASENAME.d.ts"
 # cheeky text-replace to save time.
 # only works if the text-substitution is exactly as we expected (so may fail silently depending on Emscripten version or config)
 if [ "$BUILD_UMD_VIA_TEXT_REPLACE" = "1" ]; then
@@ -122,27 +124,28 @@ if [ "$BUILD_UMD_VIA_TEXT_REPLACE" = "1" ]; then
     echo "$1" | sed -e 's/&/\\\&/g' -e '$!s/$/\\n/' | tr -d '\n'
   }
 
-  ES6_HEADER='  var _scriptDir = import.meta.url;'
-  UMD_HEADER="  var _scriptDir = typeof document !== 'undefined' && document.currentScript ? document.currentScript.src : undefined;
-  if (typeof __filename !== 'undefined') _scriptDir = _scriptDir || __filename;"
+  ES6_HEADER='  var _scriptName = import.meta.url;'
+  UMD_HEADER="  var _scriptName = typeof document !== 'undefined' && document.currentScript ? document.currentScript.src : undefined;
+  if (typeof __filename !== 'undefined') _scriptName = _scriptName || __filename;"
   UMD_HEADER_ESCAPED=`escape_for_sed_replace "$UMD_HEADER"`
 
-  ES6_FOOTER='export default Box2D;'
+  ES6_FOOTER='export default Module;'
   UMD_FOOTER="if (typeof exports === 'object' && typeof module === 'object')
-      module.exports = Box2D;
-    else if (typeof define === 'function' && define['amd'])
-      define([], function() { return Box2D; });
-    else if (typeof exports === 'object')
-      exports['Box2D'] = Box2D;
-    "
+  module.exports = Module;
+else if (typeof define === 'function' && define['amd'])
+  define([], function() { return Module; });
+else if (typeof exports === 'object')
+  exports['Module'] = Module;
+"
   UMD_FOOTER_ESCAPED=`escape_for_sed_replace "$UMD_FOOTER"`
 
   sed -e "s/^$ES6_HEADER$/$UMD_HEADER_ESCAPED/" -e "s/^$ES6_FOOTER$/$UMD_FOOTER_ESCAPED/" "$ES_FILE" > "$UMD_FILE"
   cp "$ES_DIR/$BASENAME.wasm" "$UMD_DIR"
+  cp "$ES_TSD" "$UMD_DIR"
 else
   >&2 echo -e "${Blue}Building UMD module, $UMD_DIR/$BASENAME.{js,wasm} from scratch${NC}"
   set -x
-  emcc "${LINK_OPTS[@]}" -o "$UMD_FILE"
+  emcc "${LINK_OPTS[@]}" -o "$UMD_FILE" --emit-tsd "$ES_TSD"
   { set +x; } 2>&-
 fi
 >&2 echo -e "${Green}Successfully built $UMD_DIR/$BASENAME.{js,wasm}${NC}\n"
