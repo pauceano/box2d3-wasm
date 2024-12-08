@@ -1,0 +1,4 @@
+[submodule "box2d"]
+	path = box2d
+	url = https://github.com/Birch-san/box2d.git
+	branch = embuild
