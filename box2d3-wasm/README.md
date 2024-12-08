@@ -25,3 +25,9 @@ box2d/build/bin/test.wasm
 ```
 
 I think specifically this is for running unit tests, so not sure if it'll have everything we need. Also we'll want a Release build and to know what symbols we can bind to.
+
+## Building (attempt 2)
+
+```bash
+FLAVOUR=simd TARGET_TYPE=Debug ./shell/build.sh
+```
