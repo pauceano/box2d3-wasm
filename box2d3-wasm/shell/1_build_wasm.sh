@@ -8,6 +8,7 @@ BOX2D_DIR="$(realpath "$MONOREPO_DIR/box2d")"
 B2CPP_DIR="$(realpath "$MONOREPO_DIR/box2cpp")"
 CMAKEBUILD_DIR="$(realpath "$B2D_WASM_DIR/cmake-build")"
 BUILD_DIR="$(realpath "$B2D_WASM_DIR/build")"
+CSRC_DIR="$(realpath "$B2D_WASM_DIR/csrc")"
 
 Red='\033[0;31m'
 Green='\033[0;32m'
@@ -34,6 +35,7 @@ esac
 
 # we used to use -s ENVIRONMENT=web for a slightly smaller build, until Node.js compatibility was requested in https://github.com/Birch-san/box2d-wasm/issues/8
 EMCC_OPTS=(
+  -std=c++20 # required for box2cpp
   -fno-rtti
   -s MODULARIZE=1
   -s EXPORT_NAME=Box2D
@@ -94,7 +96,7 @@ BARE_WASM="$BUILD_DIR/$BASENAME.bare.wasm"
 >&2 echo -e "${Blue}Building bare WASM${NC}"
 # emcc "$DIR/glue_stub.cpp" bin/libbox2d.a -I "$DIR/../box2d/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
 # emcc "$CMAKEBUILD_DIR/src/libbox2dd.a" -I "$BOX2D_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
-emcc "$CMAKEBUILD_DIR/src/libbox2dd.a" -I "$BOX2D_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
+emcc "$CSRC_DIR/glue.cpp" "$CMAKEBUILD_DIR/src/libbox2dd.a" -I "$BOX2D_DIR/include" -I "$B2CPP_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
 
 UMD_DIR="$BUILD_DIR/dist/umd"
 ES_DIR="$BUILD_DIR/dist/es"

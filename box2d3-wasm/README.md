@@ -33,5 +33,5 @@ I think specifically this is for running unit tests, so not sure if it'll have e
 npm i -g typescript
 FLAVOUR=simd TARGET_TYPE=Debug ./shell/0_build_makefile.sh
 emmake make -j8 -C cmake-build
-FLAVOUR=simd TARGET_TYPE=Debug BUILD_UMD_VIA_TEXT_REPLACE=1 ./shell/1_build_wasm.sh
+FLAVOUR=simd TARGET_TYPE=Debug ./shell/1_build_wasm.sh
 ```
