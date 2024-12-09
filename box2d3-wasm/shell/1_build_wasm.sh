@@ -36,7 +36,7 @@ esac
 # we used to use -s ENVIRONMENT=web for a slightly smaller build, until Node.js compatibility was requested in https://github.com/Birch-san/box2d-wasm/issues/8
 EMCC_OPTS=(
   -std=c++20 # required for box2cpp
-  -fno-rtti
+  # -fno-rtti # not compatible with embind
   -s MODULARIZE=1
   -s EXPORT_NAME=Box2D
   -s ALLOW_TABLE_GROWTH=1
@@ -96,7 +96,7 @@ BARE_WASM="$BUILD_DIR/$BASENAME.bare.wasm"
 >&2 echo -e "${Blue}Building bare WASM${NC}"
 # emcc "$DIR/glue_stub.cpp" bin/libbox2d.a -I "$DIR/../box2d/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
 # emcc "$CMAKEBUILD_DIR/src/libbox2dd.a" -I "$BOX2D_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
-emcc "$CSRC_DIR/glue.cpp" "$CMAKEBUILD_DIR/src/libbox2dd.a" -I "$BOX2D_DIR/include" -I "$B2CPP_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
+emcc -lembind "$CSRC_DIR/glue.cpp" "$CMAKEBUILD_DIR/src/libbox2dd.a" -I "$BOX2D_DIR/include" -I "$B2CPP_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
 
 UMD_DIR="$BUILD_DIR/dist/umd"
 ES_DIR="$BUILD_DIR/dist/es"
@@ -106,7 +106,7 @@ mkdir -p "$UMD_DIR" "$ES_DIR"
 >&2 echo -e "${Blue}Building post-link targets${NC}"
 
 # LINK_OPTS=(--post-link "$BARE_WASM" --post-js "$DIR/build/common/box2d_glue.js" --post-js "$DIR/glue_stub.js" ${EMCC_OPTS[@]})
-LINK_OPTS=(--post-link "$BARE_WASM")
+LINK_OPTS=(-lembind --post-link "$BARE_WASM")
 
 ES_FILE="$ES_DIR/$BASENAME.mjs"
 ES_TSD="$ES_DIR/$BASENAME.d.ts"

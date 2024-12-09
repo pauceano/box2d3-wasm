@@ -1,3 +1,7 @@
 /cmake-build/
 /build/
+!/build/dist/es/entry.mjs
+!/build/dist/es/entry.d.ts
+!/build/dist/umd/entry.mjs
+!/build/dist/umd/entry.d.ts
 /node_modules/
