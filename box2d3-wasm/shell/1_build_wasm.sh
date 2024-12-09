@@ -48,6 +48,7 @@ EMCC_OPTS=(
   )
 DEBUG_OPTS=(
   -g3
+  -gsource-map
 )
 RELEASE_OPTS=(-O3)
 
@@ -106,7 +107,7 @@ mkdir -p "$UMD_DIR" "$ES_DIR"
 >&2 echo -e "${Blue}Building post-link targets${NC}"
 
 # LINK_OPTS=(--post-link "$BARE_WASM" --post-js "$DIR/build/common/box2d_glue.js" --post-js "$DIR/glue_stub.js" ${EMCC_OPTS[@]})
-LINK_OPTS=(-lembind --post-link "$BARE_WASM")
+LINK_OPTS=(${DEBUG_OPTS[@]} -lembind --post-link "$BARE_WASM")
 
 ES_FILE="$ES_DIR/$BASENAME.mjs"
 ES_TSD="$ES_DIR/$BASENAME.d.ts"

@@ -56,6 +56,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
 
     class_<b2WorldDef>("b2WorldDef")
         .constructor()
+        .constructor<const b2WorldDef&>()
         .property("gravity", &b2WorldDef::gravity, return_value_policy::reference())
         .property("restitutionThreshold", &b2WorldDef::restitutionThreshold)
         .property("contactPushoutVelocity", &b2WorldDef::contactPushoutVelocity)
@@ -76,11 +77,12 @@ EMSCRIPTEN_BINDINGS(box2d) {
         // .property("userData", &b2WorldDef::userData, allow_raw_pointers())
         .property("internalValue", &b2WorldDef::internalValue)
         ;
+    
+    // reference return policy doesn't work here
+    function("b2DefaultWorldDef", &b2DefaultWorldDef);
 
     class_<b2::World>("World")
         .constructor()
-        .constructor<b2WorldDef&>()
-        // .function("World", select_overload<b2::World()>(&b2::World))
-        // .function("World", &World::World)
+        .constructor<const b2WorldDef&>()
         ;
 }
