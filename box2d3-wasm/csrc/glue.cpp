@@ -30,20 +30,20 @@ EMSCRIPTEN_BINDINGS(box2d) {
 
     class_<b2Transform>("b2Transform")
         .constructor()
-        .property("p", &b2Transform::p)
-        .property("q", &b2Transform::q)
+        .property("p", &b2Transform::p, return_value_policy::reference())
+        .property("q", &b2Transform::q, return_value_policy::reference())
         ;
 
     class_<b2Mat22>("b2Mat22")
         .constructor()
-        .property("cx", &b2Mat22::cx)
-        .property("cy", &b2Mat22::cy)
+        .property("cx", &b2Mat22::cx, return_value_policy::reference())
+        .property("cy", &b2Mat22::cy, return_value_policy::reference())
         ;
     
     class_<b2AABB>("b2AABB")
         .constructor()
-        .property("lowerBound", &b2AABB::lowerBound)
-        .property("upperBound", &b2AABB::upperBound)
+        .property("lowerBound", &b2AABB::lowerBound, return_value_policy::reference())
+        .property("upperBound", &b2AABB::upperBound, return_value_policy::reference())
         ;
     
     enum_<b2MixingRule>("b2MixingRule")
@@ -56,7 +56,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
 
     class_<b2WorldDef>("b2WorldDef")
         .constructor()
-        .property("gravity", &b2WorldDef::gravity)
+        .property("gravity", &b2WorldDef::gravity, return_value_policy::reference())
         .property("restitutionThreshold", &b2WorldDef::restitutionThreshold)
         .property("contactPushoutVelocity", &b2WorldDef::contactPushoutVelocity)
         .property("hitEventThreshold", &b2WorldDef::hitEventThreshold)
