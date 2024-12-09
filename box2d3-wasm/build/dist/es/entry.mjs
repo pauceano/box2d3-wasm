@@ -1,6 +1,7 @@
 /**
- * @param {Parameters<import('box2d3-wasm')>} args
- * @return {ReturnType<import('box2d3-wasm')>}
+ * @import { MainModule } from './Box2D.simd'
+ * @param {options?: unknown} args
+ * @return {Promise<MainModule>}
  */
 export default async (...args) => {
     /**
@@ -19,7 +20,7 @@ export default async (...args) => {
      * limitations under the License.
      */
     const hasSIMD = WebAssembly.validate(new Uint8Array([0,97,115,109,1,0,0,0,1,5,1,96,0,1,123,3,2,1,0,10,10,1,8,0,65,0,253,15,253,98,11]));
-    /** @type {{ 'default': import('box2d3-wasm') }} */
+    /** @type {{ 'default': (options?: unknown) => MainModule) }} */
     const Box2DModule = await (
       hasSIMD
         ? import('./Box2D.simd.mjs')

@@ -44,11 +44,14 @@
         tag.src = path;
         root.document.getElementsByTagName("head")[0].appendChild(tag);
       });
-      /** @type {Promise<import('box2d3-wasm')>} */
+      /**
+       * @import { MainModule } from './Box2D.simd'
+       * @type {Promise<(params?: unknown) => Promise<MainModule>>}
+       */
       const modulePromise = loadModule(`${box2DDir}/${moduleName}.js`, 'Box2D');
       /**
-       * @param {Parameters<import('box2d3-wasm')>} args
-       * @return {ReturnType<import('box2d3-wasm')>}
+       * @param {params?: unknown>} args
+       * @return {Promise<MainModule>}
        */
       root.Box2D = async (...args) => {
         const Box2DFactory = await modulePromise;
