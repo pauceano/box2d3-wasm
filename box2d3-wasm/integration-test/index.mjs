@@ -5,7 +5,10 @@ const {
     b2DefaultWorldDef,
     b2WorldDef,
     World,
-    b2MakeBox
+    b2MakeBox,
+    b2DefaultBodyDef,
+    b2BodyType,
+    b2Vec2,
 } = box2d;
 const B2_SECRET_COOKIE = 1152023
 const worldDef = new b2WorldDef(b2DefaultWorldDef())
@@ -17,6 +20,14 @@ const sideLengthMetres = 1;
 const square = b2MakeBox(sideLengthMetres, sideLengthMetres);
 console.log('square', square)
 
+const zero = new b2Vec2(0, 0);
+
+const bd = new b2DefaultBodyDef();
+bd.type = b2BodyType.b2_dynamicBody;
+bd.position = zero;
+
+const body = world.createBody(bd);
+console.log('body', body)
 
 /*
 import Box2DFactory from 'box2d-wasm';

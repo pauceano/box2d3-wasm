@@ -59,6 +59,7 @@ emscripten::val b2ChainDef_getPoints(const b2ChainDef& self) {
 EMSCRIPTEN_BINDINGS(box2d) {
     class_<b2Vec2>("b2Vec2")
         .constructor()
+        .constructor(+[](float x, float y) -> b2Vec2 { return b2Vec2{x, y}; })
         .property("x", &b2Vec2::x)
         .property("y", &b2Vec2::y)
         ;
@@ -128,13 +129,215 @@ EMSCRIPTEN_BINDINGS(box2d) {
     // reference return policy doesn't work here
     function("b2DefaultWorldDef", &b2DefaultWorldDef);
 
+   class_<b2BodyEvents>("b2BodyEvents")
+        .constructor()
+        .property("moveEvents", &b2BodyEvents::moveEvents, allow_raw_pointers())
+        .property("moveCount", &b2BodyEvents::moveCount)
+        ;
 
-    class_<BasicWorldInterface<WorldRef, false>>("BasicWorldInterface");
+    class_<b2BodyMoveEvent>("b2BodyMoveEvent")
+        .constructor()
+        .property("transform", &b2BodyMoveEvent::transform, return_value_policy::reference())
+        .property("bodyId", &b2BodyMoveEvent::bodyId)
+        .function("setUserData", +[](b2BodyMoveEvent& self, const emscripten::val& value) {
+            self.userData = reinterpret_cast<void*>(value.as<std::uintptr_t>());
+        })
+        .function("getUserData", +[](const b2BodyMoveEvent& self) {
+            return emscripten::val(reinterpret_cast<std::uintptr_t>(self.userData));
+        })
+        .property("fellAsleep", &b2BodyMoveEvent::fellAsleep)
+        ;
+
+    class_<b2BodyId>("b2BodyId")
+        .constructor()
+        .property("index1", &b2BodyId::index1)
+        .property("world0", &b2BodyId::world0)
+        .property("revision", &b2BodyId::revision)
+        ;
+
+
+    class_<b2ShapeId>("b2ShapeId")
+        .constructor()
+        .property("index1", &b2ShapeId::index1)
+        .property("world0", &b2ShapeId::world0)
+        .property("revision", &b2ShapeId::revision)
+        ;
+
+    class_<b2ContactEvents>("b2ContactEvents")
+        .constructor()
+        .property("beginEvents", &b2ContactEvents::beginEvents, allow_raw_pointers())
+        .property("endEvents", &b2ContactEvents::endEvents, allow_raw_pointers())
+        .property("hitEvents", &b2ContactEvents::hitEvents, allow_raw_pointers())
+        .property("beginCount", &b2ContactEvents::beginCount)
+        .property("endCount", &b2ContactEvents::endCount)
+        .property("hitCount", &b2ContactEvents::hitCount)
+        ;
+
+
+    class_<b2ContactBeginTouchEvent>("b2ContactBeginTouchEvent")
+        .constructor()
+        .property("shapeIdA", &b2ContactBeginTouchEvent::shapeIdA)
+        .property("shapeIdB", &b2ContactBeginTouchEvent::shapeIdB)
+        .property("manifold", &b2ContactBeginTouchEvent::manifold, return_value_policy::reference())
+        ;
+
+
+    class_<b2ContactEndTouchEvent>("b2ContactEndTouchEvent")
+        .constructor()
+        .property("shapeIdA", &b2ContactEndTouchEvent::shapeIdA)
+        .property("shapeIdB", &b2ContactEndTouchEvent::shapeIdB)
+        ;
+
+
+    class_<b2ContactHitEvent>("b2ContactHitEvent")
+        .constructor()
+        .property("shapeIdA", &b2ContactHitEvent::shapeIdA)
+        .property("shapeIdB", &b2ContactHitEvent::shapeIdB)
+        .property("point", &b2ContactHitEvent::point, return_value_policy::reference())
+        .property("normal", &b2ContactHitEvent::normal, return_value_policy::reference())
+        .property("approachSpeed", &b2ContactHitEvent::approachSpeed)
+        ;
+
+
+    class_<b2ManifoldPoint>("b2ManifoldPoint")
+        .constructor()
+        .property("point", &b2ManifoldPoint::point, return_value_policy::reference())
+        .property("anchorA", &b2ManifoldPoint::anchorA, return_value_policy::reference())
+        .property("anchorB", &b2ManifoldPoint::anchorB, return_value_policy::reference())
+        .property("separation", &b2ManifoldPoint::separation)
+        .property("normalImpulse", &b2ManifoldPoint::normalImpulse)
+        .property("tangentImpulse", &b2ManifoldPoint::tangentImpulse)
+        .property("maxNormalImpulse", &b2ManifoldPoint::maxNormalImpulse)
+        .property("normalVelocity", &b2ManifoldPoint::normalVelocity)
+        .property("id", &b2ManifoldPoint::id)
+        .property("persisted", &b2ManifoldPoint::persisted)
+        ;
+
+    class_<b2Manifold>("b2Manifold")
+        .constructor()
+        .function("getPoint", +[](const b2Manifold& self, int index) -> b2ManifoldPoint {
+            return self.points[index];
+        })
+        .function("setPoint", +[](b2Manifold& self, int index, const b2ManifoldPoint& point) {
+            self.points[index] = point;
+        })
+        .property("normal", &b2Manifold::normal, return_value_policy::reference())
+        .property("pointCount", &b2Manifold::pointCount)
+        ;
+
+    class_<b2Counters>("b2Counters")
+        .constructor()
+        .property("bodyCount", &b2Counters::bodyCount)
+        .property("shapeCount", &b2Counters::shapeCount)
+        .property("contactCount", &b2Counters::contactCount)
+        .property("jointCount", &b2Counters::jointCount)
+        .property("islandCount", &b2Counters::islandCount)
+        .property("stackUsed", &b2Counters::stackUsed)
+        .property("staticTreeHeight", &b2Counters::staticTreeHeight)
+        .property("treeHeight", &b2Counters::treeHeight)
+        .property("byteCount", &b2Counters::byteCount)
+        .property("taskCount", &b2Counters::taskCount)
+        .function("getColorCount", +[](const b2Counters& self, int index) -> int {
+            if (index < 0 || index >= 12) {
+                return 0;  // Return 0 for out of bounds
+            }
+            return self.colorCounts[index];
+        })
+        .function("setColorCount", +[](b2Counters& self, int index, int value) {
+            if (index >= 0 && index < 12) {
+                self.colorCounts[index] = value;
+            }
+        })
+        ;
+
+    class_<b2SensorBeginTouchEvent>("b2SensorBeginTouchEvent")
+        .constructor()
+        .property("sensorShapeId", &b2SensorBeginTouchEvent::sensorShapeId)
+        .property("visitorShapeId", &b2SensorBeginTouchEvent::visitorShapeId)
+        ;
+
+    class_<b2SensorEndTouchEvent>("b2SensorEndTouchEvent")
+        .constructor()
+        .property("sensorShapeId", &b2SensorEndTouchEvent::sensorShapeId)
+        .property("visitorShapeId", &b2SensorEndTouchEvent::visitorShapeId)
+        ;
+
+    class_<b2SensorEvents>("b2SensorEvents")
+        .constructor()
+        .property("beginEvents", &b2SensorEvents::beginEvents, allow_raw_pointers())
+        .property("endEvents", &b2SensorEvents::endEvents, allow_raw_pointers())
+        .property("beginCount", &b2SensorEvents::beginCount)
+        .property("endCount", &b2SensorEvents::endCount)
+        ;
+
+    class_<b2Profile>("b2Profile")
+        .constructor()
+        .property("step", &b2Profile::step)
+        .property("pairs", &b2Profile::pairs)
+        .property("collide", &b2Profile::collide)
+        .property("solve", &b2Profile::solve)
+        .property("buildIslands", &b2Profile::buildIslands)
+        .property("solveConstraints", &b2Profile::solveConstraints)
+        .property("prepareTasks", &b2Profile::prepareTasks)
+        .property("solverTasks", &b2Profile::solverTasks)
+        .property("prepareConstraints", &b2Profile::prepareConstraints)
+        .property("integrateVelocities", &b2Profile::integrateVelocities)
+        .property("warmStart", &b2Profile::warmStart)
+        .property("solveVelocities", &b2Profile::solveVelocities)
+        .property("integratePositions", &b2Profile::integratePositions)
+        .property("relaxVelocities", &b2Profile::relaxVelocities)
+        .property("applyRestitution", &b2Profile::applyRestitution)
+        .property("storeImpulses", &b2Profile::storeImpulses)
+        .property("finalizeBodies", &b2Profile::finalizeBodies)
+        .property("splitIslands", &b2Profile::splitIslands)
+        .property("sleepIslands", &b2Profile::sleepIslands)
+        .property("hitEvents", &b2Profile::hitEvents)
+        .property("broadphase", &b2Profile::broadphase)
+        .property("continuous", &b2Profile::continuous)
+        ;
+
+    class_<BasicWorldInterface<World, false>>("BasicWorldInterface");
     class_<MaybeConstWorldRef<false>>("WorldRef");
     class_<MaybeConstWorldRef<true>>("WorldConstRef");
-    class_<b2::World>("World")
+    class_<World, base<BasicWorldInterface<World, false>>>("World")
         .constructor()
         .constructor<const b2WorldDef&>()
+        .function("destroy", &b2::World::Destroy)
+        .function("isValid", &b2::World::IsValid)
+        .function("step", &b2::World::Step)
+        .function("setGravity", &b2::World::SetGravity)
+        .function("getGravity", &b2::World::GetGravity)
+        .function("getAwakeBodyCount", &b2::World::GetAwakeBodyCount)
+        .function("getBodyEvents", &b2::World::GetBodyEvents)
+        .function("getContactEvents", &b2::World::GetContactEvents)
+        .function("setContactTuning", &b2::World::SetContactTuning)
+        .function("enableContinuous", &b2::World::EnableContinuous)
+        .function("isContinuousEnabled", &b2::World::IsContinuousEnabled)
+        .function("enableSleeping", &b2::World::EnableSleeping)
+        .function("isSleepingEnabled", &b2::World::IsSleepingEnabled)
+        .function("enableWarmStarting", &b2::World::EnableWarmStarting)
+        .function("isWarmStartingEnabled", &b2::World::IsWarmStartingEnabled)
+        .function("setMaximumLinearVelocity", &b2::World::SetMaximumLinearVelocity)
+        .function("getMaximumLinearVelocity", &b2::World::GetMaximumLinearVelocity)
+        .function("setRestitutionThreshold", &b2::World::SetRestitutionThreshold)
+        .function("getRestitutionThreshold", &b2::World::GetRestitutionThreshold)
+        .function("setHitEventThreshold", &b2::World::SetHitEventThreshold)
+        .function("getHitEventThreshold", &b2::World::GetHitEventThreshold)
+        .function("getCounters", &b2::World::GetCounters)
+        .function("getProfile", &b2::World::GetProfile)
+        .function("getSensorEvents", &b2::World::GetSensorEvents)
+        .function("setUserData", +[](b2::World& self, const emscripten::val& value) {
+            self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>())));
+        })
+        .function("getUserData", +[](const b2::World& self) {
+            return emscripten::val(reinterpret_cast<std::uintptr_t>(self.GetUserData()));
+        })
+        .function("createBody", +[](b2::World& world, const b2BodyDef& def) -> Body* {
+            Body* body = new Body();
+            *body = world.CreateBody(b2::Tags::OwningHandle{}, def);
+            return body;
+        }, allow_raw_pointers())
+
         ;
 
     // ------------------------------------------------------------------------
@@ -323,6 +526,34 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .value("b2_bodyTypeCount", b2_bodyTypeCount)
         ;
 
+    class_<b2BodyDef>("b2BodyDef")
+        .constructor()
+        .property("type", &b2BodyDef::type)
+        .property("position", &b2BodyDef::position, return_value_policy::reference())
+        .property("rotation", &b2BodyDef::rotation, return_value_policy::reference())
+        .property("linearVelocity", &b2BodyDef::linearVelocity, return_value_policy::reference())
+        .property("angularVelocity", &b2BodyDef::angularVelocity)
+        .property("linearDamping", &b2BodyDef::linearDamping)
+        .property("angularDamping", &b2BodyDef::angularDamping)
+        .property("gravityScale", &b2BodyDef::gravityScale)
+        .property("sleepThreshold", &b2BodyDef::sleepThreshold)
+        .function("setUserData", +[](b2BodyDef& self, const emscripten::val& value) {
+            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>()));
+        })
+        .function("getUserData", +[](const b2BodyDef& self) {
+            return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
+        })
+        .property("enableSleep", &b2BodyDef::enableSleep)
+        .property("isAwake", &b2BodyDef::isAwake)
+        .property("fixedRotation", &b2BodyDef::fixedRotation)
+        .property("isBullet", &b2BodyDef::isBullet)
+        .property("isEnabled", &b2BodyDef::isEnabled)
+        .property("allowFastRotation", &b2BodyDef::allowFastRotation)
+        .property("internalValue", &b2BodyDef::internalValue)
+        ;
+
+    function("b2DefaultBodyDef", &b2DefaultBodyDef);
+
     class_<BasicBodyInterface<Body, false>>("BasicBodyInterface");
 
     class_<Body, base<BasicBodyInterface<Body, false>>>("Body")
@@ -422,4 +653,6 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .function("getWorldPoint", &Body::GetWorldPoint)
         .function("getWorldVector", &Body::GetWorldVector)
         ;
+
+    
 }
