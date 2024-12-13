@@ -1,62 +1,116 @@
 import { strict as assert } from 'assert';
 import Box2DFactory from '../build/dist/es/entry.mjs'
-const box2d = await Box2DFactory()
-const {
-    b2DefaultWorldDef,
-    b2CreateWorld,
-    b2World_Step,
-    b2WorldDef,
-    b2MakeBox,
-    b2DefaultBodyDef,
-    b2DefaultShapeDef,
-    b2CreatePolygonShape,
-    b2CreateBody,
-    b2Body_GetPosition,
-    b2Body_GetRotation,
-    b2Rot_GetAngle,
-    b2BodyType,
-    b2Vec2,
-    LeakMitigator
-} = box2d;
 
-const B2_SECRET_COOKIE = 1152023
-const worldDef = new b2WorldDef(b2DefaultWorldDef())
-assert(worldDef.internalValue === B2_SECRET_COOKIE)
-const worldId = b2CreateWorld(worldDef)
-console.log('hello', worldId)
+const box2d = await Box2DFactory();
 
-const sideLengthMetres = 1;
-const square = b2MakeBox(sideLengthMetres, sideLengthMetres);
-console.log('square', square)
+// C Interface
+(() => {
+  const {
+      b2DefaultWorldDef,
+      b2CreateWorld,
+      b2World_Step,
+      b2MakeBox,
+      b2DefaultBodyDef,
+      b2DefaultShapeDef,
+      b2CreatePolygonShape,
+      b2CreateBody,
+      b2Body_GetPosition,
+      b2Body_GetRotation,
+      b2Rot_GetAngle,
+      b2BodyType,
+      b2Vec2,
+  } = box2d;
 
-const zero = new b2Vec2(0, 0);
+  const B2_SECRET_COOKIE = 1152023;
+  const worldDef = b2DefaultWorldDef();
+  assert(worldDef.internalValue === B2_SECRET_COOKIE);
+  const worldId = b2CreateWorld(worldDef);
+  console.log('hello', worldId);
 
-const bd = new b2DefaultBodyDef();
-bd.type = b2BodyType.b2_dynamicBody;
-bd.position = zero;
+  const sideLengthMetres = 1;
+  const square = b2MakeBox(sideLengthMetres, sideLengthMetres);
+  console.log('square', square)
 
-const bodyId = b2CreateBody(worldId, bd);
+  const zero = new b2Vec2(0, 0);
 
-const shapeDef = b2DefaultShapeDef();
-shapeDef.density = 1.0;
-shapeDef.friction = 0.3;
+  const bd = new b2DefaultBodyDef();
+  bd.type = b2BodyType.b2_dynamicBody;
+  bd.position = zero;
 
-const shapeId = b2CreatePolygonShape(bodyId, shapeDef, square);
+  const bodyId = b2CreateBody(worldId, bd);
 
-console.log('shapeId', shapeId)
+  const shapeDef = b2DefaultShapeDef();
+  shapeDef.density = 1.0;
+  shapeDef.friction = 0.3;
 
-const timeStep = 1.0 / 60.0;
-const subStepCount = 4;
+  const shapeId = b2CreatePolygonShape(bodyId, shapeDef, square);
 
-console.log('bodyId', bodyId)
+  console.log('shapeId', shapeId)
 
-for (let i = 0; i < 90; ++i)
+  const timeStep = 1.0 / 60.0;
+  const subStepCount = 4;
+
+  console.log('bodyId', bodyId)
+
+  for (let i = 0; i < 90; ++i)
   {
     b2World_Step(worldId, timeStep, subStepCount);
     const position = b2Body_GetPosition(bodyId);
     const rotation = b2Body_GetRotation(bodyId);
     console.log(position.x, position.y, b2Rot_GetAngle(rotation));
   }
+})();
+
+
+// CPP Interface
+(() => {
+  const {
+      b2DefaultWorldDef,
+      b2WorldDef,
+      World,
+      b2MakeBox,
+      b2DefaultBodyDef,
+      b2DefaultShapeDef,
+      b2BodyDef,
+      b2BodyType,
+      b2Rot_GetAngle,
+      b2Vec2
+  } = box2d;
+
+  const B2_SECRET_COOKIE = 1152023;
+  const worldDef = b2DefaultWorldDef();
+  assert(worldDef.internalValue === B2_SECRET_COOKIE);
+  
+  const world = new World(new b2WorldDef(worldDef));
+
+  const sideLengthMetres = 1;
+  const square = b2MakeBox(sideLengthMetres, sideLengthMetres);
+  console.log('square', square);
+
+  const zero = new b2Vec2(0, 0);
+
+  const bd = new b2DefaultBodyDef();
+  bd.type = b2BodyType.b2_dynamicBody;
+  bd.position = zero;
+
+  const shapeDef = b2DefaultShapeDef();
+  shapeDef.density = 1.0;
+  shapeDef.friction = 0.3;
+
+  const body = world.CreateBody(new b2BodyDef(bd));
+  body.CreatePolygonShape(shapeDef, square);
+
+  const timeStep = 1.0 / 60.0;
+  const subStepCount = 4;
+
+  for (let i = 0; i < 90; ++i)
+  {
+    world.Step(timeStep, subStepCount);
+    const position = body.GetPosition();
+    const rotation = body.GetRotation();
+    console.log(position.x, position.y, b2Rot_GetAngle(rotation));
+  }
+})();
 
 
 /*

@@ -139,10 +139,10 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .constructor()
         .property("transform", &b2BodyMoveEvent::transform, return_value_policy::reference())
         .property("bodyId", &b2BodyMoveEvent::bodyId)
-        .function("setUserData", +[](b2BodyMoveEvent& self, const emscripten::val& value) {
+        .function("SetUserData", +[](b2BodyMoveEvent& self, const emscripten::val& value) {
             self.userData = reinterpret_cast<void*>(value.as<std::uintptr_t>());
         })
-        .function("getUserData", +[](const b2BodyMoveEvent& self) {
+        .function("SetUserData", +[](const b2BodyMoveEvent& self) {
             return emscripten::val(reinterpret_cast<std::uintptr_t>(self.userData));
         })
         .property("fellAsleep", &b2BodyMoveEvent::fellAsleep)
@@ -221,10 +221,10 @@ EMSCRIPTEN_BINDINGS(box2d) {
 
     class_<b2Manifold>("b2Manifold")
         .constructor()
-        .function("getPoint", +[](const b2Manifold& self, int index) -> b2ManifoldPoint {
+        .function("GetPoint", +[](const b2Manifold& self, int index) -> b2ManifoldPoint {
             return self.points[index];
         })
-        .function("setPoint", +[](b2Manifold& self, int index, const b2ManifoldPoint& point) {
+        .function("SetPoint", +[](b2Manifold& self, int index, const b2ManifoldPoint& point) {
             self.points[index] = point;
         })
         .property("normal", &b2Manifold::normal, return_value_policy::reference())
@@ -243,13 +243,13 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .property("treeHeight", &b2Counters::treeHeight)
         .property("byteCount", &b2Counters::byteCount)
         .property("taskCount", &b2Counters::taskCount)
-        .function("getColorCount", +[](const b2Counters& self, int index) -> int {
+        .function("GetColorCount", +[](const b2Counters& self, int index) -> int {
             if (index < 0 || index >= 12) {
                 return 0;  // Return 0 for out of bounds
             }
             return self.colorCounts[index];
         })
-        .function("setColorCount", +[](b2Counters& self, int index, int value) {
+        .function("SetColorCount", +[](b2Counters& self, int index, int value) {
             if (index >= 0 && index < 12) {
                 self.colorCounts[index] = value;
             }
@@ -308,37 +308,37 @@ EMSCRIPTEN_BINDINGS(box2d) {
     class_<World, base<BasicWorldInterface<World, false>>>("World")
         .constructor()
         .constructor<const b2WorldDef&>()
-        .function("destroy", &b2::World::Destroy)
-        .function("isValid", &b2::World::IsValid)
-        .function("step", &b2::World::Step)
-        .function("setGravity", &b2::World::SetGravity)
-        .function("getGravity", &b2::World::GetGravity)
-        .function("getAwakeBodyCount", &b2::World::GetAwakeBodyCount)
-        .function("getBodyEvents", &b2::World::GetBodyEvents)
-        .function("getContactEvents", &b2::World::GetContactEvents)
-        .function("setContactTuning", &b2::World::SetContactTuning)
-        .function("enableContinuous", &b2::World::EnableContinuous)
-        .function("isContinuousEnabled", &b2::World::IsContinuousEnabled)
-        .function("enableSleeping", &b2::World::EnableSleeping)
-        .function("isSleepingEnabled", &b2::World::IsSleepingEnabled)
-        .function("enableWarmStarting", &b2::World::EnableWarmStarting)
-        .function("isWarmStartingEnabled", &b2::World::IsWarmStartingEnabled)
-        .function("setMaximumLinearVelocity", &b2::World::SetMaximumLinearVelocity)
-        .function("getMaximumLinearVelocity", &b2::World::GetMaximumLinearVelocity)
-        .function("setRestitutionThreshold", &b2::World::SetRestitutionThreshold)
-        .function("getRestitutionThreshold", &b2::World::GetRestitutionThreshold)
-        .function("setHitEventThreshold", &b2::World::SetHitEventThreshold)
-        .function("getHitEventThreshold", &b2::World::GetHitEventThreshold)
-        .function("getCounters", &b2::World::GetCounters)
-        .function("getProfile", &b2::World::GetProfile)
-        .function("getSensorEvents", &b2::World::GetSensorEvents)
-        .function("setUserData", +[](b2::World& self, const emscripten::val& value) {
+        .function("Destroy", &b2::World::Destroy)
+        .function("IsValid", &b2::World::IsValid)
+        .function("Step", &b2::World::Step)
+        .function("SetGravity", &b2::World::SetGravity)
+        .function("GetGravity", &b2::World::GetGravity)
+        .function("GetAwakeBodyCount", &b2::World::GetAwakeBodyCount)
+        .function("GetBodyEvents", &b2::World::GetBodyEvents)
+        .function("GetContactEvents", &b2::World::GetContactEvents)
+        .function("SetContactTuning", &b2::World::SetContactTuning)
+        .function("EnableContinuous", &b2::World::EnableContinuous)
+        .function("IsContinuousEnabled", &b2::World::IsContinuousEnabled)
+        .function("EnableSleeping", &b2::World::EnableSleeping)
+        .function("IsSleepingEnabled", &b2::World::IsSleepingEnabled)
+        .function("EnableWarmStarting", &b2::World::EnableWarmStarting)
+        .function("IsWarmStartingEnabled", &b2::World::IsWarmStartingEnabled)
+        .function("SetMaximumLinearVelocity", &b2::World::SetMaximumLinearVelocity)
+        .function("GetMaximumLinearVelocity", &b2::World::GetMaximumLinearVelocity)
+        .function("SetRestitutionThreshold", &b2::World::SetRestitutionThreshold)
+        .function("GetRestitutionThreshold", &b2::World::GetRestitutionThreshold)
+        .function("SetHitEventThreshold", &b2::World::SetHitEventThreshold)
+        .function("GetHitEventThreshold", &b2::World::GetHitEventThreshold)
+        .function("GetCounters", &b2::World::GetCounters)
+        .function("GetProfile", &b2::World::GetProfile)
+        .function("GetSensorEvents", &b2::World::GetSensorEvents)
+        .function("SetUserData", +[](b2::World& self, const emscripten::val& value) {
             self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>())));
         })
-        .function("getUserData", +[](const b2::World& self) {
+        .function("GetUserData", +[](const b2::World& self) {
             return emscripten::val(reinterpret_cast<std::uintptr_t>(self.GetUserData()));
         })
-        .function("createBody", +[](b2::World& world, const b2BodyDef& def) -> Body* {
+        .function("CreateBody", +[](b2::World& world, const b2BodyDef& def) -> Body* {
             Body* body = new Body();
             *body = world.CreateBody(b2::Tags::OwningHandle{}, def);
             return body;
@@ -396,20 +396,20 @@ EMSCRIPTEN_BINDINGS(box2d) {
 
     class_<b2Polygon>("b2Polygon")
         .constructor()
-        .function("getVertex", +[](const b2Polygon& self, int index) -> b2Vec2 {
+        .function("GetVertex", +[](const b2Polygon& self, int index) -> b2Vec2 {
             if (index < 0 || index >= b2_maxPolygonVertices) return b2Vec2();
             return self.vertices[index];
         })
-        .function("setVertex", +[](b2Polygon& self, int index, const b2Vec2& value) {
+        .function("SetVertex", +[](b2Polygon& self, int index, const b2Vec2& value) {
             if (index >= 0 && index < b2_maxPolygonVertices) {
                 self.vertices[index] = value;
             }
         })
-        .function("getNormal", +[](const b2Polygon& self, int index) -> b2Vec2 {
+        .function("GetNormal", +[](const b2Polygon& self, int index) -> b2Vec2 {
             if (index < 0 || index >= b2_maxPolygonVertices) return b2Vec2();
             return self.normals[index];
         })
-        .function("setNormal", +[](b2Polygon& self, int index, const b2Vec2& value) {
+        .function("SetNormal", +[](b2Polygon& self, int index, const b2Vec2& value) {
             if (index >= 0 && index < b2_maxPolygonVertices) {
                 self.normals[index] = value;
             }
@@ -417,15 +417,15 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .property("centroid", &b2Polygon::centroid)
         .property("radius", &b2Polygon::radius)
         .property("count", &b2Polygon::count)
-        .class_function("getMaxVertices", +[]() { return b2_maxPolygonVertices; })
+        .class_function("GetMaxVertices", +[]() { return b2_maxPolygonVertices; })
     ;
 
     class_<b2ChainDef>("b2ChainDef")
         .constructor<>()
-        .function("getUserData", +[](const b2ChainDef& self) {
+        .function("GetUserData", +[](const b2ChainDef& self) {
             return emscripten::val(reinterpret_cast<std::uintptr_t>(self.userData));
         })
-        .function("setUserData", +[](b2ChainDef& self, const emscripten::val& value) {
+        .function("SetUserData", +[](b2ChainDef& self, const emscripten::val& value) {
             self.userData = reinterpret_cast<void*>(value.as<std::uintptr_t>());
         })
         .property("friction", &b2ChainDef::friction)
@@ -433,7 +433,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .property("filter", &b2ChainDef::filter)
         .property("customColor", &b2ChainDef::customColor)
         .property("isLoop", &b2ChainDef::isLoop)
-        .function("getPoints", +[](const b2ChainDef& self) -> emscripten::val {
+        .function("GetPoints", +[](const b2ChainDef& self) -> emscripten::val {
             auto result = emscripten::val::array();
             for (int i = 0; i < self.count; i++) {
                 auto point = emscripten::val::object();
@@ -443,7 +443,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
             }
             return result;
         })
-        .function("setPoints", +[](b2ChainDef& self, const emscripten::val& points) {
+        .function("SetPoints", +[](b2ChainDef& self, const emscripten::val& points) {
             int length = points["length"].as<int>();
             b2Vec2* newPoints = new b2Vec2[length];
 
@@ -466,14 +466,14 @@ EMSCRIPTEN_BINDINGS(box2d) {
 
     class_<Chain, base<BasicChainInterface<Chain, false>>>("Chain")
         .constructor<>()
-        .function("destroy", &Chain::Destroy)
-        .function("isValid", &Chain::IsValid)
-        .function("setFriction", &Chain::SetFriction)
-        .function("getFriction", &Chain::GetFriction)
-        .function("setRestitution", &Chain::SetRestitution)
-        .function("getRestitution", &Chain::GetRestitution)
-        .function("getSegmentCount", &Chain::GetSegmentCount)
-        .function("getSegments", +[](const Chain& self) {
+        .function("Destroy", &Chain::Destroy)
+        .function("IsValid", &Chain::IsValid)
+        .function("SetFriction", &Chain::SetFriction)
+        .function("GetFriction", &Chain::GetFriction)
+        .function("SetRestitution", &Chain::SetRestitution)
+        .function("GetRestitution", &Chain::GetRestitution)
+        .function("GetSegmentCount", &Chain::GetSegmentCount)
+        .function("GetSegments", +[](const Chain& self) {
             int count = self.GetSegmentCount();
             if (count == 0) return emscripten::val::array();
 
@@ -486,7 +486,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
             }
             return result;
         })
-        .function("getWorld", select_overload<WorldRef()>(&Chain::GetWorld))
+        .function("GetWorld", select_overload<WorldRef()>(&Chain::GetWorld))
         ;
 
     function("b2MakeBox", &b2MakeBox);
@@ -500,19 +500,19 @@ EMSCRIPTEN_BINDINGS(box2d) {
 
     class_<Shape, base<BasicShapeInterface<Shape, false>>>("Shape")
         .constructor()
-        .function("destroy", &Shape::Destroy)
-        .function("isValid", &Shape::IsValid)
-        .function("getAABB", &Shape::GetAABB)
-        .function("getDensity", &Shape::GetDensity)
-        .function("setDensity", &Shape::SetDensity)
-        .function("getFilter", &Shape::GetFilter)
-        .function("setFilter", &Shape::SetFilter)
-        .function("getFriction", &Shape::GetFriction)
-        .function("setFriction", &Shape::SetFriction)
-        .function("getUserData", +[](const Shape& self) {
+        .function("Destroy", &Shape::Destroy)
+        .function("IsValid", &Shape::IsValid)
+        .function("GetAABB", &Shape::GetAABB)
+        .function("GetDensity", &Shape::GetDensity)
+        .function("SetDensity", &Shape::SetDensity)
+        .function("GetFilter", &Shape::GetFilter)
+        .function("SetFilter", &Shape::SetFilter)
+        .function("GetFriction", &Shape::GetFriction)
+        .function("SetFriction", &Shape::SetFriction)
+        .function("GetUserData", +[](const Shape& self) {
             return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.GetUserData())));
         })
-        .function("setUserData", +[](Shape& self, const emscripten::val& value) {
+        .function("SetUserData", +[](Shape& self, const emscripten::val& value) {
             self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>())));
         })
         ;
@@ -542,6 +542,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
 
     class_<b2BodyDef>("b2BodyDef")
         .constructor()
+        .constructor<const b2BodyDef&>()
         .property("type", &b2BodyDef::type)
         .property("position", &b2BodyDef::position, return_value_policy::reference())
         .property("rotation", &b2BodyDef::rotation, return_value_policy::reference())
@@ -551,10 +552,10 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .property("angularDamping", &b2BodyDef::angularDamping)
         .property("gravityScale", &b2BodyDef::gravityScale)
         .property("sleepThreshold", &b2BodyDef::sleepThreshold)
-        .function("setUserData", +[](b2BodyDef& self, const emscripten::val& value) {
+        .function("SetUserData", +[](b2BodyDef& self, const emscripten::val& value) {
             self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>()));
         })
-        .function("getUserData", +[](const b2BodyDef& self) {
+        .function("GetUserData", +[](const b2BodyDef& self) {
             return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
         })
         .property("enableSleep", &b2BodyDef::enableSleep)
@@ -572,100 +573,120 @@ EMSCRIPTEN_BINDINGS(box2d) {
 
     class_<Body, base<BasicBodyInterface<Body, false>>>("Body")
         .constructor<>()
-        .function("isValid", &Body::IsValid)
-        .function("createChain", +[](Body& body, const b2ChainDef& def) -> Chain* {
+        .function("IsValid", &Body::IsValid)
+        .function("CreateChain", +[](Body& body, const b2ChainDef& def) -> Chain* {
             Chain* chain = new Chain();
             *chain = body.CreateChain(Tags::OwningHandle{}, def);
             return chain;
         }, emscripten::allow_raw_pointers())
-        .function("createShapeCapsule", +[](Body& body, const b2ShapeDef& def, const b2Capsule& capsule) -> Shape* {
+        .function("CreateShapeCapsule", +[](Body& body, const b2ShapeDef& def, const b2Capsule& capsule) -> Shape* {
             Shape* shape = new Shape();
             *shape = body.CreateShape(Tags::OwningHandle{}, def, capsule);
             return shape;
         }, emscripten::allow_raw_pointers())
-        .function("createShapeCircle", +[](Body& body, const b2ShapeDef& def, const b2Circle& circle) -> Shape* {
+        .function("CreateShapeCircle", +[](Body& body, const b2ShapeDef& def, const b2Circle& circle) -> Shape* {
             Shape* shape = new Shape();
             *shape = body.CreateShape(Tags::OwningHandle{}, def, circle);
             return shape;
         }, emscripten::allow_raw_pointers())
-        .function("createShapePolygon", +[](Body& body, const b2ShapeDef& def, const b2Polygon& polygon) -> Shape* {
+        .function("CreateShapePolygon", +[](Body& body, const b2ShapeDef& def, const b2Polygon& polygon) -> Shape* {
             Shape* shape = new Shape();
             *shape = body.CreateShape(Tags::OwningHandle{}, def, polygon);
             return shape;
         }, emscripten::allow_raw_pointers())
-        .function("createShapeSegment", +[](Body& body, const b2ShapeDef& def, const b2Segment& segment) -> Shape* {
+        .function("CreateShapeSegment", +[](Body& body, const b2ShapeDef& def, const b2Segment& segment) -> Shape* {
             Shape* shape = new Shape();
             *shape = body.CreateShape(Tags::OwningHandle{}, def, segment);
             return shape;
         }, emscripten::allow_raw_pointers())
-        .function("destroy", &Body::Destroy)
-        .function("enable", &Body::Enable)
-        .function("disable", &Body::Disable)
-        .function("isEnabled", &Body::IsEnabled)
-        .function("setAngularDamping", &Body::SetAngularDamping)
-        .function("getAngularDamping", &Body::GetAngularDamping)
-        .function("setAngularVelocity", &Body::SetAngularVelocity)
-        .function("getAngularVelocity", &Body::GetAngularVelocity)
-        .function("applyAngularImpulse", &Body::ApplyAngularImpulse)
-        .function("applyForce", &Body::ApplyForce)
-        .function("applyForceToCenter", &Body::ApplyForceToCenter)
-        .function("applyLinearImpulse", &Body::ApplyLinearImpulse)
-        .function("applyLinearImpulseToCenter", &Body::ApplyLinearImpulseToCenter)
-        .function("applyTorque", &Body::ApplyTorque)
-        .function("applyMassFromShapes", &Body::ApplyMassFromShapes)
-        .function("getMass", &Body::GetMass)
-        .function("setMassData", &Body::SetMassData)
-        .function("getMassData", &Body::GetMassData)
-        .function("getRotationalInertia", &Body::GetRotationalInertia)
-        .function("setAwake", &Body::SetAwake)
-        .function("isAwake", &Body::IsAwake)
-        .function("enableSleep", &Body::EnableSleep)
-        .function("isSleepEnabled", &Body::IsSleepEnabled)
-        .function("setSleepThreshold", &Body::SetSleepThreshold)
-        .function("getSleepThreshold", &Body::GetSleepThreshold)
-        .function("setBullet", &Body::SetBullet)
-        .function("isBullet", &Body::IsBullet)
-        .function("computeAABB", &Body::ComputeAABB)
-        .function("getContactCapacity", &Body::GetContactCapacity)
-        .function("getContactData", +[](const Body& body) {
+        .function("Destroy", &Body::Destroy)
+        .function("Enable", &Body::Enable)
+        .function("Disable", &Body::Disable)
+        .function("IsEnabled", &Body::IsEnabled)
+        .function("SetAngularDamping", &Body::SetAngularDamping)
+        .function("GetAngularDamping", &Body::GetAngularDamping)
+        .function("SetAngularVelocity", &Body::SetAngularVelocity)
+        .function("GetAngularVelocity", &Body::GetAngularVelocity)
+        .function("ApplyAngularImpulse", &Body::ApplyAngularImpulse)
+        .function("ApplyForce", &Body::ApplyForce)
+        .function("ApplyForceToCenter", &Body::ApplyForceToCenter)
+        .function("ApplyLinearImpulse", &Body::ApplyLinearImpulse)
+        .function("ApplyLinearImpulseToCenter", &Body::ApplyLinearImpulseToCenter)
+        .function("ApplyTorque", &Body::ApplyTorque)
+        .function("ApplyMassFromShapes", &Body::ApplyMassFromShapes)
+        .function("GetMass", &Body::GetMass)
+        .function("SetMassData", &Body::SetMassData)
+        .function("GetMassData", &Body::GetMassData)
+        .function("GetRotationalInertia", &Body::GetRotationalInertia)
+        .function("SetAwake", &Body::SetAwake)
+        .function("IsAwake", &Body::IsAwake)
+        .function("EnableSleep", &Body::EnableSleep)
+        .function("IsSleepEnabled", &Body::IsSleepEnabled)
+        .function("SetSleepThreshold", &Body::SetSleepThreshold)
+        .function("GetSleepThreshold", &Body::GetSleepThreshold)
+        .function("SetBullet", &Body::SetBullet)
+        .function("IsBullet", &Body::IsBullet)
+        .function("ComputeAABB", &Body::ComputeAABB)
+        .function("GetContactCapacity", &Body::GetContactCapacity)
+        .function("GetContactData", +[](const Body& body) {
             return getArrayWrapper<b2ContactData>(body, &Body::GetContactCapacity, &Body::GetContactData);
         })
-        .function("setFixedRotation", &Body::SetFixedRotation)
-        .function("isFixedRotation", &Body::IsFixedRotation)
-        .function("setGravityScale", &Body::SetGravityScale)
-        .function("getGravityScale", &Body::GetGravityScale)
-        .function("enableHitEvents", &Body::EnableHitEvents)
-        .function("getJointCount", &Body::GetJointCount)
-        .function("getJoints", +[](const Body& body) {
+        .function("SetFixedRotation", &Body::SetFixedRotation)
+        .function("IsFixedRotation", &Body::IsFixedRotation)
+        .function("SetGravityScale", &Body::SetGravityScale)
+        .function("GetGravityScale", &Body::GetGravityScale)
+        .function("EnableHitEvents", &Body::EnableHitEvents)
+        .function("GetJointCount", &Body::GetJointCount)
+        .function("GetJoints", +[](const Body& body) {
         return getArrayWrapper<b2JointId>(body, &Body::GetJointCount, &Body::GetJoints);
         })
-        .function("setLinearDamping", &Body::SetLinearDamping)
-        .function("getLinearDamping", &Body::GetLinearDamping)
-        .function("setLinearVelocity", &Body::SetLinearVelocity)
-        .function("getLinearVelocity", &Body::GetLinearVelocity)
-        .function("getLocalCenterOfMass", &Body::GetLocalCenterOfMass)
-        .function("getLocalPoint", &Body::GetLocalPoint)
-        .function("getLocalVector", &Body::GetLocalVector)
-        .function("getPosition", &Body::GetPosition)
-        .function("getRotation", &Body::GetRotation)
-        .function("setTransform", &Body::SetTransform)
-        .function("getTransform", &Body::GetTransform)
-        .function("getShapeCount", &Body::GetShapeCount)
-        .function("getShapes", +[](const Body& body) {
+        .function("SetLinearDamping", &Body::SetLinearDamping)
+        .function("GetLinearDamping", &Body::GetLinearDamping)
+        .function("SetLinearVelocity", &Body::SetLinearVelocity)
+        .function("GetLinearVelocity", &Body::GetLinearVelocity)
+        .function("GetLocalCenterOfMass", &Body::GetLocalCenterOfMass)
+        .function("GetLocalPoint", &Body::GetLocalPoint)
+        .function("GetLocalVector", &Body::GetLocalVector)
+        .function("GetPosition", &Body::GetPosition)
+        .function("GetRotation", &Body::GetRotation)
+        .function("SetTransform", &Body::SetTransform)
+        .function("GetTransform", &Body::GetTransform)
+        .function("GetShapeCount", &Body::GetShapeCount)
+        .function("GetShapes", +[](const Body& body) {
         return getArrayWrapper<b2ShapeId>(body, &Body::GetShapeCount, &Body::GetShapes);
         })
-        .function("setType", &Body::SetType)
-        .function("getType", &Body::GetType)
-        .function("getUserData", +[](const Body& self) {
+        .function("SetType", &Body::SetType)
+        .function("GetType", &Body::GetType)
+        .function("GetUserData", +[](const Body& self) {
             return emscripten::val(reinterpret_cast<std::uintptr_t>(self.GetUserData()));
         })
-        .function("setUserData", +[](Body& self, const emscripten::val& value) {
+        .function("SetUserData", +[](Body& self, const emscripten::val& value) {
             self.SetUserData(reinterpret_cast<void*>(value.as<std::uintptr_t>()));
         })
-        .function("getWorld", select_overload<WorldRef()>(&Body::GetWorld))
-        .function("getWorldCenterOfMass", &Body::GetWorldCenterOfMass)
-        .function("getWorldPoint", &Body::GetWorldPoint)
-        .function("getWorldVector", &Body::GetWorldVector)
+        .function("GetWorld", select_overload<WorldRef()>(&Body::GetWorld))
+        .function("GetWorldCenterOfMass", &Body::GetWorldCenterOfMass)
+        .function("GetWorldPoint", &Body::GetWorldPoint)
+        .function("GetWorldVector", &Body::GetWorldVector)
+        .function("CreateCapsuleShape", +[](Body& body, const b2ShapeDef& def, const b2Capsule& capsule) -> Shape* {
+            Shape* shape = new Shape();
+            *shape = body.CreateShape(Tags::OwningHandle{}, def, capsule);
+            return shape;
+        }, emscripten::allow_raw_pointers())
+        .function("CreateCircleShape", +[](Body& body, const b2ShapeDef& def, const b2Circle& circle) -> Shape* {
+            Shape* shape = new Shape();
+            *shape = body.CreateShape(Tags::OwningHandle{}, def, circle);
+            return shape;
+        }, emscripten::allow_raw_pointers())
+        .function("CreatePolygonShape", +[](Body& body, const b2ShapeDef& def, const b2Polygon& polygon) -> Shape* {
+            Shape* shape = new Shape();
+            *shape = body.CreateShape(Tags::OwningHandle{}, def, polygon);
+            return shape;
+        }, emscripten::allow_raw_pointers())
+        .function("CreateChain", +[](Body& body, const b2ChainDef& def) -> Chain* {
+            Chain* chain = new Chain();
+            *chain = body.CreateChain(Tags::OwningHandle{}, def);
+            return chain;
+        }, emscripten::allow_raw_pointers())
         ;
 
     function("b2CreateBody", &b2CreateBody, allow_raw_pointers());
