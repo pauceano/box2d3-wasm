@@ -3,18 +3,27 @@ import Box2DFactory from '../build/dist/es/entry.mjs'
 const box2d = await Box2DFactory()
 const {
     b2DefaultWorldDef,
+    b2CreateWorld,
+    b2World_Step,
     b2WorldDef,
-    World,
     b2MakeBox,
     b2DefaultBodyDef,
+    b2DefaultShapeDef,
+    b2CreatePolygonShape,
+    b2CreateBody,
+    b2Body_GetPosition,
+    b2Body_GetRotation,
+    b2Rot_GetAngle,
     b2BodyType,
     b2Vec2,
+    LeakMitigator
 } = box2d;
+
 const B2_SECRET_COOKIE = 1152023
 const worldDef = new b2WorldDef(b2DefaultWorldDef())
 assert(worldDef.internalValue === B2_SECRET_COOKIE)
-const world = new World(worldDef)
-console.log('hello', world)
+const worldId = b2CreateWorld(worldDef)
+console.log('hello', worldId)
 
 const sideLengthMetres = 1;
 const square = b2MakeBox(sideLengthMetres, sideLengthMetres);
@@ -26,8 +35,29 @@ const bd = new b2DefaultBodyDef();
 bd.type = b2BodyType.b2_dynamicBody;
 bd.position = zero;
 
-const body = world.createBody(bd);
-console.log('body', body)
+const bodyId = b2CreateBody(worldId, bd);
+
+const shapeDef = b2DefaultShapeDef();
+shapeDef.density = 1.0;
+shapeDef.friction = 0.3;
+
+const shapeId = b2CreatePolygonShape(bodyId, shapeDef, square);
+
+console.log('shapeId', shapeId)
+
+const timeStep = 1.0 / 60.0;
+const subStepCount = 4;
+
+console.log('bodyId', bodyId)
+
+for (let i = 0; i < 90; ++i)
+  {
+    b2World_Step(worldId, timeStep, subStepCount);
+    const position = b2Body_GetPosition(bodyId);
+    const rotation = b2Body_GetRotation(bodyId);
+    console.log(position.x, position.y, b2Rot_GetAngle(rotation));
+  }
+
 
 /*
 import Box2DFactory from 'box2d-wasm';

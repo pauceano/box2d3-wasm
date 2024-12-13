@@ -163,6 +163,12 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .property("revision", &b2ShapeId::revision)
         ;
 
+    class_<b2WorldId>("b2WorldId")
+        .constructor()
+        .property("index1", &b2WorldId::index1)
+        .property("revision", &b2WorldId::revision)
+        ;
+
     class_<b2ContactEvents>("b2ContactEvents")
         .constructor()
         .property("beginEvents", &b2ContactEvents::beginEvents, allow_raw_pointers())
@@ -337,8 +343,10 @@ EMSCRIPTEN_BINDINGS(box2d) {
             *body = world.CreateBody(b2::Tags::OwningHandle{}, def);
             return body;
         }, allow_raw_pointers())
-
         ;
+
+    function("b2CreateWorld", &b2CreateWorld, allow_raw_pointers());
+    function("b2World_Step", &b2World_Step, allow_raw_pointers());
 
     // ------------------------------------------------------------------------
     // b2Shape
@@ -509,6 +517,12 @@ EMSCRIPTEN_BINDINGS(box2d) {
         })
         ;
 
+    function("b2DefaultShapeDef", &b2DefaultShapeDef);
+    function("b2CreatePolygonShape", &b2CreatePolygonShape, allow_raw_pointers());
+    function("b2CreateCircleShape", &b2CreateCircleShape, allow_raw_pointers());
+    function("b2CreateCapsuleShape", &b2CreateCapsuleShape, allow_raw_pointers());
+    function("b2CreateSegmentShape", &b2CreateSegmentShape, allow_raw_pointers());
+
     // ------------------------------------------------------------------------
     // b2Body
     // ------------------------------------------------------------------------
@@ -654,5 +668,8 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .function("getWorldVector", &Body::GetWorldVector)
         ;
 
-    
+    function("b2CreateBody", &b2CreateBody, allow_raw_pointers());
+    function("b2Body_GetPosition", &b2Body_GetPosition, allow_raw_pointers());
+    function("b2Body_GetRotation", &b2Body_GetRotation, allow_raw_pointers());
+    function("b2Rot_GetAngle", &b2Rot_GetAngle, allow_raw_pointers());
 }
