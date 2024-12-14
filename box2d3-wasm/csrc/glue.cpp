@@ -107,7 +107,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .constructor<const b2WorldDef&>()
         .property("gravity", &b2WorldDef::gravity, return_value_policy::reference())
         .property("restitutionThreshold", &b2WorldDef::restitutionThreshold)
-        .property("contactPushoutVelocity", &b2WorldDef::contactPushoutVelocity)
+        .property("contactPushVelocity", &b2WorldDef::contactPushVelocity)
         .property("hitEventThreshold", &b2WorldDef::hitEventThreshold)
         .property("contactHertz", &b2WorldDef::contactHertz)
         .property("contactDampingRatio", &b2WorldDef::contactDampingRatio)
@@ -397,27 +397,27 @@ EMSCRIPTEN_BINDINGS(box2d) {
     class_<b2Polygon>("b2Polygon")
         .constructor()
         .function("GetVertex", +[](const b2Polygon& self, int index) -> b2Vec2 {
-            if (index < 0 || index >= b2_maxPolygonVertices) return b2Vec2();
+            if (index < 0 || index >= B2_MAX_POLYGON_VERTICES) return b2Vec2();
             return self.vertices[index];
         })
         .function("SetVertex", +[](b2Polygon& self, int index, const b2Vec2& value) {
-            if (index >= 0 && index < b2_maxPolygonVertices) {
+            if (index >= 0 && index < B2_MAX_POLYGON_VERTICES) {
                 self.vertices[index] = value;
             }
         })
         .function("GetNormal", +[](const b2Polygon& self, int index) -> b2Vec2 {
-            if (index < 0 || index >= b2_maxPolygonVertices) return b2Vec2();
+            if (index < 0 || index >= B2_MAX_POLYGON_VERTICES) return b2Vec2();
             return self.normals[index];
         })
         .function("SetNormal", +[](b2Polygon& self, int index, const b2Vec2& value) {
-            if (index >= 0 && index < b2_maxPolygonVertices) {
+            if (index >= 0 && index < B2_MAX_POLYGON_VERTICES) {
                 self.normals[index] = value;
             }
         })
         .property("centroid", &b2Polygon::centroid)
         .property("radius", &b2Polygon::radius)
         .property("count", &b2Polygon::count)
-        .class_function("GetMaxVertices", +[]() { return b2_maxPolygonVertices; })
+        .class_function("GetMaxVertices", +[]() { return B2_MAX_POLYGON_VERTICES; })
     ;
 
     class_<b2ChainDef>("b2ChainDef")
