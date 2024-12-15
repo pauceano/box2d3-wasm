@@ -2,6 +2,7 @@
 #include <box2cpp/box2cpp.h>
 #include <emscripten.h>
 #include <emscripten/bind.h>
+#include "CanvasDebugDraw.h"
 
 using namespace emscripten;
 using namespace b2;
@@ -62,6 +63,24 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .constructor(+[](float x, float y) -> b2Vec2 { return b2Vec2{x, y}; })
         .property("x", &b2Vec2::x)
         .property("y", &b2Vec2::y)
+        .function("Set", +[](b2Vec2& self, float x, float y) -> b2Vec2 {
+            self.x = x;
+            self.y = y;
+            return self;
+        })
+        .function("Copy", +[](const b2Vec2& self) -> b2Vec2 { return self; })
+        .function("Add", +[](const b2Vec2& self, const b2Vec2& other) -> b2Vec2 { return self + other; })
+        .function("Sub", +[](const b2Vec2& self, const b2Vec2& other) -> b2Vec2 { return self - other; })
+        .function("Mul", +[](b2Vec2& self, const b2Vec2& other) -> b2Vec2 {
+            self.x *= other.x;
+            self.y *= other.y;
+            return self;
+        })
+        .function("MulSV", +[](b2Vec2& self, float s) -> b2Vec2 {
+            self.x *= s;
+            self.y *= s;
+            return self;
+        })
         ;
 
     class_<b2CosSin>("b2CosSin")
@@ -74,6 +93,14 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .constructor()
         .property("c", &b2Rot::c)
         .property("s", &b2Rot::s)
+        .function("SetAngle", +[](b2Rot& self, float angle) -> b2Rot {
+            self.s = sinf(angle);
+            self.c = cosf(angle);
+            return self;
+        })
+        .function("GetAngle", +[](const b2Rot& self) -> float {
+            return atan2f(self.s, self.c);
+        })
         ;
 
     class_<b2Transform>("b2Transform")
@@ -179,7 +206,6 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .property("hitCount", &b2ContactEvents::hitCount)
         ;
 
-
     class_<b2ContactBeginTouchEvent>("b2ContactBeginTouchEvent")
         .constructor()
         .property("shapeIdA", &b2ContactBeginTouchEvent::shapeIdA)
@@ -187,13 +213,11 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .property("manifold", &b2ContactBeginTouchEvent::manifold, return_value_policy::reference())
         ;
 
-
     class_<b2ContactEndTouchEvent>("b2ContactEndTouchEvent")
         .constructor()
         .property("shapeIdA", &b2ContactEndTouchEvent::shapeIdA)
         .property("shapeIdB", &b2ContactEndTouchEvent::shapeIdB)
         ;
-
 
     class_<b2ContactHitEvent>("b2ContactHitEvent")
         .constructor()
@@ -203,7 +227,6 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .property("normal", &b2ContactHitEvent::normal, return_value_policy::reference())
         .property("approachSpeed", &b2ContactHitEvent::approachSpeed)
         ;
-
 
     class_<b2ManifoldPoint>("b2ManifoldPoint")
         .constructor()
@@ -343,6 +366,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
             *body = world.CreateBody(b2::Tags::OwningHandle{}, def);
             return body;
         }, allow_raw_pointers())
+        .function("Draw", &b2::World::Draw)
         ;
 
     function("b2CreateWorld", &b2CreateWorld, allow_raw_pointers());
@@ -489,6 +513,13 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .function("GetWorld", select_overload<WorldRef()>(&Chain::GetWorld))
         ;
 
+    class_<b2ChainId>("b2ChainId")
+        .constructor()
+        .property("index1", &b2ChainId::index1)
+        .property("world0", &b2ChainId::world0)
+        .property("revision", &b2ChainId::revision)
+        ;
+
     function("b2MakeBox", &b2MakeBox);
     function("b2MakeSquare", &b2MakeSquare);
     function("b2MakeRoundedBox", &b2MakeRoundedBox);
@@ -518,6 +549,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
         ;
 
     function("b2DefaultShapeDef", &b2DefaultShapeDef);
+    function("b2CreateChain", &b2CreateChain, allow_raw_pointers());
     function("b2CreatePolygonShape", &b2CreatePolygonShape, allow_raw_pointers());
     function("b2CreateCircleShape", &b2CreateCircleShape, allow_raw_pointers());
     function("b2CreateCapsuleShape", &b2CreateCapsuleShape, allow_raw_pointers());
@@ -526,6 +558,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
     // ------------------------------------------------------------------------
     // b2Body
     // ------------------------------------------------------------------------
+
     class_<b2MassData>("b2MassData")
         .constructor()
         .property("mass", &b2MassData::mass)
@@ -579,22 +612,22 @@ EMSCRIPTEN_BINDINGS(box2d) {
             *chain = body.CreateChain(Tags::OwningHandle{}, def);
             return chain;
         }, emscripten::allow_raw_pointers())
-        .function("CreateShapeCapsule", +[](Body& body, const b2ShapeDef& def, const b2Capsule& capsule) -> Shape* {
+        .function("CreateCapsuleShape", +[](Body& body, const b2ShapeDef& def, const b2Capsule& capsule) -> Shape* {
             Shape* shape = new Shape();
             *shape = body.CreateShape(Tags::OwningHandle{}, def, capsule);
             return shape;
         }, emscripten::allow_raw_pointers())
-        .function("CreateShapeCircle", +[](Body& body, const b2ShapeDef& def, const b2Circle& circle) -> Shape* {
+        .function("CreateCircleShape", +[](Body& body, const b2ShapeDef& def, const b2Circle& circle) -> Shape* {
             Shape* shape = new Shape();
             *shape = body.CreateShape(Tags::OwningHandle{}, def, circle);
             return shape;
         }, emscripten::allow_raw_pointers())
-        .function("CreateShapePolygon", +[](Body& body, const b2ShapeDef& def, const b2Polygon& polygon) -> Shape* {
+        .function("CreatePolygonShape", +[](Body& body, const b2ShapeDef& def, const b2Polygon& polygon) -> Shape* {
             Shape* shape = new Shape();
             *shape = body.CreateShape(Tags::OwningHandle{}, def, polygon);
             return shape;
         }, emscripten::allow_raw_pointers())
-        .function("CreateShapeSegment", +[](Body& body, const b2ShapeDef& def, const b2Segment& segment) -> Shape* {
+        .function("CreateSegmentShape", +[](Body& body, const b2ShapeDef& def, const b2Segment& segment) -> Shape* {
             Shape* shape = new Shape();
             *shape = body.CreateShape(Tags::OwningHandle{}, def, segment);
             return shape;
@@ -667,30 +700,38 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .function("GetWorldCenterOfMass", &Body::GetWorldCenterOfMass)
         .function("GetWorldPoint", &Body::GetWorldPoint)
         .function("GetWorldVector", &Body::GetWorldVector)
-        .function("CreateCapsuleShape", +[](Body& body, const b2ShapeDef& def, const b2Capsule& capsule) -> Shape* {
-            Shape* shape = new Shape();
-            *shape = body.CreateShape(Tags::OwningHandle{}, def, capsule);
-            return shape;
-        }, emscripten::allow_raw_pointers())
-        .function("CreateCircleShape", +[](Body& body, const b2ShapeDef& def, const b2Circle& circle) -> Shape* {
-            Shape* shape = new Shape();
-            *shape = body.CreateShape(Tags::OwningHandle{}, def, circle);
-            return shape;
-        }, emscripten::allow_raw_pointers())
-        .function("CreatePolygonShape", +[](Body& body, const b2ShapeDef& def, const b2Polygon& polygon) -> Shape* {
-            Shape* shape = new Shape();
-            *shape = body.CreateShape(Tags::OwningHandle{}, def, polygon);
-            return shape;
-        }, emscripten::allow_raw_pointers())
-        .function("CreateChain", +[](Body& body, const b2ChainDef& def) -> Chain* {
-            Chain* chain = new Chain();
-            *chain = body.CreateChain(Tags::OwningHandle{}, def);
-            return chain;
-        }, emscripten::allow_raw_pointers())
         ;
 
     function("b2CreateBody", &b2CreateBody, allow_raw_pointers());
     function("b2Body_GetPosition", &b2Body_GetPosition, allow_raw_pointers());
     function("b2Body_GetRotation", &b2Body_GetRotation, allow_raw_pointers());
     function("b2Rot_GetAngle", &b2Rot_GetAngle, allow_raw_pointers());
+
+    // ------------------------------------------------------------------------
+    // b2DebugDraw
+    // ------------------------------------------------------------------------
+
+    class_<b2DebugDraw>("b2DebugDraw")
+        .constructor()
+        .constructor<const b2DebugDraw&>()
+        .property("drawingBounds", &b2DebugDraw::drawingBounds)
+        .property("useDrawingBounds", &b2DebugDraw::useDrawingBounds)
+        .property("drawShapes", &b2DebugDraw::drawShapes)
+        .property("drawJoints", &b2DebugDraw::drawJoints)
+        .property("drawJointExtras", &b2DebugDraw::drawJointExtras)
+        .property("drawAABBs", &b2DebugDraw::drawAABBs)
+        .property("drawMass", &b2DebugDraw::drawMass)
+        .property("drawContacts", &b2DebugDraw::drawContacts)
+        .property("drawGraphColors", &b2DebugDraw::drawGraphColors)
+        .property("drawContactNormals", &b2DebugDraw::drawContactNormals)
+        .property("drawContactImpulses", &b2DebugDraw::drawContactImpulses)
+        .property("drawFrictionImpulses", &b2DebugDraw::drawFrictionImpulses)
+    ;
+
+    class_<CanvasDebugDraw>("CanvasDebugDraw")
+    .constructor<emscripten::val>()
+    .property("callbacks", &CanvasDebugDraw::callbacks);
+
+    function("b2World_Draw", &b2World_Draw, allow_raw_pointers());
+    function("b2DefaultDebugDraw", &b2DefaultDebugDraw);
 }
