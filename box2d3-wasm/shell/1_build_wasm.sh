@@ -97,7 +97,7 @@ BARE_WASM="$BUILD_DIR/$BASENAME.bare.wasm"
 >&2 echo -e "${Blue}Building bare WASM${NC}"
 # emcc "$DIR/glue_stub.cpp" bin/libbox2d.a -I "$DIR/../box2d/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
 # emcc "$CMAKEBUILD_DIR/src/libbox2dd.a" -I "$BOX2D_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
-emcc -lembind "$CSRC_DIR/glue.cpp" "$CMAKEBUILD_DIR/src/libbox2dd.a" -I "$BOX2D_DIR/include" -I "$B2CPP_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
+emcc -lembind "$CSRC_DIR/glue.cpp" "$CSRC_DIR/CanvasDebugDraw.cpp" "$CMAKEBUILD_DIR/src/libbox2dd.a" -I "$BOX2D_DIR/include" -I "$B2CPP_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
 
 UMD_DIR="$BUILD_DIR/dist/umd"
 ES_DIR="$BUILD_DIR/dist/es"
