@@ -18,7 +18,8 @@ NC='\033[0m' # No Color
 # fi
 
 CMAKE_OPTS=()
-CMAKE_CXX_FLAGS=()
+CFLAGS=(-pthread -s USE_PTHREADS=1)
+CXXFLAGS=(-pthread -s USE_PTHREADS=1)
 case "$FLAVOUR" in
   standard)
     # maybe we don't need to disable SIMD? seems to compile fine
@@ -27,7 +28,8 @@ case "$FLAVOUR" in
   simd)
     # this is ON by default but let's be explicit
     CMAKE_OPTS=(${CMAKE_OPTS[@]} -DBOX2D_ENABLE_SIMD=ON)
-    CMAKE_CXX_FLAGS=(${CMAKE_CXX_FLAGS[@]} -msimd128)
+    CFLAGS=(${CFLAGS[@]} -msimd128)
+    CXXFLAGS=(${CXXFLAGS[@]} -msimd128)
     ;;
   *)
     >&2 echo -e "${Red}FLAVOUR not set.${NC}"
@@ -52,9 +54,10 @@ esac
 >&2 echo -e "TARGET_TYPE is $TARGET_TYPE"
 
 set -x
+CFLAGS="${CFLAGS[@]}" \
+CXXFLAGS="${CXXFLAGS[@]}" \
 emcmake cmake \
 -DCMAKE_BUILD_TYPE="$TARGET_TYPE" \
--DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS[@]}" \
 -B"cmake-build" \
 -S"$BOX2D_DIR" \
 "${CMAKE_OPTS[@]}" \
