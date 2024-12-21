@@ -1,6 +1,6 @@
 
 import Box2DDebugDraw from '../utils/debugDraw.js';
-import Box2DFactory from '/box2d3-wasm/build/dist/es/entry.mjs';
+import Box2DFactory from 'box2d3-wasm';
 
 const Box2DFactory_ = Box2DFactory;
 Box2DFactory_().then(box2d => {
