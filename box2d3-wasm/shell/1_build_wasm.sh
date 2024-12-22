@@ -99,7 +99,7 @@ mkdir -p "$BUILD_DIR"
 BARE_WASM="$BUILD_DIR/$BASENAME.bare.wasm"
 
 >&2 echo -e "${Blue}Building bare WASM${NC}"
-emcc -lembind "$CSRC_DIR/glue.cpp" "$CSRC_DIR/CanvasDebugDraw.cpp" "$CMAKEBUILD_DIR/src/libbox2dd.a" -I "$BOX2D_DIR/include" -I "$B2CPP_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
+emcc -lembind "$CSRC_DIR/glue.cpp" "$CSRC_DIR/threading.cpp" "$CSRC_DIR/CanvasDebugDraw.cpp" "$CMAKEBUILD_DIR/src/libbox2dd.a" -I "$BOX2D_DIR/include" -I "$BOX2D_DIR/build/_deps/enkits-src/src" -I "$B2CPP_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
 >&2 echo -e "${Blue}Built bare WASM${NC}"
 
 UMD_DIR="$BUILD_DIR/dist/umd"
