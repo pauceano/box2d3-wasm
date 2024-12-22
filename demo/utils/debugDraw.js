@@ -1,6 +1,6 @@
 export default class Box2DDebugDraw {
     constructor(canvas, box2d, ptm) {
-        this.bwWorld_Draw = box2d.bwWorld_Draw;
+        this.b2World_Draw = box2d.b2World_Draw;
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         this.debugDraw = new box2d.CanvasDebugDraw(this.ctx);
@@ -26,7 +26,7 @@ export default class Box2DDebugDraw {
         this.ctx.translate(-this.offset.x * this.scale, this.offset.y * this.scale);
         this.ctx.scale(this.scale, -this.scale);
         this.ctx.lineWidth = 1 / this.scale;
-        this.bwWorld_Draw(world, this.debugDraw.callbacks);
+        this.b2World_Draw(world, this.debugDraw.callbacks);
         this.ctx.restore();
     }
 }

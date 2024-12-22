@@ -19,8 +19,12 @@ Box2DFactory_().then(box2d => {
 
   const {
       b2DefaultWorldDef,
-      b2WorldDef,
-      World,
+      b2CreateWorld,
+      b2CreateBody,
+      b2CreatePolygonShape,
+      b2CreateCircleShape,
+      b2CreateSegmentShape,
+      b2World_Step,
       b2MakeBox,
       b2Circle,
       b2DefaultBodyDef,
@@ -29,22 +33,45 @@ Box2DFactory_().then(box2d => {
       b2Segment,
       b2Vec2,
       b2Rot,
+      Box2DThreading,
+      createThreadedWorld
   } = box2d;
 
-  const worldDef = b2DefaultWorldDef();
-  // worldDef.workerCount = navigator.hardwareConcurrency - 1 || 3;
-  // worldDef.setEnqueueTask(() => {
-  //     console.log('Physics task started');
-  // });
 
-  // worldDef.setFinishTask(() => {
-  //     console.log('Physics task completed');
-  // });
+
+  /*
+  static void demo( int workerCount )
+{
+	TaskScheduler sched{};
+	TaskSchedulerConfig config{sched.GetConfig()};
+	config.numTaskThreadsToCreate = workerCount - 1;
+	sched.Initialize(config);
+	B2DTaskSet taskSet{};
+	taskSet.Init(sched.GetNumTaskThreads());
+
+	uint32_t maxTasks = 128;
+	TaskManager tm{sched, taskSet, maxTasks};
+
+	b2WorldDef worldDef = b2DefaultWorldDef();
+	worldDef.enqueueTask = &TaskManager::StaticEnqueueTask;
+	worldDef.finishTask = &TaskManager::StaticFinishTask;
+	worldDef.userTaskContext = &tm;
+	worldDef.workerCount = workerCount;
+	worldDef.enableSleep = false;
+
+	b2WorldId worldId = b2CreateWorld( &worldDef );
+}
+  */
+
+
+  const worldDef = b2DefaultWorldDef();
   worldDef.gravity.Set(0, -10);
-  const world = new World(new b2WorldDef(worldDef));
+
+  const threading = new Box2DThreading(128, 4);
+  const worldId = createThreadedWorld(worldDef, threading);
 
   const bd_ground = new b2DefaultBodyDef();
-  const ground = world.CreateBody(bd_ground);
+  const groundId = b2CreateBody(worldId, bd_ground);
 
   const shapeDefSegment = b2DefaultShapeDef();
   shapeDefSegment.density = 1.0;
@@ -54,14 +81,15 @@ Box2DFactory_().then(box2d => {
     const segment = new b2Segment();
     segment.point1 = new b2Vec2(3, -4);
     segment.point2 = new b2Vec2(6, -7);
-    ground.CreateSegmentShape(shapeDefSegment, segment);
+
+    b2CreateSegmentShape(groundId, shapeDefSegment, segment);
   }
 
   {
     const segment = new b2Segment();
     segment.point1 = new b2Vec2(3, -18);
     segment.point2 = new b2Vec2(22, -18)
-    ground.CreateSegmentShape(shapeDefSegment, segment);
+    b2CreateSegmentShape(groundId, shapeDefSegment, segment);
   }
 
   const shapeDefDynamic = b2DefaultShapeDef();
@@ -96,10 +124,10 @@ Box2DFactory_().then(box2d => {
   const boxCount = 10;
   for (let i = 0; i < boxCount; i++) {
 
-    const body = world.CreateBody(bd);
+    const bodyId = b2CreateBody(worldId, bd);
 
-    i % 2 ? body.CreateCircleShape(shapeDefDynamic, circle) : body.CreatePolygonShape(shapeDefDynamic, square);
-    initPosition(body, i);
+    i % 2 ? b2CreateCircleShape(bodyId, shapeDefDynamic, circle) : b2CreatePolygonShape(bodyId, shapeDefDynamic, square);
+
   }
 
   let handle;
@@ -107,24 +135,25 @@ Box2DFactory_().then(box2d => {
       const nowMs = window.performance.now();
       handle = requestAnimationFrame(loop.bind(null, nowMs));
       const deltaMs = nowMs-prevMs;
-      world.Step(deltaMs / 1000, subStepCount);
 
-      window.contactData = world.GetContactEvents();
+      b2World_Step(worldId, deltaMs / 1000, subStepCount);
 
-      if(window.contactData.beginCount || window.contactData.endCount || window.contactData.hitCount) {
-        console.log(window.contactData.beginCount, window.contactData.endCount, window.contactData.hitCount);
-      }
+      // window.contactData = world.GetContactEvents();
+
+      // if(window.contactData.beginCount || window.contactData.endCount || window.contactData.hitCount) {
+      //   console.log(window.contactData.beginCount, window.contactData.endCount, window.contactData.hitCount);
+      // }
 
 
-      if(window.contactData.beginCount) {
-        // we have some starting contacts
-        const arr = window.contactData.GetBeginEvents();
-        arr.forEach((contact) => {
-          console.log('contact begin', contact.shapeIdA, contact.shapeIdB, contact.manifold);
-        });
-      }
+      // if(window.contactData.beginCount) {
+      //   // we have some starting contacts
+      //   const arr = window.contactData.GetBeginEvents();
+      //   arr.forEach((contact) => {
+      //     console.log('contact begin', contact.shapeIdA, contact.shapeIdB, contact.manifold);
+      //   });
+      // }
 
-      debugDraw.drawWorld(world);
+      debugDraw.drawWorldId(worldId);
     }(window.performance.now()));
 
 });

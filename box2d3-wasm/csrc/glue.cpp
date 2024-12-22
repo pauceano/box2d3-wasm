@@ -161,6 +161,17 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .value("b2_mixMaximum", b2MixingRule::b2_mixMaximum)
         ;
 
+    	int32_t workerCount;
+
+	/// Function to spawn tasks
+	b2EnqueueTaskCallback* enqueueTask;
+
+	/// Function to finish a task
+	b2FinishTaskCallback* finishTask;
+
+	/// User context that is provided to enqueueTask and finishTask
+	void* userTaskContext;
+
     class_<b2WorldDef>("b2WorldDef")
         .constructor()
         .constructor<const b2WorldDef&>()
@@ -178,19 +189,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .property("enableSleep", &b2WorldDef::enableSleep)
         .property("enableContinuous", &b2WorldDef::enableContinuous)
         .property("workerCount", &b2WorldDef::workerCount)
-        .function("setEnqueueTask", optional_override([](b2WorldDef& self, emscripten::val callback) {
-            self.enqueueTask = [](b2TaskCallback* task, int32_t itemCount, int32_t minRange, void* context, void* userContext) -> void* {
-                task(0, itemCount, 0, context);
-                return nullptr;
-            };
-        }))
-        .function("setFinishTask", optional_override([](b2WorldDef& self, emscripten::val callback) {
-            static emscripten::val stored_callback;
-            stored_callback = callback;
-            self.finishTask = [](void* task, void* userContext) {
-                stored_callback();
-            };
-        }))
+
         // context not needed, since we're using closures to handle the callbacks
         // .property("userTaskContext", &b2WorldDef::userTaskContext, allow_raw_pointers())
         .function("SetUserData", +[](b2WorldDef& self, const emscripten::val& value) {
@@ -267,7 +266,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .property("shapeIdB", &b2ContactBeginTouchEvent::shapeIdB)
         .property("manifold", &b2ContactBeginTouchEvent::manifold, return_value_policy::reference())
         ;
-    
+
     class_<b2ContactData>("b2ContactData")
         .constructor()
         .property("shapeIdA", &b2ContactData::shapeIdA)
