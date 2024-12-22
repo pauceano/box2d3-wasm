@@ -2,6 +2,8 @@
   "name": "box2d3-wasm",
   "version": "1.0.0",
   "description": "Let's try and use box2d v3 on the web.",
+  "type": "module",
+  "types": "build/dist/es/entry.d.ts",
   "module": "build/dist/es/entry.mjs",
   "files": [
     "build/dist/es/entry.d.ts",
