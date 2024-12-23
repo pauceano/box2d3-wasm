@@ -29,7 +29,8 @@
         "optional": "cpp",
         "ratio": "cpp",
         "tuple": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "string": "cpp"
       }
     }
   }

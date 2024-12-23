@@ -47,7 +47,7 @@ EMCC_OPTS=(
   # threading
   -pthread
   -s USE_PTHREADS=1
-  -s PTHREAD_POOL_SIZE=16
+  -s PTHREAD_POOL_SIZE=navigator.hardwareConcurrency
   ${FLAVOUR_EMCC_OPTS[@]}
   )
 DEBUG_OPTS=(

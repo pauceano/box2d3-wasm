@@ -6,7 +6,7 @@ const Box2DFactory_ = Box2DFactory;
 Box2DFactory_().then(box2d => {
   const canvas = document.getElementById("demo-canvas");
 
-  const pixelsPerMeter = 32;
+  const pixelsPerMeter = 10;
   const subStepCount = 4;
 
   const cameraOffsetMetres = {
@@ -33,47 +33,32 @@ Box2DFactory_().then(box2d => {
       b2Segment,
       b2Vec2,
       b2Rot,
-      Box2DThreading,
-      createThreadedWorld
+      b2Body_SetTransform,
+      b2Body_SetLinearVelocity,
+      b2Body_SetAwake,
+      b2Body_Enable,
+      Sample,
+      createThreadedSampleWorld,
+      b2World_GetProfile
   } = box2d;
-
-
-
-  /*
-  static void demo( int workerCount )
-{
-	TaskScheduler sched{};
-	TaskSchedulerConfig config{sched.GetConfig()};
-	config.numTaskThreadsToCreate = workerCount - 1;
-	sched.Initialize(config);
-	B2DTaskSet taskSet{};
-	taskSet.Init(sched.GetNumTaskThreads());
-
-	uint32_t maxTasks = 128;
-	TaskManager tm{sched, taskSet, maxTasks};
-
-	b2WorldDef worldDef = b2DefaultWorldDef();
-	worldDef.enqueueTask = &TaskManager::StaticEnqueueTask;
-	worldDef.finishTask = &TaskManager::StaticFinishTask;
-	worldDef.userTaskContext = &tm;
-	worldDef.workerCount = workerCount;
-	worldDef.enableSleep = false;
-
-	b2WorldId worldId = b2CreateWorld( &worldDef );
-}
-  */
 
 
   const worldDef = b2DefaultWorldDef();
   worldDef.gravity.Set(0, -10);
 
-  const threading = new Box2DThreading(128, 4);
-  const worldId = createThreadedWorld(worldDef, threading);
+  let worldId, sample;
+
+  if(new URLSearchParams(window.location.search).get('threading') === 'true') {
+    sample = new Sample(navigator.hardwareConcurrency);
+    worldId = createThreadedSampleWorld(worldDef, sample);
+  } else {
+    worldId = b2CreateWorld(worldDef);
+  }
 
   const bd_ground = new b2DefaultBodyDef();
   const groundId = b2CreateBody(worldId, bd_ground);
 
-  const shapeDefSegment = b2DefaultShapeDef();
+  const shapeDefSegment = new b2DefaultShapeDef();
   shapeDefSegment.density = 1.0;
   shapeDefSegment.friction = 0.3;
 
@@ -92,16 +77,14 @@ Box2DFactory_().then(box2d => {
     b2CreateSegmentShape(groundId, shapeDefSegment, segment);
   }
 
-  const shapeDefDynamic = b2DefaultShapeDef();
-  shapeDefDynamic.density = 1.0;
-  shapeDefDynamic.friction = 0.3;
-  shapeDefDynamic.enableContactEvents = true;
-  shapeDefDynamic.enableHitEvents = true;
+  {
+    const segment = new b2Segment();
+    segment.point1 = new b2Vec2(-100, -40);
+    segment.point2 = new b2Vec2(100, -40)
+    b2CreateSegmentShape(groundId, shapeDefSegment, segment);
+  }
 
   const sideLengthMetres = 1;
-  const square = b2MakeBox(sideLengthMetres/2, sideLengthMetres/2);
-  const circle = new b2Circle();
-  circle.radius = sideLengthMetres/2;
 
   const ZERO = new b2Vec2(0, 0);
   const temp = new b2Vec2(0, 0);
@@ -109,51 +92,143 @@ Box2DFactory_().then(box2d => {
   const rot = new b2Rot();
   rot.SetAngle(0);
 
-  const initPosition = (body, index) => {
+  const initPosition = (bodyId, index) => {
+    console.log('initPosition', bodyId, index);
     temp.Set(4 + sideLengthMetres*(Math.random()-0.5), sideLengthMetres*index);
-    body.SetTransform(temp, rot);
-    body.SetLinearVelocity(ZERO);
-    body.SetAwake(1);
-    body.Enable();
+    b2Body_SetTransform(bodyId, temp, rot);
+    b2Body_SetLinearVelocity(bodyId, ZERO);
+    b2Body_SetAwake(bodyId, 1);
+    b2Body_Enable(bodyId);
   }
 
-  const bd = new b2DefaultBodyDef();
-  bd.type = b2BodyType.b2_dynamicBody;
-  bd.position = ZERO;
 
-  const boxCount = 10;
-  for (let i = 0; i < boxCount; i++) {
 
-    const bodyId = b2CreateBody(worldId, bd);
+  // const boxCount = 10;
+  // for (let i = boxCount; i >= 0; i--) {
 
-    i % 2 ? b2CreateCircleShape(bodyId, shapeDefDynamic, circle) : b2CreatePolygonShape(bodyId, shapeDefDynamic, square);
+  //   const bd = new b2DefaultBodyDef();
+  //   bd.type = b2BodyType.b2_dynamicBody;
+  //   bd.position = ZERO;
 
+  //   const bodyId = b2CreateBody(worldId, bd);
+
+  //   console.log('bodyId', bodyId);
+
+  //   const shapeDefDynamic = new b2DefaultShapeDef();
+  //   shapeDefDynamic.density = 1.0;
+  //   shapeDefDynamic.friction = 0.3;
+
+  //   const square = b2MakeBox(sideLengthMetres/2, sideLengthMetres/2);
+  //   const circle = new b2Circle();
+  //   circle.radius = sideLengthMetres/2;
+
+  //   i % 2 ? b2CreatePolygonShape(bodyId, shapeDefDynamic, square) : b2CreateCircleShape(bodyId, shapeDefDynamic, circle);
+
+  //   initPosition(bodyId, i);
+  // }
+
+
+    function createPyramid(worldId, height, gap) {
+      const boxWidth = 1.0;
+      const boxHeight = 1.0;
+
+      for (let row = 0; row < height; row++) {
+          const boxesInRow = height - row;
+
+          const startX = -(boxesInRow - 1) * (boxWidth + gap) / 2;
+
+          for (let i = 0; i < boxesInRow; i++) {
+              const bd = new b2DefaultBodyDef();
+              bd.type = b2BodyType.b2_dynamicBody;
+
+              const xPos = startX + i * (boxWidth + gap);
+              const yPos = (boxHeight + gap) * row + boxHeight;
+              bd.position = new b2Vec2().Set(xPos, yPos);
+
+              const bodyId = b2CreateBody(worldId, bd);
+
+              const shapeDefDynamic = new b2DefaultShapeDef();
+              shapeDefDynamic.density = 1.0;
+              shapeDefDynamic.friction = 0.3;
+
+              const box = b2MakeBox(boxWidth/2, boxHeight/2);
+              b2CreatePolygonShape(bodyId, shapeDefDynamic, box);
+          }
+      }
+  }
+
+  const pyramidHeight = 50;
+  const boxGap = 0.1;
+  createPyramid(worldId, pyramidHeight, boxGap);
+
+  /*
+  	b2Timer timer = b2CreateTimer();
+
+				for ( int step = 1; step < stepCount; ++step )
+				{
+					if ( benchmark->stepFcn != NULL)
+					{
+						benchmark->stepFcn( worldId, step );
+					}
+					b2World_Step( worldId, timeStep, subStepCount );
+					taskCount = 0;
+				}
+
+				float ms = b2GetMilliseconds( &timer );
+				float fps = 1000.0f * stepCount / ms;
+				printf( "run %d : %g (ms), %g (fps)\n", runIndex, ms, fps );
+  */
+
+
+  function drawProfile(stepDuration, profile) {
+    const ctx = canvas.getContext("2d");
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "black";
+    ctx.fillText(`fps: ${Math.floor(1000/stepDuration)}`, 10, 20);
+    ctx.fillText(`threading: ${sample ? 'on' : 'off'}`, 100, 20);
+    ctx.fillText(`step: ${profile.step.toFixed(2)}ms`, 10, 40);
+    ctx.fillText(`pairs: ${profile.pairs.toFixed(2)}ms`, 10, 60);
+    ctx.fillText(`collide: ${profile.collide.toFixed(2)}ms`, 10, 80);
+    ctx.fillText(`solve: ${profile.solve.toFixed(2)}ms`, 10, 100);
+    ctx.fillText(`buildIslands: ${profile.buildIslands.toFixed(2)}ms`, 10, 120);
+    ctx.fillText(`solveConstraints: ${profile.solveConstraints.toFixed(2)}ms`, 10, 140);
+    ctx.fillText(`prepareTasks: ${profile.prepareTasks.toFixed(2)}ms`, 10, 160);
+    ctx.fillText(`solverTasks: ${profile.solverTasks.toFixed(2)}ms`, 10, 180);
+    ctx.fillText(`prepareConstraints: ${profile.prepareConstraints.toFixed(2)}ms`, 10, 200);
+    ctx.fillText(`integrateVelocities: ${profile.integrateVelocities.toFixed(2)}ms`, 10, 220);
+    ctx.fillText(`warmStart: ${profile.warmStart.toFixed(2)}ms`, 10, 240);
+    ctx.fillText(`solveVelocities: ${profile.solveVelocities.toFixed(2)}ms`, 10, 260);
+    ctx.fillText(`integratePositions: ${profile.integratePositions.toFixed(2)}ms`, 10, 280);
+    ctx.fillText(`relaxVelocities: ${profile.relaxVelocities.toFixed(2)}ms`, 10, 300);
+    ctx.fillText(`applyRestitution: ${profile.applyRestitution.toFixed(2)}ms`, 10, 320);
+    ctx.fillText(`storeImpulses: ${profile.storeImpulses.toFixed(2)}ms`, 10, 340);
+    ctx.fillText(`finalizeBodies: ${profile.finalizeBodies.toFixed(2)}ms`, 10, 360);
+    ctx.fillText(`sleepIslands: ${profile.sleepIslands.toFixed(2)}ms`, 10, 380);
+    ctx.fillText(`splitIslands: ${profile.splitIslands.toFixed(2)}ms`, 10, 400);
+    ctx.fillText(`hitEvents: ${profile.hitEvents.toFixed(2)}ms`, 10, 420);
+    ctx.fillText(`broadphase: ${profile.broadphase.toFixed(2)}ms`, 10, 440);
+    ctx.fillText(`continuous: ${profile.continuous.toFixed(2)}ms`, 10, 460);
   }
 
   let handle;
-    (function loop(prevMs) {
+  function loop(prevMs) {
       const nowMs = window.performance.now();
       handle = requestAnimationFrame(loop.bind(null, nowMs));
       const deltaMs = nowMs-prevMs;
 
+      const start = performance.now();
       b2World_Step(worldId, deltaMs / 1000, subStepCount);
-
-      // window.contactData = world.GetContactEvents();
-
-      // if(window.contactData.beginCount || window.contactData.endCount || window.contactData.hitCount) {
-      //   console.log(window.contactData.beginCount, window.contactData.endCount, window.contactData.hitCount);
-      // }
-
-
-      // if(window.contactData.beginCount) {
-      //   // we have some starting contacts
-      //   const arr = window.contactData.GetBeginEvents();
-      //   arr.forEach((contact) => {
-      //     console.log('contact begin', contact.shapeIdA, contact.shapeIdB, contact.manifold);
-      //   });
-      // }
+      const end = performance.now();
+      sample?.resetTaskCount();
 
       debugDraw.drawWorldId(worldId);
-    }(window.performance.now()));
 
+      const duration = end - start;
+		  const profile = b2World_GetProfile(worldId);
+      drawProfile(duration, profile);
+  };
+
+  setTimeout(() => {
+    loop(window.performance.now());
+  }, 1000);
 });

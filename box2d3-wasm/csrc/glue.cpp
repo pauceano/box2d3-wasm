@@ -10,29 +10,8 @@ using namespace b2;
 // EMSCRIPTEN_DECLARE_VAL_TYPE(b2TaskCallback)
 // EMSCRIPTEN_DECLARE_VAL_TYPE(b2EnqueueTaskCallback)
 
-
-emscripten::val b2ShapeDef_getUserData(const b2ShapeDef& self) {
-    return emscripten::val(reinterpret_cast<std::uintptr_t>(self.userData));
-}
-void b2ShapeDef_setUserData(b2ShapeDef& self, const emscripten::val& value) {
-    self.userData = reinterpret_cast<void*>(value.as<std::uintptr_t>());
-}
-
-static double b2Filter_getCategoryBits(const b2Filter &f) {
-    return (double)f.categoryBits;
-}
-static void b2Filter_setCategoryBits(b2Filter &f, double val) {
-    f.categoryBits = (uint64_t)val;
-}
-static double b2Filter_getMaskBits(const b2Filter &f) {
-    return (double)f.maskBits;
-}
-static void b2Filter_setMaskBits(b2Filter &f, double val) {
-    f.maskBits = (uint64_t)val;
-}
-
 template<typename T>
-struct GetInterfaceType;  // Forward declaration
+struct GetInterfaceType;
 
 template<>
 struct GetInterfaceType<Body> {
@@ -89,7 +68,7 @@ emscripten::val b2ChainDef_getPoints(const b2ChainDef& self) {
     return result;
 }
 
-EMSCRIPTEN_BINDINGS(box2d) {
+EMSCRIPTEN_BINDINGS(box2dcpp) {
     class_<b2Vec2>("b2Vec2")
         .constructor()
         .constructor(+[](float x, float y) -> b2Vec2 { return b2Vec2{x, y}; })
@@ -161,17 +140,6 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .value("b2_mixMaximum", b2MixingRule::b2_mixMaximum)
         ;
 
-    	int32_t workerCount;
-
-	/// Function to spawn tasks
-	b2EnqueueTaskCallback* enqueueTask;
-
-	/// Function to finish a task
-	b2FinishTaskCallback* finishTask;
-
-	/// User context that is provided to enqueueTask and finishTask
-	void* userTaskContext;
-
     class_<b2WorldDef>("b2WorldDef")
         .constructor()
         .constructor<const b2WorldDef&>()
@@ -189,9 +157,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .property("enableSleep", &b2WorldDef::enableSleep)
         .property("enableContinuous", &b2WorldDef::enableContinuous)
         .property("workerCount", &b2WorldDef::workerCount)
-
-        // context not needed, since we're using closures to handle the callbacks
-        // .property("userTaskContext", &b2WorldDef::userTaskContext, allow_raw_pointers())
+        // we do not assign threading callbacks here, we leave this in the C++ code
         .function("SetUserData", +[](b2WorldDef& self, const emscripten::val& value) {
             self.userData = reinterpret_cast<void*>(value.as<std::uintptr_t>());
         })
@@ -200,9 +166,6 @@ EMSCRIPTEN_BINDINGS(box2d) {
         })
         .property("internalValue", &b2WorldDef::internalValue)
         ;
-
-    // reference return policy doesn't work here
-    function("b2DefaultWorldDef", &b2DefaultWorldDef);
 
    class_<b2BodyEvents>("b2BodyEvents")
         .constructor()
@@ -402,6 +365,63 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .property("continuous", &b2Profile::continuous)
         ;
 
+
+    class_<b2TreeStats>("b2TreeStats")
+        .constructor()
+        .property("nodeVisits", &b2TreeStats::nodeVisits)
+        .property("leafVisits", &b2TreeStats::leafVisits)
+        ;
+
+    class_<b2QueryFilter>("b2QueryFilter")
+        .constructor()
+        .property("categoryBits",
+            +[](const b2QueryFilter& filter) { return static_cast<uint32_t>(filter.categoryBits); },
+            +[](b2QueryFilter& filter, uint32_t val) { filter.categoryBits = val; })
+        .property("maskBits",
+            +[](const b2QueryFilter& filter) { return static_cast<uint32_t>(filter.maskBits); },
+            +[](b2QueryFilter& filter, uint32_t val) { filter.maskBits = val; })
+
+        // 64-bit access via string conversion
+        .function("setCategoryBits64",
+            +[](b2QueryFilter& filter, const std::string& val) {
+                filter.categoryBits = std::stoull(val);
+            })
+        .function("getCategoryBits64",
+            +[](const b2QueryFilter& filter) -> std::string {
+                return std::to_string(filter.categoryBits);
+            })
+        .function("setMaskBits64",
+            +[](b2QueryFilter& filter, const std::string& val) {
+                filter.maskBits = std::stoull(val);
+            })
+        .function("getMaskBits64",
+            +[](const b2QueryFilter& filter) -> std::string {
+                return std::to_string(filter.maskBits);
+            })
+        ;
+
+    class_<b2ExplosionDef>("b2ExplosionDef")
+        .constructor()
+        .property("maskBits",
+            +[](const b2ExplosionDef& filter) { return static_cast<uint32_t>(filter.maskBits); },
+            +[](b2ExplosionDef& filter, uint32_t val) { filter.maskBits = val; })
+        .property("position", &b2ExplosionDef::position, return_value_policy::reference())
+        .property("radius", &b2ExplosionDef::radius)
+        .property("falloff", &b2ExplosionDef::falloff)
+        .property("impulsePerLength", &b2ExplosionDef::impulsePerLength)
+        ;
+
+    class_<b2RayResult>("b2RayResult")
+        .constructor()
+        .property("shapeId", &b2RayResult::shapeId)
+        .property("point", &b2RayResult::point, return_value_policy::reference())
+        .property("normal", &b2RayResult::normal, return_value_policy::reference())
+        .property("fraction", &b2RayResult::fraction)
+        .property("nodeVisits", &b2RayResult::nodeVisits)
+        .property("leafVisits", &b2RayResult::leafVisits)
+        .property("hit", &b2RayResult::hit)
+        ;
+
     class_<BasicWorldInterface<World, false>>("BasicWorldInterface");
     class_<MaybeConstWorldRef<false>>("WorldRef");
     class_<MaybeConstWorldRef<true>>("WorldConstRef");
@@ -446,10 +466,6 @@ EMSCRIPTEN_BINDINGS(box2d) {
         .function("Draw", &b2::World::Draw)
         ;
 
-    function("b2CreateWorld", &b2CreateWorld, allow_raw_pointers());
-    function("b2World_Step", &b2World_Step, allow_raw_pointers());
-    function("b2World_GetContactEvents", &b2World_GetContactEvents, allow_raw_pointers());
-
     // ------------------------------------------------------------------------
     // b2Shape
     // ------------------------------------------------------------------------
@@ -475,13 +491,22 @@ EMSCRIPTEN_BINDINGS(box2d) {
 
     class_<b2Filter>("b2Filter")
         .constructor()
-        .property("categoryBits", &b2Filter_getCategoryBits, &b2Filter_setCategoryBits)
-        .property("maskBits", &b2Filter_getMaskBits, &b2Filter_setMaskBits)
+        .property("categoryBits",
+            +[](const b2Filter& filter) { return static_cast<uint32_t>(filter.categoryBits); },
+            +[](b2Filter& filter, uint32_t val) { filter.categoryBits = val; })
+        .property("maskBits",
+            +[](const b2Filter& filter) { return static_cast<uint32_t>(filter.maskBits); },
+            +[](b2Filter& filter, uint32_t val) { filter.maskBits = val; })
         .property("groupIndex", &b2Filter::groupIndex);
 
     class_<b2ShapeDef>("b2ShapeDef")
         .constructor()
-        .property("userData", &b2ShapeDef_getUserData, &b2ShapeDef_setUserData)
+        .function("SetUserData", +[](b2ShapeDef& self, const emscripten::val& value) {
+            self.userData = reinterpret_cast<void*>(value.as<std::uintptr_t>());
+        })
+        .function("SetUserData", +[](const b2ShapeDef& self) {
+            return emscripten::val(reinterpret_cast<std::uintptr_t>(self.userData));
+        })
         .property("friction", &b2ShapeDef::friction)
         .property("restitution", &b2ShapeDef::restitution)
         .property("density", &b2ShapeDef::density)
@@ -814,6 +839,10 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2Body_GetPosition", &b2Body_GetPosition, allow_raw_pointers());
     function("b2Body_GetRotation", &b2Body_GetRotation, allow_raw_pointers());
     function("b2Rot_GetAngle", &b2Rot_GetAngle, allow_raw_pointers());
+    function("b2Body_SetTransform", &b2Body_SetTransform, allow_raw_pointers());
+    function("b2Body_SetLinearVelocity", &b2Body_SetLinearVelocity, allow_raw_pointers());
+    function("b2Body_SetAwake", &b2Body_SetAwake, allow_raw_pointers());
+    function("b2Body_Enable", &b2Body_Enable, allow_raw_pointers());
 
     // ------------------------------------------------------------------------
     // b2Joint
@@ -1229,6 +1258,196 @@ EMSCRIPTEN_BINDINGS(box2d) {
     .constructor<emscripten::val>()
     .property("callbacks", &CanvasDebugDraw::callbacks);
 
-    function("b2World_Draw", &b2World_Draw, allow_raw_pointers());
     function("b2DefaultDebugDraw", &b2DefaultDebugDraw);
+}
+
+
+EMSCRIPTEN_BINDINGS(box2d) {
+    // ------------------------------------------------------------------------
+    // b2World
+    // ------------------------------------------------------------------------
+
+    function("b2DefaultWorldDef", &b2DefaultWorldDef);
+
+    function("b2CreateWorld", &b2CreateWorld, allow_raw_pointers());
+    function("b2DestroyWorld", &b2DestroyWorld);
+    function("b2World_Step", &b2World_Step);
+    function("b2World_Draw", &b2World_Draw, allow_raw_pointers());
+    function("b2World_GetBodyEvents", &b2World_GetBodyEvents);
+    function("b2World_GetSensorEvents", &b2World_GetSensorEvents);
+    function("b2World_GetContactEvents", &b2World_GetContactEvents);
+    function("b2World_EnableSleeping", &b2World_EnableSleeping);
+    function("b2World_IsSleepingEnabled", &b2World_IsSleepingEnabled);
+    function("b2World_EnableWarmStarting", &b2World_EnableWarmStarting);
+    function("b2World_IsWarmStartingEnabled", &b2World_IsWarmStartingEnabled);
+    function("b2World_GetAwakeBodyCount", &b2World_GetAwakeBodyCount);
+    function("b2World_EnableContinuous", &b2World_EnableContinuous);
+    function("b2World_IsContinuousEnabled", &b2World_IsContinuousEnabled);
+    function("b2World_SetRestitutionThreshold", &b2World_SetRestitutionThreshold);
+    function("b2World_GetRestitutionThreshold", &b2World_GetRestitutionThreshold);
+    function("b2World_SetHitEventThreshold", &b2World_SetHitEventThreshold);
+    function("b2World_GetHitEventThreshold", &b2World_GetHitEventThreshold);
+    function("b2World_SetContactTuning", &b2World_SetContactTuning);
+    function("b2World_SetJointTuning", &b2World_SetJointTuning);
+    function("b2World_SetMaximumLinearVelocity", &b2World_SetMaximumLinearVelocity);
+    function("b2World_GetMaximumLinearVelocity", &b2World_GetMaximumLinearVelocity);
+    function("b2World_GetProfile", &b2World_GetProfile);
+    function("b2World_GetCounters", &b2World_GetCounters);
+    // function("b2World_SetUserData", &b2World_SetUserData, allow_raw_pointers());
+    // function("b2World_GetUserData", &b2World_GetUserData, allow_raw_pointers());
+    // function("b2World_DumpMemoryStats", &b2World_DumpMemoryStats);
+    function("b2World_OverlapAABB",
+        +[](b2WorldId worldId, const b2AABB& aabb, b2QueryFilter filter, emscripten::val callback, emscripten::val context) {
+            return b2World_OverlapAABB(worldId, aabb, filter,
+                +[](b2ShapeId shapeId, void* ctx) -> bool {
+                    auto callback = *reinterpret_cast<emscripten::val*>(ctx);
+                    return callback(emscripten::val(shapeId)).as<bool>();
+                },
+                &callback
+            );
+        }
+    );
+    function("b2World_OverlapPoint",
+        +[](b2WorldId worldId, b2Vec2 point, b2Transform transform, b2QueryFilter filter, emscripten::val callback, emscripten::val context) {
+            return b2World_OverlapPoint(worldId, point, transform, filter,
+                +[](b2ShapeId shapeId, void* ctx) -> bool {
+                    auto callback = *reinterpret_cast<emscripten::val*>(ctx);
+                    return callback(emscripten::val(shapeId)).as<bool>();
+                },
+                &callback
+            );
+        }
+    );
+    function("b2World_OverlapCircle",
+        +[](b2WorldId worldId, const b2Circle* circle, b2Transform transform, b2QueryFilter filter, emscripten::val callback, emscripten::val context) {
+            return b2World_OverlapCircle(worldId, circle, transform, filter,
+                +[](b2ShapeId shapeId, void* ctx) -> bool {
+                    auto callback = *reinterpret_cast<emscripten::val*>(ctx);
+                    return callback(emscripten::val(shapeId)).as<bool>();
+                },
+                &callback
+            );
+        }
+    , allow_raw_pointers());
+    function("b2World_OverlapCapsule",
+        +[](b2WorldId worldId, const b2Capsule* capsule, b2Transform transform, b2QueryFilter filter, emscripten::val callback, emscripten::val context) {
+            return b2World_OverlapCapsule(worldId, capsule, transform, filter,
+                +[](b2ShapeId shapeId, void* ctx) -> bool {
+                    auto callback = *reinterpret_cast<emscripten::val*>(ctx);
+                    return callback(emscripten::val(shapeId)).as<bool>();
+                },
+                &callback
+            );
+        }
+    , allow_raw_pointers());
+    function("b2World_OverlapPolygon",
+        +[](b2WorldId worldId, const b2Polygon* polygon, b2Transform transform, b2QueryFilter filter, emscripten::val callback, emscripten::val context) {
+            return b2World_OverlapPolygon(worldId, polygon, transform, filter,
+                +[](b2ShapeId shapeId, void* ctx) -> bool {
+                    auto callback = *reinterpret_cast<emscripten::val*>(ctx);
+                    return callback(emscripten::val(shapeId)).as<bool>();
+                },
+                &callback
+            );
+        }
+    , allow_raw_pointers());
+    function("b2World_CastRay",
+        +[](b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter, emscripten::val callback) {
+            return b2World_CastRay(worldId, origin, translation, filter,
+                +[](b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* userData) -> float {
+                    auto callback = *reinterpret_cast<emscripten::val*>(userData);
+                    return callback(
+                        emscripten::val(shapeId),
+                        emscripten::val(point),
+                        emscripten::val(normal),
+                        fraction
+                    ).as<float>();
+                },
+                &callback
+            );
+        }
+    );
+    function("b2World_CastRayClosest", &b2World_CastRayClosest);
+    function("b2World_CastCircle",
+       +[](b2WorldId worldId, const b2Circle* circle, b2Transform originTransform, b2Vec2 translation, b2QueryFilter filter, emscripten::val callback) {
+           return b2World_CastCircle(worldId, circle, originTransform, translation, filter,
+               +[](b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* userData) -> float {
+                   auto callback = *reinterpret_cast<emscripten::val*>(userData);
+                   return callback(
+                       emscripten::val(shapeId),
+                       emscripten::val(point),
+                       emscripten::val(normal),
+                       fraction
+                   ).as<float>();
+               },
+               &callback
+           );
+       }
+    , allow_raw_pointers());
+    function("b2World_CastCapsule",
+       +[](b2WorldId worldId, const b2Capsule* capsule, b2Transform originTransform, b2Vec2 translation, b2QueryFilter filter, emscripten::val callback) {
+           return b2World_CastCapsule(worldId, capsule, originTransform, translation, filter,
+               +[](b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* userData) -> float {
+                   auto callback = *reinterpret_cast<emscripten::val*>(userData);
+                   return callback(
+                       emscripten::val(shapeId),
+                       emscripten::val(point),
+                       emscripten::val(normal),
+                       fraction
+                   ).as<float>();
+               },
+               &callback
+           );
+       }
+    , allow_raw_pointers());
+    function("b2World_CastPolygon",
+       +[](b2WorldId worldId, const b2Polygon* polygon, b2Transform originTransform, b2Vec2 translation, b2QueryFilter filter, emscripten::val callback) {
+           return b2World_CastPolygon(worldId, polygon, originTransform, translation, filter,
+               +[](b2ShapeId shapeId, b2Vec2 point, b2Vec2 normal, float fraction, void* userData) -> float {
+                   auto callback = *reinterpret_cast<emscripten::val*>(userData);
+                   return callback(
+                       emscripten::val(shapeId),
+                       emscripten::val(point),
+                       emscripten::val(normal),
+                       fraction
+                   ).as<float>();
+               },
+               &callback
+           );
+       }
+    , allow_raw_pointers());
+    function("b2World_SetCustomFilterCallback",
+       +[](b2WorldId worldId, emscripten::val callback) {
+           b2World_SetCustomFilterCallback(worldId,
+               +[](b2ShapeId shapeIdA, b2ShapeId shapeIdB, void* userData) -> bool {
+                   auto callback = *reinterpret_cast<emscripten::val*>(userData);
+                   return callback(
+                       emscripten::val(shapeIdA),
+                       emscripten::val(shapeIdB)
+                   ).as<bool>();
+               },
+               &callback
+           );
+       }
+    );
+    function("b2World_SetPreSolveCallback",
+       +[](b2WorldId worldId, emscripten::val callback) {
+           b2World_SetPreSolveCallback(worldId,
+               +[](b2ShapeId shapeIdA, b2ShapeId shapeIdB, b2Manifold* manifold, void* userData) -> bool {
+                   auto callback = *reinterpret_cast<emscripten::val*>(userData);
+                   return callback(
+                       emscripten::val(shapeIdA),
+                       emscripten::val(shapeIdB),
+                       emscripten::val(manifold)
+                   ).as<bool>();
+               },
+               &callback
+           );
+       }
+    );
+    function("b2World_SetGravity", &b2World_SetGravity);
+    function("b2World_GetGravity", &b2World_GetGravity);
+    function("b2World_Explode", &b2World_Explode, allow_raw_pointers());
+    function("b2World_RebuildStaticTree", &b2World_RebuildStaticTree);
+    function("b2World_EnableSpeculative", &b2World_EnableSpeculative);
 }
