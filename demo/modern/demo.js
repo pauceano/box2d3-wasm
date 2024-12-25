@@ -48,7 +48,9 @@ Box2DFactory_().then(box2d => {
 
   let worldId, sample;
 
-  if(new URLSearchParams(window.location.search).get('threading') === 'true') {
+  const params = new URLSearchParams(window.location.search);
+
+  if(params.get('threading') === '1') {
     sample = new Sample(navigator.hardwareConcurrency);
     worldId = createThreadedSampleWorld(worldDef, sample);
   } else {
@@ -157,7 +159,7 @@ Box2DFactory_().then(box2d => {
       }
   }
 
-  const pyramidHeight = 50;
+  const pyramidHeight = params.get('pyramidHeight') ? parseInt(params.get('pyramidHeight')) : 10;
   const boxGap = 0.1;
   createPyramid(worldId, pyramidHeight, boxGap);
 
@@ -228,7 +230,5 @@ Box2DFactory_().then(box2d => {
       drawProfile(duration, profile);
   };
 
-  setTimeout(() => {
-    loop(window.performance.now());
-  }, 1000);
+  loop(window.performance.now());
 });
