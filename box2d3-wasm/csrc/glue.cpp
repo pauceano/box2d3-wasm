@@ -2,7 +2,6 @@
 #include <box2cpp/box2cpp.h>
 #include <emscripten.h>
 #include <emscripten/bind.h>
-#include "CanvasDebugDraw.h"
 
 using namespace emscripten;
 using namespace b2;
@@ -1253,10 +1252,6 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("drawContactImpulses", &b2DebugDraw::drawContactImpulses)
         .property("drawFrictionImpulses", &b2DebugDraw::drawFrictionImpulses)
     ;
-
-    class_<CanvasDebugDraw>("CanvasDebugDraw")
-    .constructor<emscripten::val>()
-    .property("callbacks", &CanvasDebugDraw::callbacks);
 
     function("b2DefaultDebugDraw", &b2DefaultDebugDraw);
 }

@@ -1,10 +1,11 @@
 
-import Box2DDebugDraw from '../utils/debugDraw.js';
+import DebugDrawRenderer from '../utils/debugDraw.js';
 import Box2DFactory from 'box2d3-wasm';
 
 const Box2DFactory_ = Box2DFactory;
 Box2DFactory_().then(box2d => {
   const canvas = document.getElementById("demo-canvas");
+  const ctx = canvas.getContext("2d");
 
   const pixelsPerMeter = 10;
   const subStepCount = 4;
@@ -14,8 +15,8 @@ Box2DFactory_().then(box2d => {
     y: -12
   };
 
-  const debugDraw = new Box2DDebugDraw(canvas, box2d, pixelsPerMeter);
-  debugDraw.offset = cameraOffsetMetres;
+  const debugDraw = new DebugDrawRenderer(box2d, ctx, pixelsPerMeter);
+
 
   const {
       b2DefaultWorldDef,
@@ -39,8 +40,13 @@ Box2DFactory_().then(box2d => {
       b2Body_Enable,
       Sample,
       createThreadedSampleWorld,
-      b2World_GetProfile
+      b2World_GetProfile,
+      CanvasDebugDraw,
+      b2World_Draw
   } = box2d;
+
+
+  const canvasDebugDraw = new CanvasDebugDraw(6000);
 
 
   const worldDef = b2DefaultWorldDef();
@@ -183,11 +189,11 @@ Box2DFactory_().then(box2d => {
 
 
   function drawProfile(stepDuration, profile) {
-    const ctx = canvas.getContext("2d");
     ctx.font = "16px Arial";
     ctx.fillStyle = "black";
     ctx.fillText(`fps: ${Math.floor(1000/stepDuration)}`, 10, 20);
     ctx.fillText(`threading: ${sample ? 'on' : 'off'}`, 100, 20);
+    ctx.fillText(`memory: ${performance.memory.usedJSHeapSize}`, 300, 20);
     ctx.fillText(`step: ${profile.step.toFixed(2)}ms`, 10, 40);
     ctx.fillText(`pairs: ${profile.pairs.toFixed(2)}ms`, 10, 60);
     ctx.fillText(`collide: ${profile.collide.toFixed(2)}ms`, 10, 80);
@@ -223,7 +229,14 @@ Box2DFactory_().then(box2d => {
       const end = performance.now();
       sample?.resetTaskCount();
 
-      debugDraw.drawWorldId(worldId);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      b2World_Draw(worldId, canvasDebugDraw.GetDebugDraw());
+
+      const commandsPtr = canvasDebugDraw.GetCommandsData();
+      const commandsSize = canvasDebugDraw.GetCommandsSize();
+      const commandStride = canvasDebugDraw.GetCommandStride();
+      debugDraw.processCommands(commandsPtr, commandsSize, commandStride);
+      canvasDebugDraw.ClearCommands();
 
       const duration = end - start;
 		  const profile = b2World_GetProfile(worldId);
