@@ -174,7 +174,7 @@ else if (typeof exports === 'object')
 else
   >&2 echo -e "${Blue}Building UMD module, $UMD_DIR/$BASENAME.{js,wasm} from scratch${NC}"
   set -x
-  emcc "${LINK_OPTS[@]}" -o "$UMD_FILE" --emit-tsd "$ES_TSD"
+  emcc "${LINK_OPTS[@]}" -o "$UMD_FILE" --emit-tsd "$UMD_TSD"
   { set +x; } 2>&-
 fi
 >&2 echo -e "${Green}Successfully built $UMD_DIR/$BASENAME.{js,wasm}${NC}\n"
