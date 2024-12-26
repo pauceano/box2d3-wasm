@@ -43,6 +43,12 @@ Next, install [Emscripten][]. On macOS, you can use [Homebrew][] to install it.
 brew install emscripten
 ```
 
+Clone the repository with submodules:
+
+```bash
+git clone --recurse-submodules https://github.com/Birch-san/box2d3-wasm.git
+```
+
 ## Build
 
 Run the following commands:
