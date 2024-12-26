@@ -2,15 +2,20 @@
   "name": "box2d3-wasm",
   "version": "1.0.0",
   "description": "Let's try and use box2d v3 on the web.",
-  "type": "module",
+  "//": "we prefer ES modules, but we can just name those .mjs. we set the package type as commonjs so that the .js UMD module can be treated as CommonJS (a valid interpretation though not the only one) without having to name it .cjs (which would mislead, as its compatibility is not only CommonJS, but also AMD and browser globals)",
+  "type": "commonjs",
   "types": "build/dist/es/entry.d.ts",
+  "exports": {
+    "import": "./build/dist/es/entry.mjs",
+    "require": "./build/dist/umd/entry.js"
+  },
   "module": "build/dist/es/entry.mjs",
   "files": [
-    "build/dist/es/entry.d.ts",
-    "build/dist/es/entry.mjs",
-    "build/dist/es/Box2D.simd.d.ts",
-    "build/dist/es/Box2D.simd.mjs",
-    "build/dist/es/Box2D.simd.wasm"
+    "build/dist/**/*.d.ts",
+    "build/dist/**/*.js",
+    "build/dist/**/*.mjs",
+    "build/dist/**/*.wasm",
+    "build/dist/**/*.map"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
