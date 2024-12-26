@@ -6,9 +6,27 @@ Let's try and use [Box2D v3][] on the web via [wasm][]!
 git clone --recurse-submodules https://github.com/Birch-san/box2d3-wasm.git
 ```
 
-## Pre-Requisites
+## Install from npm
 
-Install [Node.js and npm](https://nodejs.org/en/download/).
+Install [Node.js and npm][].  
+Install [npm package](https://www.npmjs.com/package/box2d3-wasm) like so:
+
+```bash
+npm i --save box2d3-wasm
+```
+
+## Usage
+
+**Web:**  
+See the [demo](demo/modern/index.html) for an example of how to use box2d3-wasm via the Web platform. You'll need to serve the assets correctly in order to access performance features such as threading. See [Run Demos](#run-demos) for more on the serving requirements.
+
+**NodeJS:**  
+See the [integration test](integration-test/index.mjs) for an example of how to use box2d3-wasm via NodeJS. There'll be no graphics; you probably only want the NodeJS approach if you're building server-side physics or you intend to build your own native GUI.
+
+
+## Build-From-Source Pre-Requisites
+
+Install [Node.js and npm][].
 
 emscripten seems to go bang if you PATH a local typescript, so I had to make it global.
 
@@ -50,7 +68,9 @@ Cross-Origin-Embedder-Policy: require-corp
 Cross-Origin-Opener-Policy: same-origin
 ```
 
-These are required for the Box2D3 WebAssembly module to run, because it uses the SharedArrayBuffer feature which requires an isolated context for security reasons.
+These policies are required for the Box2D3 WebAssembly module to run with threading, because it uses the SharedArrayBuffer feature which requires an isolated context for security reasons.
+
+Regardless of whether you use threading: you may need web server customizations (or good defaults) to serve WASM assets with the correct MIME type (`application/wasm`).
 
 ## Run Tests
 
@@ -58,5 +78,20 @@ These are required for the Box2D3 WebAssembly module to run, because it uses the
 node integration-test/index.mjs
 ```
 
+## Release
+
+From `box2d3-wasm` package's directory,
+
+```bash
+git clean -dfx build cmake-build
+FLAVOUR=simd TARGET_TYPE=Release ./shell/0_build_makefile.sh
+emmake make -j8 -C cmake-build
+FLAVOUR=simd TARGET_TYPE=Release ./shell/1_build_wasm.sh
+# e.g. major | minor | patch, see https://docs.npmjs.com/cli/v10/commands/npm-version
+npm version minor
+npm publish
+```
+
 [Box2D v3]: https://github.com/erincatto/box2d
 [wasm]: https://webassembly.org/
+[Node.js and npm]: https://nodejs.org/en/download/
