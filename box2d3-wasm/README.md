@@ -12,8 +12,11 @@ Install [Node.js and npm](https://nodejs.org/en/download/).
 
 emscripten seems to go bang if you PATH a local typescript, so I had to make it global.
 
+Install typescript and yarn.
+
 ```bash
 npm i -g typescript
+npm i -g yarn
 ```
 
 Next, install [Emscripten](https://emscripten.org/docs/getting_started/downloads.html).
@@ -36,17 +39,9 @@ FLAVOUR=simd TARGET_TYPE=Debug ./shell/1_build_wasm.sh
 
 ## Run Demos
 
-Install the "local-web-server" package globally (or locally in the `demo` directory).
+Inside the `demo` directory, run `yarn` to install `local-web-server` locally.
 
-```bash
-npm i local-web-server -g
-```
-
-Run the following command inside the `demo` directory to start the local web server:
-
-```bash
-npm run serve
-```
+Then, to start the web server run `yarn serve`.
 
 Note that the server runs with the following CORS headers:
 
