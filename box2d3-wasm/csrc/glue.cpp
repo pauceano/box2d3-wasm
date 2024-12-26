@@ -734,8 +734,6 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("internalValue", &b2BodyDef::internalValue)
         ;
 
-    function("b2DefaultBodyDef", &b2DefaultBodyDef);
-
     class_<BasicBodyInterface<Body, false>>("BasicBodyInterface");
 
     class_<Body, base<BasicBodyInterface<Body, false>>>("Body")
@@ -838,21 +836,9 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .function("GetWorldVector", &Body::GetWorldVector)
         ;
 
-    function("b2CreateBody", &b2CreateBody, allow_raw_pointers());
-    function("b2Body_GetPosition", &b2Body_GetPosition);
-    function("b2Body_GetRotation", &b2Body_GetRotation);
-    function("b2Rot_GetAngle", &b2Rot_GetAngle);
-    function("b2Body_SetTransform", &b2Body_SetTransform);
-    function("b2Body_SetLinearVelocity", &b2Body_SetLinearVelocity);
-    function("b2Body_SetAwake", &b2Body_SetAwake);
-    function("b2Body_Enable", &b2Body_Enable);
-    function("b2Body_EnableSensorEvents", &b2Body_EnableSensorEvents);
-    function("b2Body_EnableContactEvents", &b2Body_EnableContactEvents);
-
     // ------------------------------------------------------------------------
     // b2Joint
     // ------------------------------------------------------------------------
-
     enum_<b2JointType>("b2JointType")
         .value("b2_distanceJoint", b2JointType::b2_distanceJoint)
         .value("b2_motorJoint", b2JointType::b2_motorJoint)
@@ -1294,8 +1280,15 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2World_GetMaximumLinearSpeed", &b2World_GetMaximumLinearSpeed);
     function("b2World_GetProfile", &b2World_GetProfile);
     function("b2World_GetCounters", &b2World_GetCounters);
-    // function("b2World_SetUserData", &b2World_SetUserData, allow_raw_pointers());
-    // function("b2World_GetUserData", &b2World_GetUserData, allow_raw_pointers());
+    function("b2World_SetUserData", +[](b2WorldId worldId, const emscripten::val& value) {
+        void* userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>()));
+        b2World_SetUserData(worldId, userData);
+    });
+
+    function("b2World_GetUserData", +[](b2WorldId worldId) -> emscripten::val {
+        void* userData = b2World_GetUserData(worldId);
+        return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(userData)));
+    });
     // function("b2World_DumpMemoryStats", &b2World_DumpMemoryStats);
     function("b2World_OverlapAABB",
         +[](b2WorldId worldId, const b2AABB& aabb, b2QueryFilter filter, emscripten::val callback, emscripten::val context) {
@@ -1457,4 +1450,79 @@ EMSCRIPTEN_BINDINGS(box2d) {
     // ------------------------------------------------------------------------
     function("b2Shape_GetSensorCapacity", &b2Shape_GetSensorCapacity);
     function("b2Shape_GetSensorOverlaps", &b2Shape_GetSensorOverlaps, allow_raw_pointers());
+
+
+    // ------------------------------------------------------------------------
+    // b2Body
+    // ------------------------------------------------------------------------
+    function("b2DefaultBodyDef", &b2DefaultBodyDef);
+
+    function("b2CreateBody", &b2CreateBody, allow_raw_pointers());
+    function("b2DestroyBody", &b2DestroyBody, allow_raw_pointers());
+    function("b2Body_GetPosition", &b2Body_GetPosition);
+    function("b2Body_GetRotation", &b2Body_GetRotation);
+    function("b2Body_GetTransform", &b2Body_GetTransform);
+    function("b2Body_SetTransform", &b2Body_SetTransform);
+    function("b2Body_GetLocalPoint", &b2Body_GetLocalPoint);
+    function("b2Body_GetWorldPoint", &b2Body_GetWorldPoint);
+    function("b2Body_GetLocalVector", &b2Body_GetLocalVector);
+    function("b2Body_GetWorldVector", &b2Body_GetWorldVector);
+    function("b2Body_GetMass", &b2Body_GetMass);
+    function("b2Body_GetRotationalInertia", &b2Body_GetRotationalInertia);
+    function("b2Body_GetLocalCenterOfMass", &b2Body_GetLocalCenterOfMass);
+    function("b2Body_GetWorldCenterOfMass", &b2Body_GetWorldCenterOfMass);
+    function("b2Body_SetMassData", &b2Body_SetMassData);
+    function("b2Body_GetMassData", &b2Body_GetMassData);
+    function("b2Body_ApplyMassFromShapes", &b2Body_ApplyMassFromShapes);
+    function("b2Body_GetLinearVelocity", &b2Body_GetLinearVelocity);
+    function("b2Body_GetAngularVelocity", &b2Body_GetAngularVelocity);
+    function("b2Body_SetLinearVelocity", &b2Body_SetLinearVelocity);
+    function("b2Body_SetAngularVelocity", &b2Body_SetAngularVelocity);
+    function("b2Body_ApplyForce", &b2Body_ApplyForce);
+    function("b2Body_ApplyForceToCenter", &b2Body_ApplyForceToCenter);
+    function("b2Body_ApplyTorque", &b2Body_ApplyTorque);
+    function("b2Body_ApplyLinearImpulse", &b2Body_ApplyLinearImpulse);
+    function("b2Body_ApplyLinearImpulseToCenter", &b2Body_ApplyLinearImpulseToCenter);
+    function("b2Body_ApplyAngularImpulse", &b2Body_ApplyAngularImpulse);
+    function("b2Body_SetLinearDamping", &b2Body_SetLinearDamping);
+    function("b2Body_GetLinearDamping", &b2Body_GetLinearDamping);
+    function("b2Body_SetAngularDamping", &b2Body_SetAngularDamping);
+    function("b2Body_GetAngularDamping", &b2Body_GetAngularDamping);
+    function("b2Body_SetGravityScale", &b2Body_SetGravityScale);
+    function("b2Body_GetGravityScale", &b2Body_GetGravityScale);
+    function("b2Body_GetType", &b2Body_GetType);
+    function("b2Body_SetType", &b2Body_SetType);
+    function("b2Body_IsAwake", &b2Body_IsAwake);
+    function("b2Body_SetAwake", &b2Body_SetAwake);
+    function("b2Body_IsEnabled", &b2Body_IsEnabled);
+    function("b2Body_Enable", &b2Body_Enable);
+    function("b2Body_Disable", &b2Body_Disable);
+    function("b2Body_IsSleepEnabled", &b2Body_IsSleepEnabled);
+    function("b2Body_EnableSleep", &b2Body_EnableSleep);
+    function("b2Body_SetSleepThreshold", &b2Body_SetSleepThreshold);
+    function("b2Body_GetSleepThreshold", &b2Body_GetSleepThreshold);
+    function("b2Body_SetFixedRotation", &b2Body_SetFixedRotation);
+    function("b2Body_IsFixedRotation", &b2Body_IsFixedRotation);
+    function("b2Body_SetBullet", &b2Body_SetBullet);
+    function("b2Body_IsBullet", &b2Body_IsBullet);
+    function("b2Body_SetUserData", +[](b2BodyId bodyId, const emscripten::val& value) {
+        void* userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>()));
+        b2Body_SetUserData(bodyId, userData);
+    });
+
+    function("b2Body_GetUserData", +[](b2BodyId bodyId) -> emscripten::val {
+        void* userData = b2Body_GetUserData(bodyId);
+        return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(userData)));
+    });
+    function("b2Body_EnableSensorEvents", &b2Body_EnableSensorEvents);
+    function("b2Body_EnableContactEvents", &b2Body_EnableContactEvents);
+    function("b2Body_EnableHitEvents", &b2Body_EnableHitEvents);
+    function("b2Body_GetShapeCount", &b2Body_GetShapeCount);
+    function("b2Body_GetShapes", &b2Body_GetShapes, allow_raw_pointers());
+    function("b2Body_GetJointCount", &b2Body_GetJointCount);
+    function("b2Body_GetJoints", &b2Body_GetJoints, allow_raw_pointers());
+    function("b2Body_GetContactCapacity", &b2Body_GetContactCapacity);
+    function("b2Body_GetContactData", &b2Body_GetContactData, allow_raw_pointers());
+    function("b2Body_ComputeAABB", &b2Body_ComputeAABB);
+    function("b2Body_GetWorld", &b2Body_GetWorld);
 }
