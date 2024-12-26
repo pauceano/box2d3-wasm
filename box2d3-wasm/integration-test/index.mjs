@@ -1,4 +1,8 @@
 import { strict as assert } from 'assert';
+import { cpus } from 'os';
+// pthread pool size is set to navigator.hardwareConcurrency, which is not implemented on (for example) Node 20
+globalThis.navigator ??= {};
+globalThis.navigator.hardwareConcurrency ??= cpus().length;
 import Box2DFactory from '../build/dist/es/entry.mjs'
 
 const box2d = await Box2DFactory();
