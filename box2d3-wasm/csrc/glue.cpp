@@ -144,13 +144,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .constructor<const b2WorldDef&>()
         .property("gravity", &b2WorldDef::gravity, return_value_policy::reference())
         .property("restitutionThreshold", &b2WorldDef::restitutionThreshold)
-        .property("contactPushVelocity", &b2WorldDef::contactPushVelocity)
+        .property("contactPushSpeed", &b2WorldDef::contactPushSpeed)
         .property("hitEventThreshold", &b2WorldDef::hitEventThreshold)
         .property("contactHertz", &b2WorldDef::contactHertz)
         .property("contactDampingRatio", &b2WorldDef::contactDampingRatio)
         .property("jointHertz", &b2WorldDef::jointHertz)
         .property("jointDampingRatio", &b2WorldDef::jointDampingRatio)
-        .property("maximumLinearVelocity", &b2WorldDef::maximumLinearVelocity)
+        .property("maximumLinearSpeed", &b2WorldDef::maximumLinearSpeed)
         .property("frictionMixingRule", &b2WorldDef::frictionMixingRule)
         .property("restitutionMixingRule", &b2WorldDef::restitutionMixingRule)
         .property("enableSleep", &b2WorldDef::enableSleep)
@@ -442,8 +442,8 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .function("IsSleepingEnabled", &b2::World::IsSleepingEnabled)
         .function("EnableWarmStarting", &b2::World::EnableWarmStarting)
         .function("IsWarmStartingEnabled", &b2::World::IsWarmStartingEnabled)
-        .function("SetMaximumLinearVelocity", &b2::World::SetMaximumLinearVelocity)
-        .function("GetMaximumLinearVelocity", &b2::World::GetMaximumLinearVelocity)
+        .function("SetMaximumLinearSpeed", &b2::World::SetMaximumLinearSpeed)
+        .function("GetMaximumLinearSpeed", &b2::World::GetMaximumLinearSpeed)
         .function("SetRestitutionThreshold", &b2::World::SetRestitutionThreshold)
         .function("GetRestitutionThreshold", &b2::World::GetRestitutionThreshold)
         .function("SetHitEventThreshold", &b2::World::SetHitEventThreshold)
@@ -659,6 +659,8 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .function("EnableHitEvents", &Shape::EnableHitEvents)
         .function("AreHitEventsEnabled", &Shape::AreHitEventsEnabled)
         .function("IsSensor", &Shape::IsSensor)
+        .function("GetSensorCapacity", &Shape::GetSensorCapacity)
+        .function("GetSensorOverlaps", &Shape::GetSensorOverlaps, allow_raw_pointers())
         .function("EnableSensorEvents", &Shape::EnableSensorEvents)
         .function("AreSensorEventsEnabled", &Shape::AreSensorEventsEnabled)
         .function("EnablePreSolveEvents", &Shape::EnablePreSolveEvents)
@@ -796,6 +798,7 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .function("GetContactData", +[](const Body& body) {
             return getArrayWrapper<b2ContactData>(body, &Body::GetContactCapacity, &Body::GetContactData);
         })
+        .function("EnableContactEvents", &Body::EnableContactEvents)
         .function("SetFixedRotation", &Body::SetFixedRotation)
         .function("IsFixedRotation", &Body::IsFixedRotation)
         .function("SetGravityScale", &Body::SetGravityScale)
@@ -814,6 +817,7 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .function("GetLocalVector", &Body::GetLocalVector)
         .function("GetPosition", &Body::GetPosition)
         .function("GetRotation", &Body::GetRotation)
+        .function("EnableSensorEvents", &Body::EnableSensorEvents)
         .function("SetTransform", &Body::SetTransform)
         .function("GetTransform", &Body::GetTransform)
         .function("GetShapeCount", &Body::GetShapeCount)
@@ -835,13 +839,15 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         ;
 
     function("b2CreateBody", &b2CreateBody, allow_raw_pointers());
-    function("b2Body_GetPosition", &b2Body_GetPosition, allow_raw_pointers());
-    function("b2Body_GetRotation", &b2Body_GetRotation, allow_raw_pointers());
-    function("b2Rot_GetAngle", &b2Rot_GetAngle, allow_raw_pointers());
-    function("b2Body_SetTransform", &b2Body_SetTransform, allow_raw_pointers());
-    function("b2Body_SetLinearVelocity", &b2Body_SetLinearVelocity, allow_raw_pointers());
-    function("b2Body_SetAwake", &b2Body_SetAwake, allow_raw_pointers());
-    function("b2Body_Enable", &b2Body_Enable, allow_raw_pointers());
+    function("b2Body_GetPosition", &b2Body_GetPosition);
+    function("b2Body_GetRotation", &b2Body_GetRotation);
+    function("b2Rot_GetAngle", &b2Rot_GetAngle);
+    function("b2Body_SetTransform", &b2Body_SetTransform);
+    function("b2Body_SetLinearVelocity", &b2Body_SetLinearVelocity);
+    function("b2Body_SetAwake", &b2Body_SetAwake);
+    function("b2Body_Enable", &b2Body_Enable);
+    function("b2Body_EnableSensorEvents", &b2Body_EnableSensorEvents);
+    function("b2Body_EnableContactEvents", &b2Body_EnableContactEvents);
 
     // ------------------------------------------------------------------------
     // b2Joint
@@ -1284,8 +1290,8 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2World_GetHitEventThreshold", &b2World_GetHitEventThreshold);
     function("b2World_SetContactTuning", &b2World_SetContactTuning);
     function("b2World_SetJointTuning", &b2World_SetJointTuning);
-    function("b2World_SetMaximumLinearVelocity", &b2World_SetMaximumLinearVelocity);
-    function("b2World_GetMaximumLinearVelocity", &b2World_GetMaximumLinearVelocity);
+    function("b2World_SetMaximumLinearSpeed", &b2World_SetMaximumLinearSpeed);
+    function("b2World_GetMaximumLinearSpeed", &b2World_GetMaximumLinearSpeed);
     function("b2World_GetProfile", &b2World_GetProfile);
     function("b2World_GetCounters", &b2World_GetCounters);
     // function("b2World_SetUserData", &b2World_SetUserData, allow_raw_pointers());
@@ -1445,4 +1451,10 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2World_Explode", &b2World_Explode, allow_raw_pointers());
     function("b2World_RebuildStaticTree", &b2World_RebuildStaticTree);
     function("b2World_EnableSpeculative", &b2World_EnableSpeculative);
+
+    // ------------------------------------------------------------------------
+    // b2Shape
+    // ------------------------------------------------------------------------
+    function("b2Shape_GetSensorCapacity", &b2Shape_GetSensorCapacity);
+    function("b2Shape_GetSensorOverlaps", &b2Shape_GetSensorOverlaps, allow_raw_pointers());
 }
