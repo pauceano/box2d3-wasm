@@ -59,6 +59,7 @@ RELEASE_OPTS=(-O3)
 
 case "$TARGET_TYPE" in
   Debug)
+    LIBARCHIVE="libbox2dd.a"
     EMCC_OPTS=(
       ${EMCC_OPTS[@]}
       ${DEBUG_OPTS[@]}
@@ -68,6 +69,7 @@ case "$TARGET_TYPE" in
     ;;
 
   RelWithDebInfo)
+    LIBARCHIVE="libbox2d.a"
     # consider setting --source-map-base if you know where
     # Box2D will be served from.
     EMCC_OPTS=(
@@ -78,6 +80,7 @@ case "$TARGET_TYPE" in
     ;;
   
   Release)
+    LIBARCHIVE="libbox2d.a"
     EMCC_OPTS=(
       ${EMCC_OPTS[@]}
       ${RELEASE_OPTS[@]}
@@ -107,7 +110,7 @@ emcc -lembind \
 "$CSRC_DIR/threading.cpp" \
 "$CSRC_DIR/CanvasDebugDraw.cpp" \
 "$ENKITS_DIR/src/TaskScheduler.cpp" \
-"$CMAKEBUILD_DIR/src/libbox2d.a" \
+"$CMAKEBUILD_DIR/src/$LIBARCHIVE" \
 -I "$BOX2D_DIR/include" \
 -I "$ENKITS_DIR/src" \
 -I "$B2CPP_DIR/include" \
