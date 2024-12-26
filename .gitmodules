@@ -6,3 +6,6 @@
 	path = box2cpp
 	url = https://github.com/Birch-san/box2cpp.git
 	branch = birch
+[submodule "enkiTS"]
+	path = enkiTS
+	url = https://github.com/dougbinks/enkiTS.git

@@ -6,6 +6,7 @@ B2D_WASM_DIR="$(realpath "$DIR/..")"
 MONOREPO_DIR="$(realpath "$B2D_WASM_DIR/..")"
 BOX2D_DIR="$(realpath "$MONOREPO_DIR/box2d")"
 B2CPP_DIR="$(realpath "$MONOREPO_DIR/box2cpp")"
+ENKITS_DIR="$(realpath "$MONOREPO_DIR/enkiTS")"
 CMAKEBUILD_DIR="$(realpath "$B2D_WASM_DIR/cmake-build")"
 BUILD_DIR="$(realpath "$B2D_WASM_DIR/build")"
 CSRC_DIR="$(realpath "$B2D_WASM_DIR/csrc")"
@@ -101,7 +102,17 @@ mkdir -p "$BUILD_DIR"
 BARE_WASM="$BUILD_DIR/$BASENAME.bare.wasm"
 
 >&2 echo -e "${Blue}Building bare WASM${NC}"
-emcc -lembind "$CSRC_DIR/glue.cpp" "$CSRC_DIR/threading.cpp" "$CSRC_DIR/CanvasDebugDraw.cpp" "$CMAKEBUILD_DIR/_deps/enkits-src/src/TaskScheduler.cpp" "$CMAKEBUILD_DIR/src/libbox2d.a" -I "$BOX2D_DIR/include" -I "$CMAKEBUILD_DIR/_deps/enkits-src/src" -I "$B2CPP_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
+emcc -lembind \
+"$CSRC_DIR/glue.cpp" \
+"$CSRC_DIR/threading.cpp" \
+"$CSRC_DIR/CanvasDebugDraw.cpp" \
+"$ENKITS_DIR/src/TaskScheduler.cpp" \
+"$CMAKEBUILD_DIR/src/libbox2d.a" \
+-I "$BOX2D_DIR/include" \
+-I "$ENKITS_DIR/src" \
+-I "$B2CPP_DIR/include" \
+"${EMCC_OPTS[@]}" \
+--oformat=bare -o "$BARE_WASM"
 >&2 echo -e "${Blue}Built bare WASM${NC}"
 
 UMD_DIR="$BUILD_DIR/dist/umd"
