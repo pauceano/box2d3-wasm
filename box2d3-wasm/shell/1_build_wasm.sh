@@ -44,6 +44,10 @@ EMCC_OPTS=(
   # -s SUPPORT_LONGJMP=0 # this causes 'undefined symbol: _emscripten_stack_restore'
   -s EXPORTED_FUNCTIONS=_malloc,_free
   -s ALLOW_MEMORY_GROWTH=1
+  # threading
+  -pthread
+  -s USE_PTHREADS=1
+  -s PTHREAD_POOL_SIZE=navigator.hardwareConcurrency
   ${FLAVOUR_EMCC_OPTS[@]}
   )
 DEBUG_OPTS=(
@@ -79,6 +83,8 @@ case "$TARGET_TYPE" in
       -flto
       --closure 1
       -s IGNORE_CLOSURE_COMPILER_ERRORS=1
+      -s EXPORTED_RUNTIME_METHODS=['stackSave','stackRestore','stackAlloc']
+      -s STACK_OVERFLOW_CHECK=2
       )
     ;;
   
@@ -95,9 +101,8 @@ mkdir -p "$BUILD_DIR"
 BARE_WASM="$BUILD_DIR/$BASENAME.bare.wasm"
 
 >&2 echo -e "${Blue}Building bare WASM${NC}"
-# emcc "$DIR/glue_stub.cpp" bin/libbox2d.a -I "$DIR/../box2d/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
-# emcc "$CMAKEBUILD_DIR/src/libbox2dd.a" -I "$BOX2D_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
-emcc -lembind "$CSRC_DIR/glue.cpp" "$CSRC_DIR/CanvasDebugDraw.cpp" "$CMAKEBUILD_DIR/src/libbox2dd.a" -I "$BOX2D_DIR/include" -I "$B2CPP_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
+emcc -lembind "$CSRC_DIR/glue.cpp" "$CSRC_DIR/threading.cpp" "$CSRC_DIR/CanvasDebugDraw.cpp" "$CMAKEBUILD_DIR/_deps/enkits-src/src/TaskScheduler.cpp" "$CMAKEBUILD_DIR/src/libbox2d.a" -I "$BOX2D_DIR/include" -I "$CMAKEBUILD_DIR/_deps/enkits-src/src" -I "$B2CPP_DIR/include" "${EMCC_OPTS[@]}" --oformat=bare -o "$BARE_WASM"
+>&2 echo -e "${Blue}Built bare WASM${NC}"
 
 UMD_DIR="$BUILD_DIR/dist/umd"
 ES_DIR="$BUILD_DIR/dist/es"
@@ -106,8 +111,15 @@ mkdir -p "$UMD_DIR" "$ES_DIR"
 
 >&2 echo -e "${Blue}Building post-link targets${NC}"
 
-# LINK_OPTS=(--post-link "$BARE_WASM" --post-js "$DIR/build/common/box2d_glue.js" --post-js "$DIR/glue_stub.js" ${EMCC_OPTS[@]})
-LINK_OPTS=(${DEBUG_OPTS[@]} -lembind --post-link "$BARE_WASM")
+LINK_OPTS=(
+  ${DEBUG_OPTS[@]}
+  -lembind
+  -pthread
+  -s USE_PTHREADS=1
+  -s ALLOW_MEMORY_GROWTH=1
+  -s PTHREAD_POOL_SIZE=navigator.hardwareConcurrency
+  --post-link "$BARE_WASM"
+)
 
 ES_FILE="$ES_DIR/$BASENAME.mjs"
 ES_TSD="$ES_DIR/$BASENAME.d.ts"
