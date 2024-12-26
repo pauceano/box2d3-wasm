@@ -15,6 +15,10 @@
       {
         "name": "demo",
         "path": "demo"
+      },
+      {
+        "name": "enkiTS",
+        "path": "enkiTS"
       }
     ],
     "settings": {
