@@ -5,6 +5,8 @@ export default class DebugDrawRenderer {
         this.scale = scale;
         this.offset = { x: 0, y: 0 };
 
+        this.debugDrawCommandBuffer = new Module.DebugDrawCommandBuffer();
+
         this.colorCache = {};
         this.colorCache[1.0] = this.initializeColorCache();
         this.colorCache[0.5] = this.initializeColorCache(0.5);
@@ -388,5 +390,14 @@ export default class DebugDrawRenderer {
             x: xf.p.x + xf.q.c * v.x - xf.q.s * v.y,
             y: xf.p.y + xf.q.s * v.x + xf.q.c * v.y
         };
+    }
+
+    draw(worldId) {
+        this.Module.b2World_Draw(worldId, this.debugDrawCommandBuffer.GetDebugDraw());
+        const commandsPtr = this.debugDrawCommandBuffer.GetCommandsData();
+        const commandsSize = this.debugDrawCommandBuffer.GetCommandsSize();
+        const commandStride = this.debugDrawCommandBuffer.GetCommandStride();
+        this.processCommands(commandsPtr, commandsSize, commandStride);
+        this.debugDrawCommandBuffer.ClearCommands();
     }
 }

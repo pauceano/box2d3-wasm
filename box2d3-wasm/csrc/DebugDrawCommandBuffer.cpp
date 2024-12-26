@@ -3,16 +3,16 @@
 #include <vector>
 #include <box2d/box2d.h>
 
-struct DrawCmd {
-    uint8_t type;
+struct DebugDrawCommand {
+    uint8_t commandType;
     uint32_t color;
     uint16_t vertexCount;
     float data[32];
 };
 
-class CanvasDebugDraw {
+class DebugDrawCommandBuffer {
 public:
-    CanvasDebugDraw(size_t maxCommands) : maxCommands(maxCommands) {
+    DebugDrawCommandBuffer(size_t maxCommands = 10000) : maxCommands(maxCommands) {
         debugDraw.context = this;
         commands.reserve(maxCommands);
 
@@ -29,11 +29,11 @@ public:
         debugDraw.useDrawingBounds = false;
 
         debugDraw.DrawPolygon = [](const b2Vec2* vertices, int vertexCount, b2HexColor color, void* context) {
-            auto* self = static_cast<CanvasDebugDraw*>(context);
+            auto* self = static_cast<DebugDrawCommandBuffer*>(context);
             if (self->commands.size() >= self->maxCommands) return;
 
-            DrawCmd cmd;
-            cmd.type = 0;
+            DebugDrawCommand cmd;
+            cmd.commandType = 0;  // DRAW_POLYGON
             cmd.color = color;
             cmd.vertexCount = std::min((uint16_t)vertexCount, (uint16_t)16);
 
@@ -46,11 +46,11 @@ public:
         };
 
         debugDraw.DrawSolidPolygon = [](b2Transform transform, const b2Vec2* vertices, int vertexCount, float radius, b2HexColor color, void* context) {
-            auto* self = static_cast<CanvasDebugDraw*>(context);
+            auto* self = static_cast<DebugDrawCommandBuffer*>(context);
             if (self->commands.size() >= self->maxCommands) return;
 
-            DrawCmd cmd;
-            cmd.type = 1;
+            DebugDrawCommand cmd;
+            cmd.commandType = 1;  // DRAW_SOLID_POLYGON
             cmd.color = color;
             cmd.vertexCount = std::min((uint16_t)vertexCount, (uint16_t)14) + 2;
 
@@ -68,11 +68,11 @@ public:
         };
 
         debugDraw.DrawCircle = [](b2Vec2 center, float radius, b2HexColor color, void* context) {
-            auto* self = static_cast<CanvasDebugDraw*>(context);
+            auto* self = static_cast<DebugDrawCommandBuffer*>(context);
             if (self->commands.size() >= self->maxCommands) return;
 
-            DrawCmd cmd;
-            cmd.type = 2;
+            DebugDrawCommand cmd;
+            cmd.commandType = 2;  // DRAW_CIRCLE
             cmd.color = color;
             cmd.vertexCount = 1;
             cmd.data[0] = center.x;
@@ -83,11 +83,11 @@ public:
         };
 
         debugDraw.DrawSolidCircle = [](b2Transform transform, float radius, b2HexColor color, void* context) {
-            auto* self = static_cast<CanvasDebugDraw*>(context);
+            auto* self = static_cast<DebugDrawCommandBuffer*>(context);
             if (self->commands.size() >= self->maxCommands) return;
 
-            DrawCmd cmd;
-            cmd.type = 3;
+            DebugDrawCommand cmd;
+            cmd.commandType = 3;  // DRAW_SOLID_CIRCLE
             cmd.color = color;
             cmd.vertexCount = 1;
             cmd.data[0] = transform.p.x;
@@ -100,11 +100,11 @@ public:
         };
 
         debugDraw.DrawSolidCapsule = [](b2Vec2 p1, b2Vec2 p2, float radius, b2HexColor color, void* context) {
-            auto* self = static_cast<CanvasDebugDraw*>(context);
+            auto* self = static_cast<DebugDrawCommandBuffer*>(context);
             if (self->commands.size() >= self->maxCommands) return;
 
-            DrawCmd cmd;
-            cmd.type = 4;
+            DebugDrawCommand cmd;
+            cmd.commandType = 4;  // DRAW_SOLID_CAPSULE
             cmd.color = color;
             cmd.vertexCount = 2;
             cmd.data[0] = p1.x;
@@ -117,11 +117,11 @@ public:
         };
 
         debugDraw.DrawSegment = [](b2Vec2 p1, b2Vec2 p2, b2HexColor color, void* context) {
-            auto* self = static_cast<CanvasDebugDraw*>(context);
+            auto* self = static_cast<DebugDrawCommandBuffer*>(context);
             if (self->commands.size() >= self->maxCommands) return;
 
-            DrawCmd cmd;
-            cmd.type = 5;
+            DebugDrawCommand cmd;
+            cmd.commandType = 5;  // DRAW_SEGMENT
             cmd.color = color;
             cmd.vertexCount = 2;
             cmd.data[0] = p1.x;
@@ -133,11 +133,11 @@ public:
         };
 
         debugDraw.DrawTransform = [](b2Transform transform, void* context) {
-            auto* self = static_cast<CanvasDebugDraw*>(context);
+            auto* self = static_cast<DebugDrawCommandBuffer*>(context);
             if (self->commands.size() >= self->maxCommands) return;
 
-            DrawCmd cmd;
-            cmd.type = 6;
+            DebugDrawCommand cmd;
+            cmd.commandType = 6;  // DRAW_TRANSFORM
             cmd.vertexCount = 1;
             cmd.data[0] = transform.p.x;
             cmd.data[1] = transform.p.y;
@@ -148,11 +148,11 @@ public:
         };
 
         debugDraw.DrawPoint = [](b2Vec2 p, float size, b2HexColor color, void* context) {
-            auto* self = static_cast<CanvasDebugDraw*>(context);
+            auto* self = static_cast<DebugDrawCommandBuffer*>(context);
             if (self->commands.size() >= self->maxCommands) return;
 
-            DrawCmd cmd;
-            cmd.type = 7;
+            DebugDrawCommand cmd;
+            cmd.commandType = 7;  // DRAW_POINT
             cmd.color = color;
             cmd.vertexCount = 1;
             cmd.data[0] = p.x;
@@ -163,11 +163,11 @@ public:
         };
 
         debugDraw.DrawString = [](b2Vec2 p, const char* s, void* context) {
-            auto* self = static_cast<CanvasDebugDraw*>(context);
+            auto* self = static_cast<DebugDrawCommandBuffer*>(context);
             if (self->commands.size() >= self->maxCommands) return;
 
-            DrawCmd cmd;
-            cmd.type = 8;
+            DebugDrawCommand cmd;
+            cmd.commandType = 8;  // DRAW_STRING
             cmd.vertexCount = 1;
             cmd.data[0] = p.x;
             cmd.data[1] = p.y;
@@ -190,22 +190,23 @@ public:
     }
 
     size_t GetCommandStride() const {
-        return sizeof(DrawCmd);
+        return sizeof(DebugDrawCommand);
     }
 
 private:
     b2DebugDraw debugDraw;
-    std::vector<DrawCmd> commands;
+    std::vector<DebugDrawCommand> commands;
     size_t maxCommands;
 };
 
-EMSCRIPTEN_BINDINGS(canvas_debug_draw) {
-    emscripten::class_<CanvasDebugDraw>("CanvasDebugDraw")
+EMSCRIPTEN_BINDINGS(debug_draw_buffer) {
+    emscripten::class_<DebugDrawCommandBuffer>("DebugDrawCommandBuffer")
+        .constructor()
         .constructor<size_t>()
-        .function("GetDebugDraw", &CanvasDebugDraw::GetDebugDraw, emscripten::allow_raw_pointers())
-        .function("GetCommandsData", &CanvasDebugDraw::GetCommandsData)
-        .function("GetCommandsSize", &CanvasDebugDraw::GetCommandsSize)
-        .function("GetCommandStride", &CanvasDebugDraw::GetCommandStride)
-        .function("ClearCommands", &CanvasDebugDraw::ClearCommands)
-        .function("GetMaxCommands", &CanvasDebugDraw::GetMaxCommands);
+        .function("GetDebugDraw", &DebugDrawCommandBuffer::GetDebugDraw, emscripten::allow_raw_pointers())
+        .function("GetCommandsData", &DebugDrawCommandBuffer::GetCommandsData)
+        .function("GetCommandsSize", &DebugDrawCommandBuffer::GetCommandsSize)
+        .function("GetCommandStride", &DebugDrawCommandBuffer::GetCommandStride)
+        .function("ClearCommands", &DebugDrawCommandBuffer::ClearCommands)
+        ;
 }

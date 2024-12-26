@@ -21,31 +21,23 @@ const {
   b2CreateWorld,
   b2CreateBody,
   b2CreatePolygonShape,
-  b2CreateCircleShape,
   b2CreateSegmentShape,
   b2World_Step,
   b2MakeBox,
-  b2Circle,
   b2DefaultBodyDef,
   b2DefaultShapeDef,
   b2BodyType,
   b2Segment,
   b2Vec2,
   b2Rot,
-  b2Body_SetTransform,
-  b2Body_SetLinearVelocity,
-  b2Body_SetAwake,
-  b2Body_Enable,
-  Sample,
+  TaskSystem,
   b2CreateThreadedWorld,
   b2World_GetProfile,
-  CanvasDebugDraw,
-  b2World_Draw
+  DebugDrawCommandBuffer,
 } = box2d;
 
 
-const canvasDebugDraw = new CanvasDebugDraw(6000);
-
+const debugDrawCommandBuffer = new DebugDrawCommandBuffer();
 
 const worldDef = b2DefaultWorldDef();
 worldDef.gravity.Set(0, -10);
@@ -91,11 +83,6 @@ shapeDefSegment.friction = 0.3;
   segment.point2 = new b2Vec2(100, -40)
   b2CreateSegmentShape(groundId, shapeDefSegment, segment);
 }
-
-const sideLengthMetres = 1;
-
-const ZERO = new b2Vec2(0, 0);
-const temp = new b2Vec2(0, 0);
 
 const rot = new b2Rot();
 rot.SetAngle(0);
@@ -177,13 +164,7 @@ function loop(prevMs) {
     sample?.resetTaskCount();
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    b2World_Draw(worldId, taskSystem.GetDebugDraw());
-
-    const commandsPtr = taskSystem.GetCommandsData();
-    const commandsSize = taskSystem.GetCommandsSize();
-    const commandStride = taskSystem.GetCommandStride();
-    debugDraw.processCommands(commandsPtr, commandsSize, commandStride);
-    taskSystem.ClearCommands();
+    debugDraw.draw(worldId);
 
     const duration = end - start;
     const profile = b2World_GetProfile(worldId);
