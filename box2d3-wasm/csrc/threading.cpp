@@ -1,3 +1,4 @@
+// TaskSystem.cpp
 #include <box2d/box2d.h>
 #include <box2cpp/box2cpp.h>
 #include <emscripten.h>
@@ -5,26 +6,25 @@
 #include "threading.h"
 #include "TaskScheduler.h"
 
-
 using namespace emscripten;
 using namespace enki;
 using namespace b2;
 
-static void* EnqueueTask(b2TaskCallback* task, int32_t itemCount, int32_t minRange, void* taskContext, void* userContext)
+static void* SchedulePhysicsTask(b2TaskCallback* task, int32_t itemCount, int32_t minRange, void* taskContext, void* userContext)
 {
-    Sample* sample = static_cast<Sample*>(userContext);
-    
-    if (sample->m_taskCount < Sample::m_maxTasks)
-    {
-        SampleTask& sampleTask = sample->m_tasks[sample->m_taskCount];
-        sampleTask.m_SetSize = itemCount;
-        sampleTask.m_MinRange = minRange;
-        sampleTask.m_task = task;
-        sampleTask.m_taskContext = taskContext;
+    TaskSystem* system = static_cast<TaskSystem*>(userContext);
 
-        sample->m_scheduler->AddTaskSetToPipe(&sampleTask);
-        ++sample->m_taskCount;
-        return &sampleTask;
+    if (system->activeTaskCount < TaskSystem::MAX_TASKS)
+    {
+        PhysicsTask& physicsTask = system->tasks[system->activeTaskCount];
+        physicsTask.m_SetSize = itemCount;
+        physicsTask.m_MinRange = minRange;
+        physicsTask.taskCallback = task;
+        physicsTask.taskData = taskContext;
+
+        system->taskScheduler->AddTaskSetToPipe(&physicsTask);
+        ++system->activeTaskCount;
+        return &physicsTask;
     }
     else
     {
@@ -33,38 +33,35 @@ static void* EnqueueTask(b2TaskCallback* task, int32_t itemCount, int32_t minRan
     }
 }
 
-static void FinishTask(void* taskPtr, void* userContext)
+static void WaitForPhysicsTask(void* taskPtr, void* userContext)
 {
     if (taskPtr != nullptr)
     {
-        SampleTask* sampleTask = static_cast<SampleTask*>(taskPtr);
-        Sample* sample = static_cast<Sample*>(userContext);
-        sample->m_scheduler->WaitforTask(sampleTask);
+        PhysicsTask* physicsTask = static_cast<PhysicsTask*>(taskPtr);
+        TaskSystem* system = static_cast<TaskSystem*>(userContext);
+        system->taskScheduler->WaitforTask(physicsTask);
     }
 }
 
-EMSCRIPTEN_BINDINGS(box2d_setup) {
-	class_<Sample>("Sample")
-    	.constructor<int>()
-        .function("getTaskCount", &Sample::getTaskCount)
-        .function("getThreadCount", &Sample::getThreadCount)
-        .function("resetTaskCount", &Sample::resetTaskCount)
-		;
+EMSCRIPTEN_BINDINGS(threading) {
+    class_<TaskSystem>("TaskSystem")
+        .constructor<int>()
+        .function("getActiveTaskCount", &TaskSystem::getActiveTaskCount)
+        .function("getTotalThreadCount", &TaskSystem::getTotalThreadCount)
+        .function("clearTasks", &TaskSystem::clearTasks)
+        ;
 
-
-	function("createThreadedSampleWorld", optional_override([](
-		b2WorldDef& originalDef,
-		Sample& sample
-	) -> b2WorldId
-	{
+    function("b2CreateThreadedWorld", optional_override([](
+        b2WorldDef& originalDef,
+        TaskSystem& system
+    ) -> b2WorldId
+    {
         b2WorldDef def = originalDef;
-        def.enqueueTask = &EnqueueTask;
-        def.finishTask = &FinishTask;
-        def.userTaskContext = &sample;
-        def.workerCount = sample.getThreadCount() - 1;
-
-        printf("Creating threaded world with %d workers\n", def.workerCount);
+        def.enqueueTask = &SchedulePhysicsTask;
+        def.finishTask = &WaitForPhysicsTask;
+        def.userTaskContext = &system;
+        def.workerCount = system.getTotalThreadCount() - 1;
 
         return b2CreateWorld(&def);
-	}));
+    }));
 }

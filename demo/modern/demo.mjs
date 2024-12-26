@@ -37,7 +37,7 @@ const {
   b2Body_SetAwake,
   b2Body_Enable,
   Sample,
-  createThreadedSampleWorld,
+  b2CreateThreadedWorld,
   b2World_GetProfile,
   CanvasDebugDraw,
   b2World_Draw
@@ -50,15 +50,15 @@ const canvasDebugDraw = new CanvasDebugDraw(6000);
 const worldDef = b2DefaultWorldDef();
 worldDef.gravity.Set(0, -10);
 
-let worldId, sample;
+let worldId, taskSystem;
 
 const params = new URLSearchParams(window.location.search);
 
 const statsLevel = params.get('stats') || 2;
 
 if(params.get('threading') === '1') {
-  sample = new Sample(navigator.hardwareConcurrency);
-  worldId = createThreadedSampleWorld(worldDef, sample);
+  taskSystem = new TaskSystem(navigator.hardwareConcurrency);
+  worldId = b2CreateThreadedWorld(worldDef, taskSystem);
 } else {
   worldId = b2CreateWorld(worldDef);
 }
@@ -100,93 +100,38 @@ const temp = new b2Vec2(0, 0);
 const rot = new b2Rot();
 rot.SetAngle(0);
 
-const initPosition = (bodyId, index) => {
-  console.log('initPosition', bodyId, index);
-  temp.Set(4 + sideLengthMetres*(Math.random()-0.5), sideLengthMetres*index);
-  b2Body_SetTransform(bodyId, temp, rot);
-  b2Body_SetLinearVelocity(bodyId, ZERO);
-  b2Body_SetAwake(bodyId, 1);
-  b2Body_Enable(bodyId);
-}
+function createPyramid(worldId, height, gap) {
+  const boxWidth = 1.0;
+  const boxHeight = 1.0;
 
+  for (let row = 0; row < height; row++) {
+      const boxesInRow = height - row;
 
+      const startX = -(boxesInRow - 1) * (boxWidth + gap) / 2;
 
-// const boxCount = 10;
-// for (let i = boxCount; i >= 0; i--) {
+      for (let i = 0; i < boxesInRow; i++) {
+          const bd = new b2DefaultBodyDef();
+          bd.type = b2BodyType.b2_dynamicBody;
 
-//   const bd = new b2DefaultBodyDef();
-//   bd.type = b2BodyType.b2_dynamicBody;
-//   bd.position = ZERO;
+          const xPos = startX + i * (boxWidth + gap);
+          const yPos = (boxHeight + gap) * row + boxHeight;
+          bd.position = new b2Vec2().Set(xPos, yPos);
 
-//   const bodyId = b2CreateBody(worldId, bd);
+          const bodyId = b2CreateBody(worldId, bd);
 
-//   console.log('bodyId', bodyId);
+          const shapeDefDynamic = new b2DefaultShapeDef();
+          shapeDefDynamic.density = 1.0;
+          shapeDefDynamic.friction = 0.3;
 
-//   const shapeDefDynamic = new b2DefaultShapeDef();
-//   shapeDefDynamic.density = 1.0;
-//   shapeDefDynamic.friction = 0.3;
-
-//   const square = b2MakeBox(sideLengthMetres/2, sideLengthMetres/2);
-//   const circle = new b2Circle();
-//   circle.radius = sideLengthMetres/2;
-
-//   i % 2 ? b2CreatePolygonShape(bodyId, shapeDefDynamic, square) : b2CreateCircleShape(bodyId, shapeDefDynamic, circle);
-
-//   initPosition(bodyId, i);
-// }
-
-
-  function createPyramid(worldId, height, gap) {
-    const boxWidth = 1.0;
-    const boxHeight = 1.0;
-
-    for (let row = 0; row < height; row++) {
-        const boxesInRow = height - row;
-
-        const startX = -(boxesInRow - 1) * (boxWidth + gap) / 2;
-
-        for (let i = 0; i < boxesInRow; i++) {
-            const bd = new b2DefaultBodyDef();
-            bd.type = b2BodyType.b2_dynamicBody;
-
-            const xPos = startX + i * (boxWidth + gap);
-            const yPos = (boxHeight + gap) * row + boxHeight;
-            bd.position = new b2Vec2().Set(xPos, yPos);
-
-            const bodyId = b2CreateBody(worldId, bd);
-
-            const shapeDefDynamic = new b2DefaultShapeDef();
-            shapeDefDynamic.density = 1.0;
-            shapeDefDynamic.friction = 0.3;
-
-            const box = b2MakeBox(boxWidth/2, boxHeight/2);
-            b2CreatePolygonShape(bodyId, shapeDefDynamic, box);
-        }
-    }
+          const box = b2MakeBox(boxWidth/2, boxHeight/2);
+          b2CreatePolygonShape(bodyId, shapeDefDynamic, box);
+      }
+  }
 }
 
 const pyramidHeight = params.get('pyramidHeight') ? parseInt(params.get('pyramidHeight')) : 10;
 const boxGap = 0.1;
 createPyramid(worldId, pyramidHeight, boxGap);
-
-/*
-  b2Timer timer = b2CreateTimer();
-
-      for ( int step = 1; step < stepCount; ++step )
-      {
-        if ( benchmark->stepFcn != NULL)
-        {
-          benchmark->stepFcn( worldId, step );
-        }
-        b2World_Step( worldId, timeStep, subStepCount );
-        taskCount = 0;
-      }
-
-      float ms = b2GetMilliseconds( &timer );
-      float fps = 1000.0f * stepCount / ms;
-      printf( "run %d : %g (ms), %g (fps)\n", runIndex, ms, fps );
-*/
-
 
 function drawProfile(stepDuration, profile) {
   ctx.font = "16px Arial";
@@ -232,13 +177,13 @@ function loop(prevMs) {
     sample?.resetTaskCount();
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    b2World_Draw(worldId, canvasDebugDraw.GetDebugDraw());
+    b2World_Draw(worldId, taskSystem.GetDebugDraw());
 
-    const commandsPtr = canvasDebugDraw.GetCommandsData();
-    const commandsSize = canvasDebugDraw.GetCommandsSize();
-    const commandStride = canvasDebugDraw.GetCommandStride();
+    const commandsPtr = taskSystem.GetCommandsData();
+    const commandsSize = taskSystem.GetCommandsSize();
+    const commandStride = taskSystem.GetCommandStride();
     debugDraw.processCommands(commandsPtr, commandsSize, commandStride);
-    canvasDebugDraw.ClearCommands();
+    taskSystem.ClearCommands();
 
     const duration = end - start;
     const profile = b2World_GetProfile(worldId);

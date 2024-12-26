@@ -1,72 +1,73 @@
-#ifndef SAMPLE_H
-#define SAMPLE_H
+// TaskSystem.h
+#ifndef TASK_SYSTEM_H
+#define TASK_SYSTEM_H
 
 #include "TaskScheduler.h"
 #include <box2d/box2d.h>
 #include <cstdint>
 #include <cassert>
 
-class SampleTask : public enki::ITaskSet
+class PhysicsTask : public enki::ITaskSet
 {
 public:
-    SampleTask() = default;
+    PhysicsTask() = default;
 
     void ExecuteRange(enki::TaskSetPartition range, uint32_t threadIndex) override
     {
-        if (m_task)
+        if (taskCallback)
         {
-            m_task(range.start, range.end, threadIndex, m_taskContext);
+            taskCallback(range.start, range.end, threadIndex, taskData);
         }
     }
 
-    b2TaskCallback* m_task = nullptr;
-    void* m_taskContext = nullptr;
+    b2TaskCallback* taskCallback = nullptr;
+    void* taskData = nullptr;
 };
 
-struct Sample
+struct TaskSystem
 {
-    static constexpr int m_maxTasks = 128;
+    static constexpr int MAX_TASKS = 128;
 
-    enki::TaskScheduler* m_scheduler = nullptr;
-    SampleTask* m_tasks = nullptr;
-    int m_taskCount = 0;
-    int m_threadCount = 0;
+    enki::TaskScheduler* taskScheduler = nullptr;
+    PhysicsTask* tasks = nullptr;
+    int activeTaskCount = 0;
+    int totalThreadCount = 0;
 
-    explicit Sample(int workerCount)
+    explicit TaskSystem(int workerCount)
     {
-        m_scheduler = new enki::TaskScheduler;
-        m_scheduler->Initialize(workerCount);
+        taskScheduler = new enki::TaskScheduler;
+        taskScheduler->Initialize(workerCount);
 
-        m_tasks = new SampleTask[m_maxTasks];
-        m_taskCount = 0;
+        tasks = new PhysicsTask[MAX_TASKS];
+        activeTaskCount = 0;
 
-        m_threadCount = 1 + workerCount;
+        totalThreadCount = 1 + workerCount;
     }
 
-    ~Sample()
+    ~TaskSystem()
     {
-        if (m_scheduler)
+        if (taskScheduler)
         {
-            m_scheduler->WaitforAll();
-            delete m_scheduler;
+            taskScheduler->WaitforAll();
+            delete taskScheduler;
         }
-        delete[] m_tasks;
+        delete[] tasks;
     }
 
-    void resetTaskCount()
+    void clearTasks()
     {
-        m_taskCount = 0;
+        activeTaskCount = 0;
     }
 
-    int getTaskCount() const
+    int getActiveTaskCount() const
     {
-        return m_taskCount;
+        return activeTaskCount;
     }
 
-    int getThreadCount() const
+    int getTotalThreadCount() const
     {
-        return m_threadCount;
+        return totalThreadCount;
     }
 };
 
-#endif // SAMPLE_H
+#endif // TASK_SYSTEM_H
