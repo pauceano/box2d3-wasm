@@ -10,12 +10,11 @@ Box2DFactory_().then(box2d => {
   const pixelsPerMeter = 10;
   const subStepCount = 4;
 
-  const cameraOffsetMetres = {
-    x: 11,
-    y: -12
-  };
-
   const debugDraw = new DebugDrawRenderer(box2d, ctx, pixelsPerMeter);
+  debugDraw.offset = {
+    x: 40,
+    y: -29
+  };
 
 
   const {
@@ -55,6 +54,8 @@ Box2DFactory_().then(box2d => {
   let worldId, sample;
 
   const params = new URLSearchParams(window.location.search);
+
+  const statsLevel = params.get('stats') || 2;
 
   if(params.get('threading') === '1') {
     sample = new Sample(navigator.hardwareConcurrency);
@@ -191,9 +192,11 @@ Box2DFactory_().then(box2d => {
   function drawProfile(stepDuration, profile) {
     ctx.font = "16px Arial";
     ctx.fillStyle = "black";
+    if (statsLevel < 1) return;
     ctx.fillText(`fps: ${Math.floor(1000/stepDuration)}`, 10, 20);
     ctx.fillText(`threading: ${sample ? 'on' : 'off'}`, 100, 20);
     ctx.fillText(`memory: ${performance.memory.usedJSHeapSize}`, 300, 20);
+    if (statsLevel < 2) return;
     ctx.fillText(`step: ${profile.step.toFixed(2)}ms`, 10, 40);
     ctx.fillText(`pairs: ${profile.pairs.toFixed(2)}ms`, 10, 60);
     ctx.fillText(`collide: ${profile.collide.toFixed(2)}ms`, 10, 80);
