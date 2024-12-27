@@ -1,5 +1,5 @@
 
-import Box2DFactory from '/box2d3-wasm/build/dist/es/entry.mjs';
+import Box2DFactory from 'box2d3-wasm';
 
 let box2d = null;
 
