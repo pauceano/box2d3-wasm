@@ -93,6 +93,7 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         })
         ;
     constant("b2Vec2_zero", b2Vec2_zero);
+    constant("B2_PI", B2_PI);
 
     class_<b2CosSin>("b2CosSin")
         .constructor()
@@ -134,6 +135,17 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("lowerBound", &b2AABB::lowerBound, return_value_policy::reference())
         .property("upperBound", &b2AABB::upperBound, return_value_policy::reference())
         ;
+
+    class_<b2Hull>("b2Hull")
+    .constructor()
+    .property("count", &b2Hull::count)
+    .function("getPoint", optional_override([](const b2Hull& hull, int index) {
+        if (index >= 0 && index < hull.count) {
+            return hull.points[index];
+        }
+        return b2Vec2();
+    }))
+    ;
 
     enum_<b2MixingRule>("b2MixingRule")
         .value("b2_mixAverage", b2MixingRule::b2_mixAverage)
@@ -633,6 +645,10 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
     function("b2MakeRoundedBox", &b2MakeRoundedBox);
     function("b2MakeOffsetBox", &b2MakeOffsetBox);
     function("b2MakeOffsetRoundedBox", &b2MakeOffsetRoundedBox);
+    function("b2MakePolygon", &b2MakePolygon, allow_raw_pointers());
+    function("b2MakeOffsetPolygon", &b2MakeOffsetPolygon, allow_raw_pointers());
+    function("b2MakeOffsetRoundedPolygon", &b2MakeOffsetRoundedPolygon, allow_raw_pointers());
+
 
     enum_<b2ShapeType>("b2ShapeType")
         .value("b2_circleShape", b2_circleShape)
@@ -1536,4 +1552,88 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2CreateRevoluteJoint", &b2CreateRevoluteJoint, allow_raw_pointers());
     function("b2DefaultWeldJointDef", &b2DefaultWeldJointDef);
     function("b2DefaultWheelJointDef", &b2DefaultWheelJointDef);
+
+
+    // ------------------------------------------------------------------------
+    // Misc
+    // ------------------------------------------------------------------------
+    function("b2ComputeHull", optional_override([](const emscripten::val& pointsArray) -> b2Hull {
+        int count = pointsArray["length"].as<int>();
+        std::vector<b2Vec2> points(count);
+        for (int i = 0; i < count; i++) {
+            const auto point = pointsArray[i];
+            points[i].x = point["x"].as<float>();
+            points[i].y = point["y"].as<float>();
+        }
+        return b2ComputeHull(points.data(), count);
+    }));
+
+    // ------------------------------------------------------------------------
+    // Random
+    // ------------------------------------------------------------------------
+    static uint32_t g_seed = 12345;
+    static const uint32_t RAND_LIMIT = 32767;
+
+    function("RandomInt", optional_override([]() -> int {
+        uint32_t x = g_seed;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        g_seed = x;
+        return (int)(x % (RAND_LIMIT + 1));
+    }));
+    function("RandomIntRange", optional_override([](int lo, int hi) -> int {
+        uint32_t x = g_seed;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        g_seed = x;
+        return lo + (int)(x % (RAND_LIMIT + 1)) % (hi - lo + 1);
+    }));
+    function("RandomFloat", optional_override([]() -> float {
+        uint32_t x = g_seed;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        g_seed = x;
+        float r = (float)(x & (RAND_LIMIT));
+        r /= RAND_LIMIT;
+        r = 2.0f * r - 1.0f;
+        return r;
+    }));
+    function("RandomFloatRange", optional_override([](float lo, float hi) -> float {
+        uint32_t x = g_seed;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        g_seed = x;
+        float r = (float)(x & (RAND_LIMIT));
+        r /= RAND_LIMIT;
+        r = (hi - lo) * r + lo;
+        return r;
+    }));
+    function("RandomVec2", optional_override([](float lo, float hi) -> b2Vec2 {
+        b2Vec2 v;
+
+        uint32_t x = g_seed;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        g_seed = x;
+        float rx = (float)(x & (RAND_LIMIT));
+        rx /= RAND_LIMIT;
+        v.x = (hi - lo) * rx + lo;
+
+        x = g_seed;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        g_seed = x;
+        float ry = (float)(x & (RAND_LIMIT));
+        ry /= RAND_LIMIT;
+        v.y = (hi - lo) * ry + lo;
+
+        return v;
+    }));
+
 }

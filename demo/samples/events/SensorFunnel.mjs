@@ -1,7 +1,12 @@
 import Sample from "../sample.mjs";
 
-import camera from '../camera.mjs';
 import settings from '../settings.mjs';
+
+import CreateHuman from "../prefabs/human.mjs";
+
+const e_count = 20;
+const e_donut = 0;
+const e_human = 1;
 
 export default class SensorFunnel extends Sample{
 	constructor(box2d, canvas){
@@ -90,17 +95,53 @@ export default class SensorFunnel extends Sample{
 			}
 		}
 
-		// m_wait = 0.5f;
-		// m_side = -15.0f;
-		// m_type = e_human;
+		this.m_wait = 0.5;
+		this.m_side = -15.0;
+		this.m_type = e_human;
 
-		// for ( int i = 0; i < e_count; ++i )
-		// {
-		// 	m_isSpawned[i] = false;
-		// }
+		this.m_isSpawned = new Array(e_count).fill(false);
 
-		// memset( m_humans, 0, sizeof( m_humans ) );
-
-		// CreateElement();*/
+		this.CreateElement();
 	}
+
+	CreateElement()
+	{
+		let index = -1;
+		for ( let i = 0; i < e_count; ++i )
+		{
+			if ( this.m_isSpawned[i] == false )
+			{
+				index = i;
+				break;
+			}
+		}
+
+		if ( index == -1 )
+		{
+			return;
+		}
+
+		const center = new this.box2d.b2Vec2(this.m_side, 29.5);
+
+		if ( this.m_type == e_donut )
+		{
+			// Donut* donut = m_donuts + index;
+			// // donut->Spawn(m_worldId, center, index + 1, donut);
+			// donut->Spawn( m_worldId, center, 1.0f, 0, donut );
+		}
+		else
+		{
+			const scale = 2.0;
+			const jointFriction = 0.05;
+			const jointHertz = 6.0;
+			const jointDamping = 0.5;
+			const colorize = true;
+			console.log(this.m_worldId, center, scale, jointFriction, jointHertz, jointDamping, index + 1, undefined, colorize);
+			const human = CreateHuman( this.box2d, this.m_worldId, center, scale, jointFriction, jointHertz, jointDamping, index + 1, undefined, colorize );
+		}
+
+		this.m_isSpawned[index] = true;
+		this.m_side = -this.m_side;
+	}
+
 }
