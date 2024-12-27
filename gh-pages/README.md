@@ -13,7 +13,7 @@ npm i
 Copy library assets into static/lib:
 
 ```bash
-git clean -dfx static/box2d3-wasm coi-serviceworker.min.js
+git clean -dfx static/box2d3-wasm static/coi-serviceworker.min.js
 mkdir -p static/box2d3-wasm
 cp -r node_modules/box2d3-wasm/build/dist/es/. static/box2d3-wasm/
 cp node_modules/coi-serviceworker/coi-serviceworker.min.js static/
