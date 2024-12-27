@@ -42,7 +42,7 @@ export default class Sample{
 
 		const timeStep = settings.hertz > 0.0 ? 1.0 / settings.hertz : 0.0;
 
-		this.debugDraw.setFlags({
+		this.debugDraw.SetFlags({
 			drawShapes: settings.drawShapes,
 			drawJoints: settings.drawJoints,
 			drawJointExtras: settings.drawJointExtras,
@@ -62,10 +62,10 @@ export default class Sample{
 		for ( let i = 0; i < 1; ++i )
 		{
 			b2World_Step( this.m_worldId, timeStep, settings.subStepCount );
-			this.m_taskSystem?.clearTasks();
+			this.m_taskSystem?.ClearTasks();
 		}
 
-		this.debugDraw.draw(this.m_worldId, camera);
+		this.debugDraw.Draw(this.m_worldId, camera);
 	}
 
 	UpdateUI(){

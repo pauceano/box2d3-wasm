@@ -54,17 +54,17 @@ struct TaskSystem
         delete[] tasks;
     }
 
-    void clearTasks()
+    void ClearTasks()
     {
         activeTaskCount = 0;
     }
 
-    int getActiveTaskCount() const
+    int GetActiveTaskCount() const
     {
         return activeTaskCount;
     }
 
-    int getTotalThreadCount() const
+    int GetTotalThreadCount() const
     {
         return totalThreadCount;
     }

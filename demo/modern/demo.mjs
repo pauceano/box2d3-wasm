@@ -161,10 +161,10 @@ function loop(prevMs) {
     const start = performance.now();
     b2World_Step(worldId, deltaMs / 1000, subStepCount);
     const end = performance.now();
-    taskSystem?.clearTasks();
+    taskSystem?.ClearTasks();
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    debugDraw.draw(worldId);
+    debugDraw.Draw(worldId);
 
     const duration = end - start;
     const profile = b2World_GetProfile(worldId);

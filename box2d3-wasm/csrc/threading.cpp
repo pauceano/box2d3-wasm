@@ -46,9 +46,9 @@ static void WaitForPhysicsTask(void* taskPtr, void* userContext)
 EMSCRIPTEN_BINDINGS(threading) {
     class_<TaskSystem>("TaskSystem")
         .constructor<int>()
-        .function("getActiveTaskCount", &TaskSystem::getActiveTaskCount)
-        .function("getTotalThreadCount", &TaskSystem::getTotalThreadCount)
-        .function("clearTasks", &TaskSystem::clearTasks)
+        .function("GetActiveTaskCount", &TaskSystem::GetActiveTaskCount)
+        .function("GetTotalThreadCount", &TaskSystem::GetTotalThreadCount)
+        .function("ClearTasks", &TaskSystem::ClearTasks)
         ;
 
     function("b2CreateThreadedWorld", optional_override([](
@@ -60,7 +60,7 @@ EMSCRIPTEN_BINDINGS(threading) {
         def.enqueueTask = &SchedulePhysicsTask;
         def.finishTask = &WaitForPhysicsTask;
         def.userTaskContext = &system;
-        def.workerCount = system.getTotalThreadCount() - 1;
+        def.workerCount = system.GetTotalThreadCount() - 1;
 
         return b2CreateWorld(&def);
     }));

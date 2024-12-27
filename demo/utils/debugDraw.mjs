@@ -12,14 +12,6 @@ export default class DebugDrawRenderer {
         this.colorCache[0.5] = this.initializeColorCache(0.5);
     }
 
-
-    setFlags(flags) {
-        const debugDraw = this.debugDrawCommandBuffer.GetDebugDraw();
-        for (const [key, value] of Object.entries(flags)) {
-            debugDraw[key] = value;
-        }
-    }
-
     initializeColorCache(alpha = 1.0) {
         const b2HexColor = {
             b2_colorAliceBlue: 0xF0F8FF,
@@ -400,7 +392,14 @@ export default class DebugDrawRenderer {
         };
     }
 
-    draw(worldId, camera) {
+    SetFlags(flags) {
+        const debugDraw = this.debugDrawCommandBuffer.GetDebugDraw();
+        for (const [key, value] of Object.entries(flags)) {
+            debugDraw[key] = value;
+        }
+    }
+
+    Draw(worldId, camera) {
         if(camera) {
             if(camera.zoom) {
                 this.scale = camera.zoom;
