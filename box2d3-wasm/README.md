@@ -2,21 +2,21 @@
 
 [Box2D v3][] ported to the web via [wasm][]!
 
-## Online Demos
+## Online Demo
 
-Check out the [pyramid drop demo](https://box2d-v3-threading.netlify.app/?threading=1&pyramidHeight=64). You can change the size of the pyramid by editing the "pyramidHeight" URL parameter. Set it to 101 for a pyramid with 5,050 boxes!
+Check out the [pyramid drop demo](https://birch-san.github.io/box2d3-wasm/?threads=auto&pyramidHeight=64). You can change the size of the pyramid by editing the "pyramidHeight" URL parameter. Set it to 101 for a pyramid with 5,050 boxes!
 
-Check out the [stress test demo](https://phaser-stress-test-box2d3-wasm.netlify.app/?threading=1). How many shapes can your computer simulate at 60fps? box2d3-wasm is the fastest Box2D implementation on the web.
+## Usage 
 
-## Web Usage 
+### Web Usage
 
 See the [pyramid drop demo code](demo/modern/demo.js) for an example of how to use box2d3-wasm in a Web browser. You'll need to serve the assets correctly in order to access performance features such as threading. See the [Serving Requirements](#serving-requirements) section below.
 
-## NodeJS Usage
+### NodeJS Usage
 
 See the [integration test code](integration-test/index.mjs) for an example of how to use box2d3-wasm via NodeJS. There'll be no graphics; you probably only want the NodeJS approach if you're building server-side physics or you intend to build your own native GUI.
 
-## Available on npm
+### Available on npm
 
 Install as an [npm package](https://www.npmjs.com/package/box2d3-wasm):
 
