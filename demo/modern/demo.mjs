@@ -194,7 +194,7 @@ function drawProfile(stepDuration, profile) {
   if (statsLevel < 1) return;
   ctx.fillText(`fps: ${Math.floor(1000/stepDuration)}`, 10, 20);
   ctx.fillText(`threading: ${sample ? 'on' : 'off'}`, 100, 20);
-  ctx.fillText(`memory: ${performance.memory.usedJSHeapSize}`, 300, 20);
+  ctx.fillText(`memory: ${performance.memory?.usedJSHeapSize ?? '(Unavailable)'}`, 300, 20);
   if (statsLevel < 2) return;
   ctx.fillText(`step: ${profile.step.toFixed(2)}ms`, 10, 40);
   ctx.fillText(`pairs: ${profile.pairs.toFixed(2)}ms`, 10, 60);
