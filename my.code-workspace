@@ -19,6 +19,10 @@
       {
         "name": "enkiTS",
         "path": "enkiTS"
+      },
+      {
+        "name": "gh-pages",
+        "path": "gh-pages"
       }
     ],
     "settings": {
