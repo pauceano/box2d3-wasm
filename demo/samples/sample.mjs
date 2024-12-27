@@ -1,15 +1,14 @@
 
-import DebugDrawRenderer from '../utils/debugDraw.mjs';
+import DebugDrawRenderer, {Camera} from '../utils/debugDraw.mjs';
 
-import camera, {DEFAULT_CAMERA} from './camera.mjs';
 import settings, {DEFAULT_SETTINGS} from './settings.mjs';
 
 export default class Sample{
 	constructor(box2d, canvas){
 
 		Object.assign(settings, DEFAULT_SETTINGS);
-		Object.assign(camera, DEFAULT_CAMERA);
 
+		this.camera = new Camera();
 		this.box2d = box2d;
 		this.canvas = canvas;
 		this.ctx = canvas.getContext('2d');
@@ -65,7 +64,7 @@ export default class Sample{
 			this.m_taskSystem?.ClearTasks();
 		}
 
-		this.debugDraw.Draw(this.m_worldId, camera);
+		this.debugDraw.Draw(this.m_worldId, this.camera);
 	}
 
 	UpdateUI(){

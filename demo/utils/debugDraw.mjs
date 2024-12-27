@@ -400,16 +400,11 @@ export default class DebugDrawRenderer {
     }
 
     Draw(worldId, camera) {
-        if(camera) {
-            if(camera.zoom) {
-                this.scale = camera.zoom;
-            }
-
-            if(camera.center) {
-                // make camera center the center of the canvas width and height
-                this.offset.x = camera.center.x + this.ctx.canvas.width / 2 / this.scale;
-                this.offset.y = camera.center.y - this.ctx.canvas.height / 2 / this.scale;
-            }
+        if (camera) {
+            const transform = camera.getTransform();
+            this.scale = transform.scale.x;
+            this.offset.x = transform.offset.x;
+            this.offset.y = transform.offset.y;
         }
 
         this.Module.b2World_Draw(worldId, this.debugDrawCommandBuffer.GetDebugDraw());
@@ -418,5 +413,53 @@ export default class DebugDrawRenderer {
         const commandStride = this.debugDrawCommandBuffer.GetCommandStride();
         this.processCommands(commandsPtr, commandsSize, commandStride);
         this.debugDrawCommandBuffer.ClearCommands();
+    }
+}
+
+export class Camera {
+    constructor() {
+        this.center = { x: 0, y: 0 };
+        this.zoom = 1.0;
+        this.width = 1280;
+        this.height = 800;
+    }
+
+    getTransform() {
+        const ratio = this.width / this.height;
+        const extents = {
+            x: this.zoom * ratio,
+            y: this.zoom
+        };
+
+        const scale = {
+            x: this.width / (2 * extents.x),
+            y: this.height / (2 * extents.y)
+        };
+
+        const offset = {
+            x: this.center.x + (this.width / 2 / scale.x),
+            y: this.center.y - (this.height / 2 / scale.y)
+        };
+
+        return {
+            offset,
+            scale
+        };
+    }
+
+    convertWorldToScreen(worldPoint) {
+        const transform = this.getTransform();
+        return {
+            x: (worldPoint.x - transform.offset.x) * transform.scale.x,
+            y: this.height - ((worldPoint.y - transform.offset.y) * transform.scale.y)
+        };
+    }
+
+    convertScreenToWorld(screenPoint) {
+        const transform = this.getTransform();
+        return {
+            x: (screenPoint.x / transform.scale.x) + transform.offset.x,
+            y: ((this.height - screenPoint.y) / transform.scale.y) + transform.offset.y
+        };
     }
 }

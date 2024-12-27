@@ -7,8 +7,8 @@ export default class SensorFunnel extends Sample{
 	constructor(box2d, canvas){
 		super(box2d, canvas);
 
-		camera.center = {x: 0.0, y: 0.0 };
-		camera.zoom = 15.0;
+		this.camera.center = {x: 0.0, y: 0.0 };
+		this.camera.zoom = 25 * 1.333;
 
 		settings.drawJoints = false;
 

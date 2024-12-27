@@ -1,7 +1,6 @@
 
 import Box2DFactory from 'box2d3-wasm';
 import settings, {DEFAULT_SETTINGS} from './settings.mjs';
-import camera, {DEFAULT_CAMERA} from './camera.mjs';
 
 let box2d = null;
 let sample = null;
@@ -12,15 +11,15 @@ const ctx = canvas.getContext("2d");
 function loadSample(url) {
 	import(url).then((module) => {
 		sample = new module.default(box2d, canvas);
+		canvas.width = sample.camera.width;
+		canvas.height = sample.camera.height;
+
 		console.log(sample);
 	});
 }
 
 
 async function initialize(){
-	canvas.width = camera.width;
-	canvas.height = camera.height;
-
 	box2d = await Box2DFactory();
 
 	requestAnimationFrame(update);
