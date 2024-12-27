@@ -56,8 +56,14 @@ const params = new URLSearchParams(window.location.search);
 
 const statsLevel = params.get('stats') || 2;
 
-if(params.get('threading') === '1') {
-  sample = new Sample(navigator.hardwareConcurrency);
+let threads;
+if(params.get('threads')) {
+  if (params.get('threads') === 'auto') {
+    threads = navigator.hardwareConcurrency;
+  } else {
+    threads = Number.parseInt(params.get('threads'));
+  }
+  sample = new Sample(threads);
   worldId = createThreadedSampleWorld(worldDef, sample);
 } else {
   worldId = b2CreateWorld(worldDef);
@@ -193,8 +199,8 @@ function drawProfile(stepDuration, profile) {
   ctx.fillStyle = "black";
   if (statsLevel < 1) return;
   ctx.fillText(`fps: ${Math.floor(1000/stepDuration)}`, 10, 20);
-  ctx.fillText(`threading: ${sample ? 'on' : 'off'}`, 100, 20);
-  ctx.fillText(`memory: ${performance.memory?.usedJSHeapSize ?? '(Unavailable)'}`, 300, 20);
+  ctx.fillText(`threading: ${sample ? `${threads} threads` : 'off'}`, 100, 20);
+  ctx.fillText(`memory: ${performance.memory?.usedJSHeapSize ?? 'Unavailable'}`, 300, 20);
   if (statsLevel < 2) return;
   ctx.fillText(`step: ${profile.step.toFixed(2)}ms`, 10, 40);
   ctx.fillText(`pairs: ${profile.pairs.toFixed(2)}ms`, 10, 60);
