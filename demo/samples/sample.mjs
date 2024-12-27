@@ -38,20 +38,22 @@ export default class Sample{
 			b2World_EnableWarmStarting,
 			b2World_EnableContinuous,
 			b2World_Step,
-		} = box2d;
+		} = this.box2d;
 
 		const timeStep = settings.hertz > 0.0 ? 1.0 / settings.hertz : 0.0;
 
-		this.debugDraw.drawShapes = settings.drawShapes;
-		this.debugDraw.drawJoints = settings.drawJoints;
-		this.debugDraw.drawJointExtras = settings.drawJointExtras;
-		this.debugDraw.drawAABBs = settings.drawAABBs;
-		this.debugDraw.drawMass = settings.drawMass;
-		this.debugDraw.drawContacts = settings.drawContactPoints;
-		this.debugDraw.drawGraphColors = settings.drawGraphColors;
-		this.debugDraw.drawContactNormals = settings.drawContactNormals;
-		this.debugDraw.drawContactImpulses = settings.drawContactImpulses;
-		this.debugDraw.drawFrictionImpulses = settings.drawFrictionImpulses;
+		this.debugDraw.setFlags({
+			drawShapes: settings.drawShapes,
+			drawJoints: settings.drawJoints,
+			drawJointExtras: settings.drawJointExtras,
+			drawAABBs: settings.drawAABBs,
+			drawMass: settings.drawMass,
+			drawContacts: settings.drawContactPoints,
+			drawGraphColors: settings.drawGraphColors,
+			drawContactNormals: settings.drawContactNormals,
+			drawContactImpulses: settings.drawContactImpulses,
+			drawFrictionImpulses: settings.drawFrictionImpulses,
+		});
 
 		b2World_EnableSleeping( this.m_worldId, settings.enableSleep );
 		b2World_EnableWarmStarting( this.m_worldId, settings.enableWarmStarting );

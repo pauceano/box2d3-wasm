@@ -12,6 +12,14 @@ export default class DebugDrawRenderer {
         this.colorCache[0.5] = this.initializeColorCache(0.5);
     }
 
+
+    setFlags(flags) {
+        const debugDraw = this.debugDrawCommandBuffer.GetDebugDraw();
+        for (const [key, value] of Object.entries(flags)) {
+            debugDraw[key] = value;
+        }
+    }
+
     initializeColorCache(alpha = 1.0) {
         const b2HexColor = {
             b2_colorAliceBlue: 0xF0F8FF,
@@ -364,7 +372,7 @@ export default class DebugDrawRenderer {
 
     drawPoint(cmd) {
         this.ctx.beginPath();
-        this.ctx.arc(cmd.data[0], cmd.data[1], cmd.data[2]/2, 0, 2 * Math.PI);
+        this.ctx.arc(cmd.data[0], cmd.data[1], (cmd.data[2]/2) / this.scale, 0, 2 * Math.PI);
         this.ctx.fillStyle = this.colorToHTML(cmd.color);
         this.ctx.fill();
     }
@@ -392,7 +400,19 @@ export default class DebugDrawRenderer {
         };
     }
 
-    draw(worldId) {
+    draw(worldId, camera) {
+        if(camera) {
+            if(camera.zoom) {
+                this.scale = camera.zoom;
+            }
+
+            if(camera.center) {
+                // make camera center the center of the canvas width and height
+                this.offset.x = camera.center.x + this.ctx.canvas.width / 2 / this.scale;
+                this.offset.y = camera.center.y - this.ctx.canvas.height / 2 / this.scale;
+            }
+        }
+
         this.Module.b2World_Draw(worldId, this.debugDrawCommandBuffer.GetDebugDraw());
         const commandsPtr = this.debugDrawCommandBuffer.GetCommandsData();
         const commandsSize = this.debugDrawCommandBuffer.GetCommandsSize();

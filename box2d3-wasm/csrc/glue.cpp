@@ -92,6 +92,7 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             return self;
         })
         ;
+    constant("b2Vec2_zero", b2Vec2_zero);
 
     class_<b2CosSin>("b2CosSin")
         .constructor()
@@ -112,6 +113,9 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             return atan2f(self.s, self.c);
         })
         ;
+
+    constant("b2Rot_identity", b2Rot_identity);
+
 
     class_<b2Transform>("b2Transform")
         .constructor()
@@ -546,6 +550,8 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .class_function("GetMaxVertices", +[]() { return B2_MAX_POLYGON_VERTICES; })
     ;
 
+    function("b2DefaultChainDef", &b2DefaultChainDef);
+
     class_<b2ChainDef>("b2ChainDef")
         .constructor<>()
         .function("GetUserData", +[](const b2ChainDef& self) {
@@ -937,7 +943,6 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
         })
     ;
-    function("b2DefaultDistanceJointDef", &b2DefaultDistanceJointDef);
 
     class_<b2MotorJointDef>("b2MotorJointDef")
         .constructor()
@@ -957,7 +962,6 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
         })
     ;
-    function("b2DefaultMotorJointDef", &b2DefaultMotorJointDef);
 
     class_<b2MouseJointDef>("b2MouseJointDef")
         .constructor()
@@ -976,7 +980,6 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
         })
     ;
-    function("b2DefaultMouseJointDef", &b2DefaultMouseJointDef);
 
     class_<b2NullJointDef>("b2NullJointDef")
         .constructor()
@@ -990,7 +993,6 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
         })
     ;
-    function("b2DefaultNullJointDef", &b2DefaultNullJointDef);
 
     class_<b2PrismaticJointDef>("b2PrismaticJointDef")
         .constructor()
@@ -1018,7 +1020,6 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
         })
     ;
-    function("b2DefaultPrismaticJointDef", &b2DefaultPrismaticJointDef);
 
     class_<b2RevoluteJointDef>("b2RevoluteJointDef")
         .constructor()
@@ -1046,7 +1047,6 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
         })
     ;
-    function("b2DefaultRevoluteJointDef", &b2DefaultRevoluteJointDef);
 
     class_<b2WeldJointDef>("b2WeldJointDef")
         .constructor()
@@ -1068,7 +1068,6 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
         })
     ;
-    function("b2DefaultWeldJointDef", &b2DefaultWeldJointDef);
 
     class_<b2WheelJointDef>("b2WheelJointDef")
         .constructor()
@@ -1095,7 +1094,6 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
         })
     ;
-    function("b2DefaultWheelJointDef", &b2DefaultWheelJointDef);
 
     class_<DistanceJoint, base<BasicDistanceJointInterface<DistanceJoint, false>>>("DistanceJoint")
         .constructor<>()
@@ -1253,7 +1251,6 @@ EMSCRIPTEN_BINDINGS(box2d) {
     // ------------------------------------------------------------------------
     // b2World
     // ------------------------------------------------------------------------
-
     function("b2DefaultWorldDef", &b2DefaultWorldDef);
 
     function("b2CreateWorld", &b2CreateWorld, allow_raw_pointers());
@@ -1525,4 +1522,18 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2Body_GetContactData", &b2Body_GetContactData, allow_raw_pointers());
     function("b2Body_ComputeAABB", &b2Body_ComputeAABB);
     function("b2Body_GetWorld", &b2Body_GetWorld);
+
+    // ------------------------------------------------------------------------
+    // b2Joint
+    // ------------------------------------------------------------------------
+
+    function("b2DefaultDistanceJointDef", &b2DefaultDistanceJointDef);
+    function("b2DefaultMotorJointDef", &b2DefaultMotorJointDef);
+    function("b2DefaultMouseJointDef", &b2DefaultMouseJointDef);
+    function("b2DefaultNullJointDef", &b2DefaultNullJointDef);
+    function("b2DefaultPrismaticJointDef", &b2DefaultPrismaticJointDef);
+    function("b2DefaultRevoluteJointDef", &b2DefaultRevoluteJointDef);
+    function("b2CreateRevoluteJoint", &b2CreateRevoluteJoint, allow_raw_pointers());
+    function("b2DefaultWeldJointDef", &b2DefaultWeldJointDef);
+    function("b2DefaultWheelJointDef", &b2DefaultWheelJointDef);
 }

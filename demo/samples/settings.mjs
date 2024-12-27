@@ -11,6 +11,7 @@ export const DEFAULT_SETTINGS = {
 	drawContactNormals: false,
 	drawContactImpulses: false,
 	drawFrictionImpulses: false,
+	maxFrameTime: 1000 / 60,
 	hertz: 60,
 	enableWarmStarting: true,
 	enableContinuous: true,
