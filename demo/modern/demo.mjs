@@ -1,5 +1,5 @@
 
-import DebugDrawRenderer from '../utils/debugDraw.js';
+import DebugDrawRenderer from '../utils/debugDraw.mjs';
 import Box2DFactory from 'box2d3-wasm';
 
 const Box2DFactory_ = Box2DFactory;

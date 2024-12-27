@@ -1,4 +1,4 @@
-import Box2DDebugDraw from '../utils/debugDraw.js';
+import Box2DDebugDraw from '../utils/debugDraw.mjs';
 
 const settings = {
 	workerCount: 1,
