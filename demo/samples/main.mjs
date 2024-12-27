@@ -16,7 +16,7 @@ function loadSample(sample) {
 async function initialize(){
 	box2d = await Box2DFactory();
 
-	loadSample('./events/SensorFunnel.js');
+	loadSample('./events/SensorFunnel.mjs');
 }
 
 initialize();

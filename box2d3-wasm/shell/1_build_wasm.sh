@@ -108,7 +108,7 @@ BARE_WASM="$BUILD_DIR/$BASENAME.bare.wasm"
 emcc -lembind \
 "$CSRC_DIR/glue.cpp" \
 "$CSRC_DIR/threading.cpp" \
-"$CSRC_DIR/DebugDrawCommandBuffer.cpp" \
+"$CSRC_DIR/debugDraw.cpp" \
 "$ENKITS_DIR/src/TaskScheduler.cpp" \
 "$CMAKEBUILD_DIR/src/$LIBARCHIVE" \
 -I "$BOX2D_DIR/include" \
