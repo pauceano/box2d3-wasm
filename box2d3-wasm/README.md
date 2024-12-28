@@ -1,30 +1,30 @@
 # box2d3-wasm
 
-Let's try and use [Box2D v3][] on the web via [wasm][]!
+[Box2D v3][] ported to the web via [wasm][]!
 
-```bash
-git clone --recurse-submodules https://github.com/Birch-san/box2d3-wasm.git
-```
+## Online Demo
 
-## Install from npm
+Check out the [pyramid drop demo](https://birch-san.github.io/box2d3-wasm/?threads=auto&pyramidHeight=64). You can change the size of the pyramid by editing the "pyramidHeight" URL parameter. Set it to 101 for a pyramid with 5,050 boxes!
 
-Install [Node.js and npm][].  
-Install [npm package](https://www.npmjs.com/package/box2d3-wasm) like so:
+## Usage 
+
+### Web Usage
+
+See the [pyramid drop demo code](demo/modern/demo.js) for an example of how to use box2d3-wasm in a Web browser. You'll need to serve the assets correctly in order to access performance features such as threading. See the [Serving Requirements](#serving-requirements) section below.
+
+### NodeJS Usage
+
+See the [integration test code](integration-test/index.mjs) for an example of how to use box2d3-wasm via NodeJS. There'll be no graphics; you probably only want the NodeJS approach if you're building server-side physics or you intend to build your own native GUI.
+
+### Available on npm
+
+Install as an [npm package](https://www.npmjs.com/package/box2d3-wasm):
 
 ```bash
 npm i --save box2d3-wasm
 ```
 
-## Usage
-
-**Web:**  
-See the [demo](demo/modern/index.html) for an example of how to use box2d3-wasm via the Web platform. You'll need to serve the assets correctly in order to access performance features such as threading. See [Run Demos](#run-demos) for more on the serving requirements.
-
-**NodeJS:**  
-See the [integration test](integration-test/index.mjs) for an example of how to use box2d3-wasm via NodeJS. There'll be no graphics; you probably only want the NodeJS approach if you're building server-side physics or you intend to build your own native GUI.
-
-
-## Build-From-Source Pre-Requisites
+## Build from Source Pre-Requisites
 
 Install [Node.js and npm][].
 
@@ -37,12 +37,16 @@ npm i -g typescript
 npm i -g yarn
 ```
 
-Next, install [Emscripten](https://emscripten.org/docs/getting_started/downloads.html).
-
-On macOS, you can use [Homebrew](https://brew.sh/) to install it.
+Next, install [Emscripten][]. On macOS, you can use [Homebrew][] to install it.
 
 ```bash
 brew install emscripten
+```
+
+Clone the repository with submodules:
+
+```bash
+git clone --recurse-submodules https://github.com/Birch-san/box2d3-wasm.git
 ```
 
 ## Build
@@ -60,6 +64,8 @@ FLAVOUR=simd TARGET_TYPE=Debug ./shell/1_build_wasm.sh
 Inside the `demo` directory, run `yarn` to install `local-web-server` locally.
 
 Then, to start the web server run `yarn serve`.
+
+## Serving Requirements
 
 Note that the server runs with the following CORS headers:
 
@@ -92,6 +98,14 @@ npm version minor
 npm publish
 ```
 
+## Licensing
+
+[Box2D v3][] is licensed under the MIT License by Erin Catto.
+
+box2d3-wasm is licensed under the MIT License by Alex Birch & Erik Sombroek.
+
 [Box2D v3]: https://github.com/erincatto/box2d
 [wasm]: https://webassembly.org/
 [Node.js and npm]: https://nodejs.org/en/download/
+[Emscripten]: https://emscripten.org/docs/getting_started/downloads.html
+[Homebrew]: https://brew.sh/
