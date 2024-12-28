@@ -57,7 +57,7 @@ export default class SensorFunnel extends Sample{
 
 			let sign = 1.0;
 			let y = 14.0;
-			for ( let i = 0; i < 3; ++i )
+			for ( let i = 0; i < 3; i++ )
 			{
 				bodyDef.position.Set(0.0, y);
 				bodyDef.type = b2BodyType.b2_dynamicBody;
@@ -99,6 +99,7 @@ export default class SensorFunnel extends Sample{
 		this.m_side = -15.0;
 		this.m_type = e_human;
 
+		this.m_elements = new Array(e_count).fill(null);
 		this.m_isSpawned = new Array(e_count).fill(false);
 
 		this.CreateElement();
@@ -107,7 +108,7 @@ export default class SensorFunnel extends Sample{
 	CreateElement()
 	{
 		let index = -1;
-		for ( let i = 0; i < e_count; ++i )
+		for ( let i = 0; i < e_count; i++ )
 		{
 			if ( this.m_isSpawned[i] == false )
 			{
@@ -136,12 +137,57 @@ export default class SensorFunnel extends Sample{
 			const jointHertz = 6.0;
 			const jointDamping = 0.5;
 			const colorize = true;
-			console.log(this.m_worldId, center, scale, jointFriction, jointHertz, jointDamping, index + 1, undefined, colorize);
-			const human = CreateHuman( this.box2d, this.m_worldId, center, scale, jointFriction, jointHertz, jointDamping, index + 1, undefined, colorize );
+			const human = CreateHuman( this.box2d, this.m_worldId, center, scale, jointFriction, jointHertz, jointDamping, index + 1, index, colorize );
+			this.m_elements[index] = human;
 		}
 
 		this.m_isSpawned[index] = true;
 		this.m_side = -this.m_side;
+	}
+
+	DestroyElement(index){
+		if ( this.m_elements[index] != null )
+		{
+			this.m_elements[index].Destroy();
+			this.m_elements[index] = null;
+		}
+
+		this.m_isSpawned[index] = false;
+	}
+
+	Step(){
+		const {
+			b2World_GetSensorEvents,
+			b2Shape_GetBody,
+			b2Body_GetUserData
+		} = this.box2d;
+
+		super.Step();
+
+		const sensorEvents = b2World_GetSensorEvents( this.m_worldId );
+
+		const deferredDestructions = new Set();
+
+		const beginEvents = sensorEvents.GetBeginEvents();
+		for ( let i = 0; i < beginEvents.length; i++ ){
+			const event = beginEvents[i];
+			const visitorId = event.visitorShapeId;
+			const bodyId = b2Shape_GetBody( visitorId );
+			const elementId = b2Body_GetUserData( bodyId );
+			deferredDestructions.add(elementId);
+		}
+
+		deferredDestructions.forEach( elementId => {
+			this.DestroyElement(elementId);
+		});
+
+		this.m_wait -= 1.0 / settings.hertz;
+
+		if ( this.m_wait <= 0.0 )
+		{
+			this.CreateElement();
+			this.m_wait += 0.5;
+		}
 	}
 
 }
