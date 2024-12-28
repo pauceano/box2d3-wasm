@@ -22,7 +22,7 @@ class Human {
 		this.isSpawned = false;
 	}
 
-	Destroy()
+	Despawn()
 	{
 		console.assert( this.isSpawned == true );
 

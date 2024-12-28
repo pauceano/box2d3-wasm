@@ -1,4 +1,5 @@
 #include <box2d/box2d.h>
+#include <box2d/math_functions.h>
 #include <box2cpp/box2cpp.h>
 #include <emscripten.h>
 #include <emscripten/bind.h>
@@ -1615,14 +1616,21 @@ EMSCRIPTEN_BINDINGS(box2d) {
     // ------------------------------------------------------------------------
     function("b2DestroyJoint", &b2DestroyJoint, allow_raw_pointers());
     function("b2DefaultDistanceJointDef", &b2DefaultDistanceJointDef);
+    function("b2CreateDistanceJoint", &b2CreateDistanceJoint, allow_raw_pointers());
     function("b2DefaultMotorJointDef", &b2DefaultMotorJointDef);
+    function("b2CreateMotorJoint", &b2CreateMotorJoint, allow_raw_pointers());
     function("b2DefaultMouseJointDef", &b2DefaultMouseJointDef);
+    function("b2CreateMouseJoint", &b2CreateMouseJoint, allow_raw_pointers());
     function("b2DefaultNullJointDef", &b2DefaultNullJointDef);
+    function("b2CreateNullJoint", &b2CreateNullJoint, allow_raw_pointers());
     function("b2DefaultPrismaticJointDef", &b2DefaultPrismaticJointDef);
+    function("b2CreatePrismaticJoint", &b2CreatePrismaticJoint, allow_raw_pointers());
     function("b2DefaultRevoluteJointDef", &b2DefaultRevoluteJointDef);
     function("b2CreateRevoluteJoint", &b2CreateRevoluteJoint, allow_raw_pointers());
     function("b2DefaultWeldJointDef", &b2DefaultWeldJointDef);
+    function("b2CreateWeldJoint", &b2CreateWeldJoint, allow_raw_pointers());
     function("b2DefaultWheelJointDef", &b2DefaultWheelJointDef);
+    function("b2CreateWheelJoint", &b2CreateWheelJoint, allow_raw_pointers());
 
 
     // ------------------------------------------------------------------------
@@ -1638,6 +1646,9 @@ EMSCRIPTEN_BINDINGS(box2d) {
         }
         return b2ComputeHull(points.data(), count);
     }));
+
+    function("b2RelativeAngle", b2RelativeAngle);
+    function("b2MakeRot", b2MakeRot);
 
     // ------------------------------------------------------------------------
     // Random

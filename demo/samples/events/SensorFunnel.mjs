@@ -3,10 +3,14 @@ import Sample from "../sample.mjs";
 import settings from '../settings.mjs';
 
 import CreateHuman from "../prefabs/human.mjs";
+import Donut from "../prefabs/donut.mjs";
 
-const e_count = 20;
+const params = new URLSearchParams(window.location.search);
+
+const e_count = params.get('e_count') ? parseInt(params.get('e_count')) : 20;
 const e_donut = 0;
 const e_human = 1;
+const e_wait = params.get('e_wait') ? parseFloat(params.get('e_wait')) : 0.5;
 
 export default class SensorFunnel extends Sample{
 	constructor(box2d, canvas){
@@ -47,7 +51,6 @@ export default class SensorFunnel extends Sample{
 				[ -8.26825142, -5.953125 ],	 [ -16.8672504, -0.661376953 ], [ -16.8672504, 11.906374 ],
 				[ -8.26825142, 11.906374 ],	 [ -16.8672504, 17.1978741 ],
 			].map( ( [x, y] ) => ({x, y}) );
-
 
 			const chainDef = b2DefaultChainDef();
 			chainDef.SetPoints(points);
@@ -95,9 +98,10 @@ export default class SensorFunnel extends Sample{
 			}
 		}
 
-		this.m_wait = 0.5;
+		this.m_wait = e_wait;
 		this.m_side = -15.0;
-		this.m_type = e_human;
+		this.m_type = params.get('m_type') ? parseInt(params.get('m_type')) : e_human;
+
 
 		this.m_elements = new Array(e_count).fill(null);
 		this.m_isSpawned = new Array(e_count).fill(false);
@@ -126,9 +130,9 @@ export default class SensorFunnel extends Sample{
 
 		if ( this.m_type == e_donut )
 		{
-			// Donut* donut = m_donuts + index;
-			// // donut->Spawn(m_worldId, center, index + 1, donut);
-			// donut->Spawn( m_worldId, center, 1.0f, 0, donut );
+			const donut = new Donut(this.box2d);
+			donut.Spawn( this.m_worldId, center, 1.0, 0, index );
+			this.m_elements[index] = donut;
 		}
 		else
 		{
@@ -148,7 +152,7 @@ export default class SensorFunnel extends Sample{
 	DestroyElement(index){
 		if ( this.m_elements[index] != null )
 		{
-			this.m_elements[index].Destroy();
+			this.m_elements[index].Despawn();
 			this.m_elements[index] = null;
 		}
 
@@ -186,7 +190,7 @@ export default class SensorFunnel extends Sample{
 		if ( this.m_wait <= 0.0 )
 		{
 			this.CreateElement();
-			this.m_wait += 0.5;
+			this.m_wait += e_wait;
 		}
 	}
 
