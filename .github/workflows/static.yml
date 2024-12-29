@@ -37,19 +37,30 @@ jobs:
         with:
           node-version: 20
           registry-url: https://npm.pkg.github.com/
-      - name: install npm dependencies
+
+      - name: Copy demo content
+        run: cp -r demo gh-pages/
+
+      - name: Install npm dependencies
         working-directory: gh-pages
         run: npm i
       - working-directory: gh-pages
-        run: mkdir -p static/box2d3-wasm
+        run: mkdir -p box2d3-wasm
       - working-directory: gh-pages
-        run: cp -r node_modules/box2d3-wasm/build/dist/es/. static/box2d3-wasm/
+        run: cp -r node_modules/box2d3-wasm/* box2d3-wasm/
       - working-directory: gh-pages
-        run: cp node_modules/coi-serviceworker/coi-serviceworker.min.js static/
+        run: cp node_modules/coi-serviceworker/coi-serviceworker.min.js ./
+
+      - name: Modify HTML files
+        working-directory: gh-pages
+        run: node modify-html.js
+
+  
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: gh-pages/static
+          path: gh-pages
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
