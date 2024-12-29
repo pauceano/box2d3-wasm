@@ -321,6 +321,12 @@ export default class DebugDrawRenderer {
         this.ctx.fill();
         this.ctx.strokeStyle = this.colorToHTML(cmd.color);
         this.ctx.stroke();
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(p1.x, p1.y);
+        this.ctx.lineTo(p2.x, p2.y);
+        this.ctx.strokeStyle = this.colorToHTML(cmd.color);
+        this.ctx.stroke();
     }
 
     drawSegment(cmd) {
