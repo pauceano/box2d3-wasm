@@ -401,6 +401,8 @@ export default class DebugDrawRenderer {
 
     Draw(worldId, camera) {
         if (camera) {
+            this.ctx.canvas.width = camera.width;
+            this.ctx.canvas.height = camera.height;
             const transform = camera.getTransform();
             this.scale = transform.scale.x;
             this.offset.x = transform.offset.x;
@@ -413,53 +415,5 @@ export default class DebugDrawRenderer {
         const commandStride = this.debugDrawCommandBuffer.GetCommandStride();
         this.processCommands(commandsPtr, commandsSize, commandStride);
         this.debugDrawCommandBuffer.ClearCommands();
-    }
-}
-
-export class Camera {
-    constructor() {
-        this.center = { x: 0, y: 0 };
-        this.zoom = 1.0;
-        this.width = 1280;
-        this.height = 800;
-    }
-
-    getTransform() {
-        const ratio = this.width / this.height;
-        const extents = {
-            x: this.zoom * ratio,
-            y: this.zoom
-        };
-
-        const scale = {
-            x: this.width / (2 * extents.x),
-            y: this.height / (2 * extents.y)
-        };
-
-        const offset = {
-            x: this.center.x + (this.width / 2 / scale.x),
-            y: this.center.y - (this.height / 2 / scale.y)
-        };
-
-        return {
-            offset,
-            scale
-        };
-    }
-
-    convertWorldToScreen(worldPoint) {
-        const transform = this.getTransform();
-        return {
-            x: (worldPoint.x - transform.offset.x) * transform.scale.x,
-            y: this.height - ((worldPoint.y - transform.offset.y) * transform.scale.y)
-        };
-    }
-
-    convertScreenToWorld(screenPoint) {
-        const transform = this.getTransform();
-        return {
-            x: (screenPoint.x / transform.scale.x) + transform.offset.x,
-            y: ((this.height - screenPoint.y) / transform.scale.y) + transform.offset.y
-        };
     }
 }

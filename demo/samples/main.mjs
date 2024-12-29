@@ -11,10 +11,6 @@ const ctx = canvas.getContext("2d");
 function loadSample(url) {
 	import(url).then((module) => {
 		sample = new module.default(box2d, canvas);
-		canvas.width = sample.camera.width;
-		canvas.height = sample.camera.height;
-
-		console.log(sample);
 	});
 }
 

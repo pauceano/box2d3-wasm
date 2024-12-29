@@ -1,5 +1,6 @@
 
-import DebugDrawRenderer, {Camera} from '../utils/debugDraw.mjs';
+import DebugDrawRenderer from '../utils/debugDraw.mjs';
+import Camera from '../utils/camera.mjs';
 
 import settings, {DEFAULT_SETTINGS} from './settings.mjs';
 
@@ -8,7 +9,7 @@ export default class Sample{
 
 		Object.assign(settings, DEFAULT_SETTINGS);
 
-		this.camera = new Camera();
+		this.camera = new Camera({autoResize: true, controls: true});
 		this.box2d = box2d;
 		this.canvas = canvas;
 		this.ctx = canvas.getContext('2d');
