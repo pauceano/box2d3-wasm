@@ -1,85 +1,79 @@
-import Box2DDebugDraw from '../utils/debugDraw.mjs';
+import DebugDrawRenderer from '../utils/debugDraw.mjs';
+import Camera from '../utils/camera.mjs';
 
-const settings = {
-	workerCount: 1,
-	enableSleep: true,
-	// draw options
-	drawShapes: true,
-	drawJoints: false,
-	drawJointExtras: false,
-	drawAABBs: false,
-	drawMass: false,
-	drawContactPoints: false,
-	drawGraphColors: false,
-	drawContactNormals: false,
-	drawContactImpulses: false,
-	drawFrictionImpulses: false,
-	// simulation options
-	hertz: 60,
-	enableWarmStarting: true,
-	enableContinuous: true,
-	subStepCount: 4,
-}
-
-const camera = {
-	offset: { x: 11, y: -12 },
-	ptm: 32,
-};
+import settings, {DEFAULT_SETTINGS} from './settings.mjs';
 
 export default class Sample{
 	constructor(box2d, canvas){
+
+		Object.assign(settings, DEFAULT_SETTINGS);
+
+		this.camera = new Camera({autoResize: true, controls: true, canvas});
 		this.box2d = box2d;
 		this.canvas = canvas;
-		const {b2DefaultWorldDef, b2CreateWorld} = box2d;
+		this.ctx = canvas.getContext('2d');
+		const {
+			b2DefaultWorldDef,
+			b2CreateWorld,
+			b2CreateThreadedWorld,
+		} = box2d;
 
 		this.worldDef = b2DefaultWorldDef();
-		// this.worldDef.workerCount = settings.workerCount;
-		// this.worldDef.enqueueTask = EnqueueTask;
-		// this.worldDef.finishTask = FinishTask;
-		// this.worldDef.userTaskContext = this;
 		this.worldDef.enableSleep = settings.enableSleep;
 
-		this.m_worldId = b2CreateWorld(this.worldDef);
+		if(settings.workerCount > 1){
+			this.m_taskSystem = new TaskSystem(navigator.hardwareConcurrency);
+			this.m_worldId = b2CreateThreadedWorld(this.worldDef, this.m_taskSystem);
+		} else {
+			this.m_worldId = b2CreateWorld(this.worldDef);
+		}
 
-		this.debugDraw = new Box2DDebugDraw(this.canvas, box2d, camera.ptm);
+		this.debugDraw = new DebugDrawRenderer(box2d, this.ctx, settings.ptm);
+
+		this.UpdateUI();
 	}
 
 	Step(){
+		const {
+			b2World_EnableSleeping,
+			b2World_EnableWarmStarting,
+			b2World_EnableContinuous,
+			b2World_Step,
+		} = this.box2d;
+
 		const timeStep = settings.hertz > 0.0 ? 1.0 / settings.hertz : 0.0;
 
+		this.debugDraw.SetFlags({
+			drawShapes: settings.drawShapes,
+			drawJoints: settings.drawJoints,
+			drawJointExtras: settings.drawJointExtras,
+			drawAABBs: settings.drawAABBs,
+			drawMass: settings.drawMass,
+			drawContacts: settings.drawContactPoints,
+			drawGraphColors: settings.drawGraphColors,
+			drawContactNormals: settings.drawContactNormals,
+			drawContactImpulses: settings.drawContactImpulses,
+			drawFrictionImpulses: settings.drawFrictionImpulses,
+		});
 
-		g_draw.m_debugDraw.drawingBounds = g_camera.GetViewBounds();
-		g_draw.m_debugDraw.useDrawingBounds = settings.useCameraBounds;
-
-		g_draw.m_debugDraw.drawShapes = settings.drawShapes;
-		g_draw.m_debugDraw.drawJoints = settings.drawJoints;
-		g_draw.m_debugDraw.drawJointExtras = settings.drawJointExtras;
-		g_draw.m_debugDraw.drawAABBs = settings.drawAABBs;
-		g_draw.m_debugDraw.drawMass = settings.drawMass;
-		g_draw.m_debugDraw.drawContacts = settings.drawContactPoints;
-		g_draw.m_debugDraw.drawGraphColors = settings.drawGraphColors;
-		g_draw.m_debugDraw.drawContactNormals = settings.drawContactNormals;
-		g_draw.m_debugDraw.drawContactImpulses = settings.drawContactImpulses;
-		g_draw.m_debugDraw.drawFrictionImpulses = settings.drawFrictionImpulses;
-
-		b2World_EnableSleeping( m_worldId, settings.enableSleep );
-		b2World_EnableWarmStarting( m_worldId, settings.enableWarmStarting );
-		b2World_EnableContinuous( m_worldId, settings.enableContinuous );
+		b2World_EnableSleeping( this.m_worldId, settings.enableSleep );
+		b2World_EnableWarmStarting( this.m_worldId, settings.enableWarmStarting );
+		b2World_EnableContinuous( this.m_worldId, settings.enableContinuous );
 
 		for ( let i = 0; i < 1; ++i )
 		{
-			b2World_Step( m_worldId, timeStep, settings.subStepCount );
-			m_taskCount = 0;
+			b2World_Step( this.m_worldId, timeStep, settings.subStepCount );
+			this.m_taskSystem?.ClearTasks();
 		}
-
-		this.debugDraw.drawWorldId(this.m_worldId);
 	}
 
-	UpdateUI(){
-
+	Draw(){
+		this.debugDraw.Draw(this.m_worldId, this.camera);
 	}
+
+	UpdateUI(){}
 
 	Destroy(){
-
+		this.camera.Destroy();
 	}
 }

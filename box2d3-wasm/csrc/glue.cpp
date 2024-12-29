@@ -1,4 +1,5 @@
 #include <box2d/box2d.h>
+#include <box2d/math_functions.h>
 #include <box2cpp/box2cpp.h>
 #include <emscripten.h>
 #include <emscripten/bind.h>
@@ -73,25 +74,43 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .constructor(+[](float x, float y) -> b2Vec2 { return b2Vec2{x, y}; })
         .property("x", &b2Vec2::x)
         .property("y", &b2Vec2::y)
-        .function("Set", +[](b2Vec2& self, float x, float y) -> b2Vec2 {
+        .function("Set", +[](b2Vec2& self, float x, float y) -> b2Vec2& {
             self.x = x;
             self.y = y;
             return self;
+        }, return_value_policy::reference())
+        .function("Copy", +[](b2Vec2& self, const b2Vec2& other) -> b2Vec2& {
+            self.x = other.x;
+            self.y = other.y;
+            return self;
+        }, return_value_policy::reference())
+        // Clone should stay as is since it returns a new vector
+        .function("Clone", +[](const b2Vec2& self) -> b2Vec2 {
+            return b2Vec2{self.x, self.y};
         })
-        .function("Copy", +[](const b2Vec2& self) -> b2Vec2 { return self; })
-        .function("Add", +[](const b2Vec2& self, const b2Vec2& other) -> b2Vec2 { return self + other; })
-        .function("Sub", +[](const b2Vec2& self, const b2Vec2& other) -> b2Vec2 { return self - other; })
-        .function("Mul", +[](b2Vec2& self, const b2Vec2& other) -> b2Vec2 {
+        .function("Add", +[](b2Vec2& self, const b2Vec2& other) -> b2Vec2& {
+            self.x += other.x;
+            self.y += other.y;
+            return self;
+        }, return_value_policy::reference())
+        .function("Sub", +[](b2Vec2& self, const b2Vec2& other) -> b2Vec2& {
+            self.x -= other.x;
+            self.y -= other.y;
+            return self;
+        }, return_value_policy::reference())
+        .function("Mul", +[](b2Vec2& self, const b2Vec2& other) -> b2Vec2& {
             self.x *= other.x;
             self.y *= other.y;
             return self;
-        })
-        .function("MulSV", +[](b2Vec2& self, float s) -> b2Vec2 {
+        }, return_value_policy::reference())
+        .function("MulSV", +[](b2Vec2& self, float s) -> b2Vec2& {
             self.x *= s;
             self.y *= s;
             return self;
-        })
+        }, return_value_policy::reference())
         ;
+    constant("b2Vec2_zero", b2Vec2_zero);
+    constant("B2_PI", B2_PI);
 
     class_<b2CosSin>("b2CosSin")
         .constructor()
@@ -113,6 +132,9 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         })
         ;
 
+    constant("b2Rot_identity", b2Rot_identity);
+
+
     class_<b2Transform>("b2Transform")
         .constructor()
         .property("p", &b2Transform::p, return_value_policy::reference())
@@ -130,6 +152,17 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("lowerBound", &b2AABB::lowerBound, return_value_policy::reference())
         .property("upperBound", &b2AABB::upperBound, return_value_policy::reference())
         ;
+
+    class_<b2Hull>("b2Hull")
+    .constructor()
+    .property("count", &b2Hull::count)
+    .function("getPoint", optional_override([](const b2Hull& hull, int index) {
+        if (index >= 0 && index < hull.count) {
+            return hull.points[index];
+        }
+        return b2Vec2();
+    }))
+    ;
 
     enum_<b2MixingRule>("b2MixingRule")
         .value("b2_mixAverage", b2MixingRule::b2_mixAverage)
@@ -157,11 +190,11 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("enableContinuous", &b2WorldDef::enableContinuous)
         .property("workerCount", &b2WorldDef::workerCount)
         // we do not assign threading callbacks here, we leave this in the C++ code
-        .function("SetUserData", +[](b2WorldDef& self, const emscripten::val& value) {
-            self.userData = reinterpret_cast<void*>(value.as<std::uintptr_t>());
+        .function("SetUserData", +[](b2WorldDef& self, int id) {
+            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
         })
-        .function("SetUserData", +[](const b2WorldDef& self) {
-            return emscripten::val(reinterpret_cast<std::uintptr_t>(self.userData));
+        .function("GetUserData", +[](const b2WorldDef& self) {  // Note: fixed function name from SetUserData to GetUserData
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.userData));
         })
         .property("internalValue", &b2WorldDef::internalValue)
         ;
@@ -176,11 +209,11 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .constructor()
         .property("transform", &b2BodyMoveEvent::transform, return_value_policy::reference())
         .property("bodyId", &b2BodyMoveEvent::bodyId)
-        .function("SetUserData", +[](b2BodyMoveEvent& self, const emscripten::val& value) {
-            self.userData = reinterpret_cast<void*>(value.as<std::uintptr_t>());
+        .function("SetUserData", +[](b2BodyMoveEvent& self, int id) {
+            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
         })
-        .function("SetUserData", +[](const b2BodyMoveEvent& self) {
-            return emscripten::val(reinterpret_cast<std::uintptr_t>(self.userData));
+        .function("GetUserData", +[](const b2BodyMoveEvent& self) {  // Fixed function name from SetUserData to GetUserData
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.userData));
         })
         .property("fellAsleep", &b2BodyMoveEvent::fellAsleep)
         ;
@@ -332,8 +365,12 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
 
     class_<b2SensorEvents>("b2SensorEvents")
         .constructor()
-        .property("beginEvents", &b2SensorEvents::beginEvents, allow_raw_pointers())
-        .property("endEvents", &b2SensorEvents::endEvents, allow_raw_pointers())
+        .function("GetBeginEvents", +[](const b2SensorEvents& events) {
+            return getEventsArray(events.beginEvents, events.beginCount);
+        })
+        .function("GetEndEvents", +[](const b2SensorEvents& events) {
+            return getEventsArray(events.endEvents, events.endCount);
+        })
         .property("beginCount", &b2SensorEvents::beginCount)
         .property("endCount", &b2SensorEvents::endCount)
         ;
@@ -451,11 +488,11 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .function("GetCounters", &b2::World::GetCounters)
         .function("GetProfile", &b2::World::GetProfile)
         .function("GetSensorEvents", &b2::World::GetSensorEvents)
-        .function("SetUserData", +[](b2::World& self, const emscripten::val& value) {
-            self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>())));
+        .function("SetUserData", +[](b2::World& self, int id) {
+            self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(id)));
         })
         .function("GetUserData", +[](const b2::World& self) {
-            return emscripten::val(reinterpret_cast<std::uintptr_t>(self.GetUserData()));
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.GetUserData()));
         })
         .function("CreateBody", +[](b2::World& world, const b2BodyDef& def) -> Body* {
             Body* body = new Body();
@@ -471,21 +508,21 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
 
      class_<b2Circle>("b2Circle")
         .constructor()
-        .property("center", &b2Circle::center)
+        .property("center", &b2Circle::center, return_value_policy::reference())
         .property("radius", &b2Circle::radius)
         ;
 
     class_<b2Capsule>("b2Capsule")
         .constructor()
-        .property("center1", &b2Capsule::center1)
-        .property("center2", &b2Capsule::center2)
+        .property("center1", &b2Capsule::center1, return_value_policy::reference())
+        .property("center2", &b2Capsule::center2, return_value_policy::reference())
         .property("radius", &b2Capsule::radius)
         ;
 
     class_<b2Segment>("b2Segment")
         .constructor()
-        .property("point1", &b2Segment::point1)
-        .property("point2", &b2Segment::point2)
+        .property("point1", &b2Segment::point1, return_value_policy::reference())
+        .property("point2", &b2Segment::point2, return_value_policy::reference())
         ;
 
     class_<b2Filter>("b2Filter")
@@ -500,16 +537,16 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
 
     class_<b2ShapeDef>("b2ShapeDef")
         .constructor()
-        .function("SetUserData", +[](b2ShapeDef& self, const emscripten::val& value) {
-            self.userData = reinterpret_cast<void*>(value.as<std::uintptr_t>());
+        .function("SetUserData", +[](b2ShapeDef& self, int id) {
+            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
         })
-        .function("SetUserData", +[](const b2ShapeDef& self) {
-            return emscripten::val(reinterpret_cast<std::uintptr_t>(self.userData));
+        .function("GetUserData", +[](const b2ShapeDef& self) {
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.userData));
         })
         .property("friction", &b2ShapeDef::friction)
         .property("restitution", &b2ShapeDef::restitution)
         .property("density", &b2ShapeDef::density)
-        .property("filter", &b2ShapeDef::filter)
+        .property("filter", &b2ShapeDef::filter, return_value_policy::reference())
         .property("customColor", &b2ShapeDef::customColor)
         .property("isSensor", &b2ShapeDef::isSensor)
         .property("enableSensorEvents", &b2ShapeDef::enableSensorEvents)
@@ -540,23 +577,25 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
                 self.normals[index] = value;
             }
         })
-        .property("centroid", &b2Polygon::centroid)
+        .property("centroid", &b2Polygon::centroid, return_value_policy::reference())
         .property("radius", &b2Polygon::radius)
         .property("count", &b2Polygon::count)
         .class_function("GetMaxVertices", +[]() { return B2_MAX_POLYGON_VERTICES; })
     ;
 
+    function("b2DefaultChainDef", &b2DefaultChainDef);
+
     class_<b2ChainDef>("b2ChainDef")
         .constructor<>()
-        .function("GetUserData", +[](const b2ChainDef& self) {
-            return emscripten::val(reinterpret_cast<std::uintptr_t>(self.userData));
+        .function("SetUserData", +[](b2ChainDef& self, int id) {
+            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
         })
-        .function("SetUserData", +[](b2ChainDef& self, const emscripten::val& value) {
-            self.userData = reinterpret_cast<void*>(value.as<std::uintptr_t>());
+        .function("GetUserData", +[](const b2ChainDef& self) {
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.userData));
         })
         .property("friction", &b2ChainDef::friction)
         .property("restitution", &b2ChainDef::restitution)
-        .property("filter", &b2ChainDef::filter)
+        .property("filter", &b2ChainDef::filter, return_value_policy::reference())
         .property("customColor", &b2ChainDef::customColor)
         .property("isLoop", &b2ChainDef::isLoop)
         .function("GetPoints", +[](const b2ChainDef& self) -> emscripten::val {
@@ -622,11 +661,23 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("revision", &b2ChainId::revision)
         ;
 
+    class_<b2ChainSegment>("b2ChainSegment")
+        .constructor()
+        .property("ghost1", &b2ChainSegment::ghost1, return_value_policy::reference())
+        .property("segment", &b2ChainSegment::segment, return_value_policy::reference())
+        .property("ghost2", &b2ChainSegment::ghost2, return_value_policy::reference())
+        .property("chainId", &b2ChainSegment::chainId)
+        ;
+
     function("b2MakeBox", &b2MakeBox);
     function("b2MakeSquare", &b2MakeSquare);
     function("b2MakeRoundedBox", &b2MakeRoundedBox);
     function("b2MakeOffsetBox", &b2MakeOffsetBox);
     function("b2MakeOffsetRoundedBox", &b2MakeOffsetRoundedBox);
+    function("b2MakePolygon", &b2MakePolygon, allow_raw_pointers());
+    function("b2MakeOffsetPolygon", &b2MakeOffsetPolygon, allow_raw_pointers());
+    function("b2MakeOffsetRoundedPolygon", &b2MakeOffsetRoundedPolygon, allow_raw_pointers());
+
 
     enum_<b2ShapeType>("b2ShapeType")
         .value("b2_circleShape", b2_circleShape)
@@ -674,11 +725,11 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .function("GetBody", select_overload<BodyRef()>(&Shape::GetBody))
         .function("GetParentChain", select_overload<ChainRef()>(&Shape::GetParentChain))
         .function("GetWorld", select_overload<WorldRef()>(&Shape::GetWorld))
-        .function("GetUserData", +[](const Shape& self) {
-            return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.GetUserData())));
+        .function("SetUserData", +[](Shape& self, int id) {
+            self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(id)));
         })
-        .function("SetUserData", +[](Shape& self, const emscripten::val& value) {
-            self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>())));
+        .function("GetUserData", +[](const Shape& self) {
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.GetUserData()));
         })
         ;
 
@@ -696,7 +747,7 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
     class_<b2MassData>("b2MassData")
         .constructor()
         .property("mass", &b2MassData::mass)
-        .property("center", &b2MassData::center)
+        .property("center", &b2MassData::center, return_value_policy::reference())
         .property("rotationalInertia", &b2MassData::rotationalInertia);
         ;
 
@@ -719,11 +770,11 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("angularDamping", &b2BodyDef::angularDamping)
         .property("gravityScale", &b2BodyDef::gravityScale)
         .property("sleepThreshold", &b2BodyDef::sleepThreshold)
-        .function("SetUserData", +[](b2BodyDef& self, const emscripten::val& value) {
-            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>()));
+        .function("SetUserData", +[](b2BodyDef& self, int id) {
+            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
         })
         .function("GetUserData", +[](const b2BodyDef& self) {
-            return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.userData));
         })
         .property("enableSleep", &b2BodyDef::enableSleep)
         .property("isAwake", &b2BodyDef::isAwake)
@@ -733,8 +784,6 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("allowFastRotation", &b2BodyDef::allowFastRotation)
         .property("internalValue", &b2BodyDef::internalValue)
         ;
-
-    function("b2DefaultBodyDef", &b2DefaultBodyDef);
 
     class_<BasicBodyInterface<Body, false>>("BasicBodyInterface");
 
@@ -822,15 +871,15 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .function("GetTransform", &Body::GetTransform)
         .function("GetShapeCount", &Body::GetShapeCount)
         .function("GetShapes", +[](const Body& body) {
-        return getArrayWrapper<b2ShapeId>(body, &Body::GetShapeCount, &Body::GetShapes);
+            return getArrayWrapper<b2ShapeId>(body, &Body::GetShapeCount, &Body::GetShapes);
         })
         .function("SetType", &Body::SetType)
         .function("GetType", &Body::GetType)
-        .function("GetUserData", +[](const Body& self) {
-            return emscripten::val(reinterpret_cast<std::uintptr_t>(self.GetUserData()));
+        .function("SetUserData", +[](Body& self, int id) {
+            self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(id)));
         })
-        .function("SetUserData", +[](Body& self, const emscripten::val& value) {
-            self.SetUserData(reinterpret_cast<void*>(value.as<std::uintptr_t>()));
+        .function("GetUserData", +[](const Body& self) {
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.GetUserData()));
         })
         .function("GetWorld", select_overload<WorldRef()>(&Body::GetWorld))
         .function("GetWorldCenterOfMass", &Body::GetWorldCenterOfMass)
@@ -838,21 +887,9 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .function("GetWorldVector", &Body::GetWorldVector)
         ;
 
-    function("b2CreateBody", &b2CreateBody, allow_raw_pointers());
-    function("b2Body_GetPosition", &b2Body_GetPosition);
-    function("b2Body_GetRotation", &b2Body_GetRotation);
-    function("b2Rot_GetAngle", &b2Rot_GetAngle);
-    function("b2Body_SetTransform", &b2Body_SetTransform);
-    function("b2Body_SetLinearVelocity", &b2Body_SetLinearVelocity);
-    function("b2Body_SetAwake", &b2Body_SetAwake);
-    function("b2Body_Enable", &b2Body_Enable);
-    function("b2Body_EnableSensorEvents", &b2Body_EnableSensorEvents);
-    function("b2Body_EnableContactEvents", &b2Body_EnableContactEvents);
-
     // ------------------------------------------------------------------------
     // b2Joint
     // ------------------------------------------------------------------------
-
     enum_<b2JointType>("b2JointType")
         .value("b2_distanceJoint", b2JointType::b2_distanceJoint)
         .value("b2_motorJoint", b2JointType::b2_motorJoint)
@@ -880,16 +917,16 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .function("GetCollideConnected", &Joint::GetCollideConnected)
         .function("GetConstraintForce", &Joint::GetConstraintForce)
         .function("GetConstraintTorque", &Joint::GetConstraintTorque)
-        .function("GetLocalAnchorA", &Joint::GetLocalAnchorA)
-        .function("GetLocalAnchorB", &Joint::GetLocalAnchorB)
+        .function("GetLocalAnchorA", &Joint::GetLocalAnchorA, return_value_policy::reference())
+        .function("GetLocalAnchorB", &Joint::GetLocalAnchorB, return_value_policy::reference())
         .function("GetType", &Joint::GetType)
         .function("WakeBodies", &Joint::WakeBodies)
         .function("GetWorld", select_overload<WorldRef()>(&Joint::GetWorld))
-        .function("GetUserData", +[](const Joint& self) {
-            return emscripten::val(reinterpret_cast<std::uintptr_t>(self.GetUserData()));
+        .function("SetUserData", +[](Joint& self, int id) {
+            self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(id)));
         })
-        .function("SetUserData", +[](Joint& self, const emscripten::val& value) {
-            self.SetUserData(reinterpret_cast<void*>(value.as<std::uintptr_t>()));
+        .function("GetUserData", +[](const Joint& self) {
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.GetUserData()));
         })
         ;
 
@@ -931,8 +968,8 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .constructor<const b2DistanceJointDef&>()
         .property("bodyIdA", &b2DistanceJointDef::bodyIdA)
         .property("bodyIdB", &b2DistanceJointDef::bodyIdB)
-        .property("localAnchorA", &b2DistanceJointDef::localAnchorA)
-        .property("localAnchorB", &b2DistanceJointDef::localAnchorB)
+        .property("localAnchorA", &b2DistanceJointDef::localAnchorA, return_value_policy::reference())
+        .property("localAnchorB", &b2DistanceJointDef::localAnchorB, return_value_policy::reference())
         .property("length", &b2DistanceJointDef::length)
         .property("enableSpring", &b2DistanceJointDef::enableSpring)
         .property("hertz", &b2DistanceJointDef::hertz)
@@ -944,14 +981,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("maxMotorForce", &b2DistanceJointDef::maxMotorForce)
         .property("motorSpeed", &b2DistanceJointDef::motorSpeed)
         .property("collideConnected", &b2DistanceJointDef::collideConnected)
-        .function("SetUserData", +[](b2DistanceJointDef& self, const emscripten::val& value) {
-            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>()));
+        .function("SetUserData", +[](b2DistanceJointDef& self, int id) {
+            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
         })
         .function("GetUserData", +[](const b2DistanceJointDef& self) {
-            return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.userData));
         })
     ;
-    function("b2DefaultDistanceJointDef", &b2DefaultDistanceJointDef);
 
     class_<b2MotorJointDef>("b2MotorJointDef")
         .constructor()
@@ -964,14 +1000,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("maxTorque", &b2MotorJointDef::maxTorque)
         .property("correctionFactor", &b2MotorJointDef::correctionFactor)
         .property("collideConnected", &b2MotorJointDef::collideConnected)
-        .function("SetUserData", +[](b2MotorJointDef& self, const emscripten::val& value) {
-            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>()));
+        .function("SetUserData", +[](b2MotorJointDef& self, int id) {
+            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
         })
         .function("GetUserData", +[](const b2MotorJointDef& self) {
-            return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.userData));
         })
     ;
-    function("b2DefaultMotorJointDef", &b2DefaultMotorJointDef);
 
     class_<b2MouseJointDef>("b2MouseJointDef")
         .constructor()
@@ -983,36 +1018,34 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("dampingRatio", &b2MouseJointDef::dampingRatio)
         .property("maxForce", &b2MouseJointDef::maxForce)
         .property("collideConnected", &b2MouseJointDef::collideConnected)
-        .function("SetUserData", +[](b2MouseJointDef& self, const emscripten::val& value) {
-            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>()));
+        .function("SetUserData", +[](b2MouseJointDef& self, int id) {
+            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
         })
         .function("GetUserData", +[](const b2MouseJointDef& self) {
-            return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.userData));
         })
     ;
-    function("b2DefaultMouseJointDef", &b2DefaultMouseJointDef);
 
     class_<b2NullJointDef>("b2NullJointDef")
         .constructor()
         .constructor<const b2NullJointDef&>()
         .property("bodyIdA", &b2NullJointDef::bodyIdA)
         .property("bodyIdB", &b2NullJointDef::bodyIdB)
-        .function("SetUserData", +[](b2NullJointDef& self, const emscripten::val& value) {
-            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>()));
+        .function("SetUserData", +[](b2NullJointDef& self, int id) {
+            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
         })
         .function("GetUserData", +[](const b2NullJointDef& self) {
-            return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.userData));
         })
     ;
-    function("b2DefaultNullJointDef", &b2DefaultNullJointDef);
 
     class_<b2PrismaticJointDef>("b2PrismaticJointDef")
         .constructor()
         .constructor<const b2PrismaticJointDef&>()
         .property("bodyIdA", &b2PrismaticJointDef::bodyIdA)
         .property("bodyIdB", &b2PrismaticJointDef::bodyIdB)
-        .property("localAnchorA", &b2PrismaticJointDef::localAnchorA)
-        .property("localAnchorB", &b2PrismaticJointDef::localAnchorB)
+        .property("localAnchorA", &b2PrismaticJointDef::localAnchorA, return_value_policy::reference())
+        .property("localAnchorB", &b2PrismaticJointDef::localAnchorB, return_value_policy::reference())
         .property("localAxisA", &b2PrismaticJointDef::localAxisA)
         .property("referenceAngle", &b2PrismaticJointDef::referenceAngle)
         .property("enableSpring", &b2PrismaticJointDef::enableSpring)
@@ -1025,22 +1058,21 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("maxMotorForce", &b2PrismaticJointDef::maxMotorForce)
         .property("motorSpeed", &b2PrismaticJointDef::motorSpeed)
         .property("collideConnected", &b2PrismaticJointDef::collideConnected)
-        .function("SetUserData", +[](b2PrismaticJointDef& self, const emscripten::val& value) {
-            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>()));
+        .function("SetUserData", +[](b2PrismaticJointDef& self, int id) {
+            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
         })
         .function("GetUserData", +[](const b2PrismaticJointDef& self) {
-            return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.userData));
         })
     ;
-    function("b2DefaultPrismaticJointDef", &b2DefaultPrismaticJointDef);
 
     class_<b2RevoluteJointDef>("b2RevoluteJointDef")
         .constructor()
         .constructor<const b2RevoluteJointDef&>()
         .property("bodyIdA", &b2RevoluteJointDef::bodyIdA)
         .property("bodyIdB", &b2RevoluteJointDef::bodyIdB)
-        .property("localAnchorA", &b2RevoluteJointDef::localAnchorA)
-        .property("localAnchorB", &b2RevoluteJointDef::localAnchorB)
+        .property("localAnchorA", &b2RevoluteJointDef::localAnchorA, return_value_policy::reference())
+        .property("localAnchorB", &b2RevoluteJointDef::localAnchorB, return_value_policy::reference())
         .property("referenceAngle", &b2RevoluteJointDef::referenceAngle)
         .property("enableSpring", &b2RevoluteJointDef::enableSpring)
         .property("hertz", &b2RevoluteJointDef::hertz)
@@ -1053,45 +1085,43 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("motorSpeed", &b2RevoluteJointDef::motorSpeed)
         .property("drawSize", &b2RevoluteJointDef::drawSize)
         .property("collideConnected", &b2RevoluteJointDef::collideConnected)
-        .function("SetUserData", +[](b2RevoluteJointDef& self, const emscripten::val& value) {
-            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>()));
+        .function("SetUserData", +[](b2RevoluteJointDef& self, int id) {
+            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
         })
         .function("GetUserData", +[](const b2RevoluteJointDef& self) {
-            return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.userData));
         })
     ;
-    function("b2DefaultRevoluteJointDef", &b2DefaultRevoluteJointDef);
 
     class_<b2WeldJointDef>("b2WeldJointDef")
         .constructor()
         .constructor<const b2WeldJointDef&>()
         .property("bodyIdA", &b2WeldJointDef::bodyIdA)
         .property("bodyIdB", &b2WeldJointDef::bodyIdB)
-        .property("localAnchorA", &b2WeldJointDef::localAnchorA)
-        .property("localAnchorB", &b2WeldJointDef::localAnchorB)
+        .property("localAnchorA", &b2WeldJointDef::localAnchorA, return_value_policy::reference())
+        .property("localAnchorB", &b2WeldJointDef::localAnchorB, return_value_policy::reference())
         .property("referenceAngle", &b2WeldJointDef::referenceAngle)
         .property("linearHertz", &b2WeldJointDef::linearHertz)
         .property("angularHertz", &b2WeldJointDef::angularHertz)
         .property("linearDampingRatio", &b2WeldJointDef::linearDampingRatio)
         .property("angularDampingRatio", &b2WeldJointDef::angularDampingRatio)
         .property("collideConnected", &b2WeldJointDef::collideConnected)
-        .function("SetUserData", +[](b2WeldJointDef& self, const emscripten::val& value) {
-            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>()));
+        .function("SetUserData", +[](b2WeldJointDef& self, int id) {
+            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
         })
         .function("GetUserData", +[](const b2WeldJointDef& self) {
-            return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.userData));
         })
     ;
-    function("b2DefaultWeldJointDef", &b2DefaultWeldJointDef);
 
     class_<b2WheelJointDef>("b2WheelJointDef")
         .constructor()
         .constructor<const b2WheelJointDef&>()
         .property("bodyIdA", &b2WheelJointDef::bodyIdA)
         .property("bodyIdB", &b2WheelJointDef::bodyIdB)
-        .property("localAnchorA", &b2WheelJointDef::localAnchorA)
-        .property("localAnchorB", &b2WheelJointDef::localAnchorB)
-        .property("localAxisA", &b2WheelJointDef::localAxisA)
+        .property("localAnchorA", &b2WheelJointDef::localAnchorA, return_value_policy::reference())
+        .property("localAnchorB", &b2WheelJointDef::localAnchorB, return_value_policy::reference())
+        .property("localAxisA", &b2WheelJointDef::localAxisA, return_value_policy::reference())
         .property("enableSpring", &b2WheelJointDef::enableSpring)
         .property("hertz", &b2WheelJointDef::hertz)
         .property("dampingRatio", &b2WheelJointDef::dampingRatio)
@@ -1102,14 +1132,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("maxMotorTorque", &b2WheelJointDef::maxMotorTorque)
         .property("motorSpeed", &b2WheelJointDef::motorSpeed)
         .property("collideConnected", &b2WheelJointDef::collideConnected)
-        .function("SetUserData", +[](b2WheelJointDef& self, const emscripten::val& value) {
-            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<double>()));
+        .function("SetUserData", +[](b2WheelJointDef& self, int id) {
+            self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
         })
         .function("GetUserData", +[](const b2WheelJointDef& self) {
-            return emscripten::val(static_cast<double>(reinterpret_cast<std::uintptr_t>(self.userData)));
+            return static_cast<int>(reinterpret_cast<std::uintptr_t>(self.userData));
         })
     ;
-    function("b2DefaultWheelJointDef", &b2DefaultWheelJointDef);
 
     class_<DistanceJoint, base<BasicDistanceJointInterface<DistanceJoint, false>>>("DistanceJoint")
         .constructor<>()
@@ -1267,7 +1296,6 @@ EMSCRIPTEN_BINDINGS(box2d) {
     // ------------------------------------------------------------------------
     // b2World
     // ------------------------------------------------------------------------
-
     function("b2DefaultWorldDef", &b2DefaultWorldDef);
 
     function("b2CreateWorld", &b2CreateWorld, allow_raw_pointers());
@@ -1294,8 +1322,14 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2World_GetMaximumLinearSpeed", &b2World_GetMaximumLinearSpeed);
     function("b2World_GetProfile", &b2World_GetProfile);
     function("b2World_GetCounters", &b2World_GetCounters);
-    // function("b2World_SetUserData", &b2World_SetUserData, allow_raw_pointers());
-    // function("b2World_GetUserData", &b2World_GetUserData, allow_raw_pointers());
+    function("b2World_SetUserData", +[](b2WorldId worldId, int id) {
+        void* userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
+        b2World_SetUserData(worldId, userData);
+    });
+    function("b2World_GetUserData", +[](b2WorldId worldId) {
+        void* userData = b2World_GetUserData(worldId);
+        return static_cast<int>(reinterpret_cast<std::uintptr_t>(userData));
+    });
     // function("b2World_DumpMemoryStats", &b2World_DumpMemoryStats);
     function("b2World_OverlapAABB",
         +[](b2WorldId worldId, const b2AABB& aabb, b2QueryFilter filter, emscripten::val callback, emscripten::val context) {
@@ -1455,6 +1489,233 @@ EMSCRIPTEN_BINDINGS(box2d) {
     // ------------------------------------------------------------------------
     // b2Shape
     // ------------------------------------------------------------------------
+    function("b2Shape_GetBody", &b2Shape_GetBody);
+    function("b2Shape_GetWorld", &b2Shape_GetWorld);
+    function("b2Shape_SetUserData", +[](b2ShapeId shapeId, int id) {
+        void* userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
+        b2Shape_SetUserData(shapeId, userData);
+    });
+
+    function("b2Shape_GetUserData", +[](b2ShapeId shapeId) {
+        void* userData = b2Shape_GetUserData(shapeId);
+        return static_cast<int>(reinterpret_cast<std::uintptr_t>(userData));
+    });
+    function("b2Shape_IsSensor", &b2Shape_IsSensor);
+    function("b2Shape_TestPoint", &b2Shape_TestPoint);
+    function("b2Shape_RayCast", &b2Shape_RayCast, allow_raw_pointers());
+    function("b2Shape_SetDensity", &b2Shape_SetDensity);
+    function("b2Shape_GetDensity", &b2Shape_GetDensity);
+    function("b2Shape_SetFriction", &b2Shape_SetFriction);
+    function("b2Shape_GetFriction", &b2Shape_GetFriction);
+    function("b2Shape_SetRestitution", &b2Shape_SetRestitution);
+    function("b2Shape_GetRestitution", &b2Shape_GetRestitution);
+    function("b2Shape_GetFilter", &b2Shape_GetFilter);
+    function("b2Shape_SetFilter", &b2Shape_SetFilter);
+    function("b2Shape_EnableSensorEvents", &b2Shape_EnableSensorEvents);
+    function("b2Shape_AreSensorEventsEnabled", &b2Shape_AreSensorEventsEnabled);
+    function("b2Shape_EnableContactEvents", &b2Shape_EnableContactEvents);
+    function("b2Shape_AreContactEventsEnabled", &b2Shape_AreContactEventsEnabled);
+    function("b2Shape_EnablePreSolveEvents", &b2Shape_EnablePreSolveEvents);
+    function("b2Shape_ArePreSolveEventsEnabled", &b2Shape_ArePreSolveEventsEnabled);
+    function("b2Shape_EnableHitEvents", &b2Shape_EnableHitEvents);
+    function("b2Shape_AreHitEventsEnabled", &b2Shape_AreHitEventsEnabled);
+    function("b2Shape_GetType", &b2Shape_GetType);
+    function("b2Shape_GetCircle", &b2Shape_GetCircle);
+    function("b2Shape_GetSegment", &b2Shape_GetSegment);
+    function("b2Shape_GetChainSegment", &b2Shape_GetChainSegment);
+    function("b2Shape_GetCapsule", &b2Shape_GetCapsule);
+    function("b2Shape_GetPolygon", &b2Shape_GetPolygon);
+    function("b2Shape_SetCircle", &b2Shape_SetCircle, allow_raw_pointers());
+    function("b2Shape_SetCapsule", &b2Shape_SetCapsule, allow_raw_pointers());
+    function("b2Shape_SetSegment", &b2Shape_SetSegment, allow_raw_pointers());
+    function("b2Shape_SetPolygon", &b2Shape_SetPolygon, allow_raw_pointers());
+    function("b2Shape_GetParentChain", &b2Shape_GetParentChain);
+    function("b2Shape_GetContactCapacity", &b2Shape_GetContactCapacity);
+    function("b2Shape_GetContactData", &b2Shape_GetContactData, allow_raw_pointers());
     function("b2Shape_GetSensorCapacity", &b2Shape_GetSensorCapacity);
     function("b2Shape_GetSensorOverlaps", &b2Shape_GetSensorOverlaps, allow_raw_pointers());
+    function("b2Shape_GetAABB", &b2Shape_GetAABB);
+    function("b2Shape_GetClosestPoint", &b2Shape_GetClosestPoint);
+
+    // ------------------------------------------------------------------------
+    // b2Body
+    // ------------------------------------------------------------------------
+    function("b2DefaultBodyDef", &b2DefaultBodyDef);
+
+    function("b2CreateBody", &b2CreateBody, allow_raw_pointers());
+    function("b2DestroyBody", &b2DestroyBody, allow_raw_pointers());
+    function("b2Body_GetPosition", &b2Body_GetPosition);
+    function("b2Body_GetRotation", &b2Body_GetRotation);
+    function("b2Body_GetTransform", &b2Body_GetTransform);
+    function("b2Body_SetTransform", &b2Body_SetTransform);
+    function("b2Body_GetLocalPoint", &b2Body_GetLocalPoint);
+    function("b2Body_GetWorldPoint", &b2Body_GetWorldPoint);
+    function("b2Body_GetLocalVector", &b2Body_GetLocalVector);
+    function("b2Body_GetWorldVector", &b2Body_GetWorldVector);
+    function("b2Body_GetMass", &b2Body_GetMass);
+    function("b2Body_GetRotationalInertia", &b2Body_GetRotationalInertia);
+    function("b2Body_GetLocalCenterOfMass", &b2Body_GetLocalCenterOfMass);
+    function("b2Body_GetWorldCenterOfMass", &b2Body_GetWorldCenterOfMass);
+    function("b2Body_SetMassData", &b2Body_SetMassData);
+    function("b2Body_GetMassData", &b2Body_GetMassData);
+    function("b2Body_ApplyMassFromShapes", &b2Body_ApplyMassFromShapes);
+    function("b2Body_GetLinearVelocity", &b2Body_GetLinearVelocity);
+    function("b2Body_GetAngularVelocity", &b2Body_GetAngularVelocity);
+    function("b2Body_SetLinearVelocity", &b2Body_SetLinearVelocity);
+    function("b2Body_SetAngularVelocity", &b2Body_SetAngularVelocity);
+    function("b2Body_ApplyForce", &b2Body_ApplyForce);
+    function("b2Body_ApplyForceToCenter", &b2Body_ApplyForceToCenter);
+    function("b2Body_ApplyTorque", &b2Body_ApplyTorque);
+    function("b2Body_ApplyLinearImpulse", &b2Body_ApplyLinearImpulse);
+    function("b2Body_ApplyLinearImpulseToCenter", &b2Body_ApplyLinearImpulseToCenter);
+    function("b2Body_ApplyAngularImpulse", &b2Body_ApplyAngularImpulse);
+    function("b2Body_SetLinearDamping", &b2Body_SetLinearDamping);
+    function("b2Body_GetLinearDamping", &b2Body_GetLinearDamping);
+    function("b2Body_SetAngularDamping", &b2Body_SetAngularDamping);
+    function("b2Body_GetAngularDamping", &b2Body_GetAngularDamping);
+    function("b2Body_SetGravityScale", &b2Body_SetGravityScale);
+    function("b2Body_GetGravityScale", &b2Body_GetGravityScale);
+    function("b2Body_GetType", &b2Body_GetType);
+    function("b2Body_SetType", &b2Body_SetType);
+    function("b2Body_IsAwake", &b2Body_IsAwake);
+    function("b2Body_SetAwake", &b2Body_SetAwake);
+    function("b2Body_IsEnabled", &b2Body_IsEnabled);
+    function("b2Body_Enable", &b2Body_Enable);
+    function("b2Body_Disable", &b2Body_Disable);
+    function("b2Body_IsSleepEnabled", &b2Body_IsSleepEnabled);
+    function("b2Body_EnableSleep", &b2Body_EnableSleep);
+    function("b2Body_SetSleepThreshold", &b2Body_SetSleepThreshold);
+    function("b2Body_GetSleepThreshold", &b2Body_GetSleepThreshold);
+    function("b2Body_SetFixedRotation", &b2Body_SetFixedRotation);
+    function("b2Body_IsFixedRotation", &b2Body_IsFixedRotation);
+    function("b2Body_SetBullet", &b2Body_SetBullet);
+    function("b2Body_IsBullet", &b2Body_IsBullet);
+    function("b2Body_SetUserData", +[](b2BodyId bodyId, int id) {
+        void* userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
+        b2Body_SetUserData(bodyId, userData);
+    });
+
+    function("b2Body_GetUserData", +[](b2BodyId bodyId) {
+        void* userData = b2Body_GetUserData(bodyId);
+        return static_cast<int>(reinterpret_cast<std::uintptr_t>(userData));
+    });
+    function("b2Body_EnableSensorEvents", &b2Body_EnableSensorEvents);
+    function("b2Body_EnableContactEvents", &b2Body_EnableContactEvents);
+    function("b2Body_EnableHitEvents", &b2Body_EnableHitEvents);
+    function("b2Body_GetShapeCount", &b2Body_GetShapeCount);
+    function("b2Body_GetShapes", &b2Body_GetShapes, allow_raw_pointers());
+    function("b2Body_GetJointCount", &b2Body_GetJointCount);
+    function("b2Body_GetJoints", &b2Body_GetJoints, allow_raw_pointers());
+    function("b2Body_GetContactCapacity", &b2Body_GetContactCapacity);
+    function("b2Body_GetContactData", &b2Body_GetContactData, allow_raw_pointers());
+    function("b2Body_ComputeAABB", &b2Body_ComputeAABB);
+    function("b2Body_GetWorld", &b2Body_GetWorld);
+
+    // ------------------------------------------------------------------------
+    // b2Joint
+    // ------------------------------------------------------------------------
+    function("b2DestroyJoint", &b2DestroyJoint, allow_raw_pointers());
+    function("b2DefaultDistanceJointDef", &b2DefaultDistanceJointDef);
+    function("b2CreateDistanceJoint", &b2CreateDistanceJoint, allow_raw_pointers());
+    function("b2DefaultMotorJointDef", &b2DefaultMotorJointDef);
+    function("b2CreateMotorJoint", &b2CreateMotorJoint, allow_raw_pointers());
+    function("b2DefaultMouseJointDef", &b2DefaultMouseJointDef);
+    function("b2CreateMouseJoint", &b2CreateMouseJoint, allow_raw_pointers());
+    function("b2DefaultNullJointDef", &b2DefaultNullJointDef);
+    function("b2CreateNullJoint", &b2CreateNullJoint, allow_raw_pointers());
+    function("b2DefaultPrismaticJointDef", &b2DefaultPrismaticJointDef);
+    function("b2CreatePrismaticJoint", &b2CreatePrismaticJoint, allow_raw_pointers());
+    function("b2DefaultRevoluteJointDef", &b2DefaultRevoluteJointDef);
+    function("b2CreateRevoluteJoint", &b2CreateRevoluteJoint, allow_raw_pointers());
+    function("b2DefaultWeldJointDef", &b2DefaultWeldJointDef);
+    function("b2CreateWeldJoint", &b2CreateWeldJoint, allow_raw_pointers());
+    function("b2DefaultWheelJointDef", &b2DefaultWheelJointDef);
+    function("b2CreateWheelJoint", &b2CreateWheelJoint, allow_raw_pointers());
+
+
+    // ------------------------------------------------------------------------
+    // Misc
+    // ------------------------------------------------------------------------
+    function("b2ComputeHull", optional_override([](const emscripten::val& pointsArray) -> b2Hull {
+        int count = pointsArray["length"].as<int>();
+        std::vector<b2Vec2> points(count);
+        for (int i = 0; i < count; i++) {
+            const auto point = pointsArray[i];
+            points[i].x = point["x"].as<float>();
+            points[i].y = point["y"].as<float>();
+        }
+        return b2ComputeHull(points.data(), count);
+    }));
+
+    function("b2RelativeAngle", b2RelativeAngle);
+    function("b2MakeRot", b2MakeRot);
+
+    // ------------------------------------------------------------------------
+    // Random
+    // ------------------------------------------------------------------------
+    static uint32_t g_seed = 12345;
+    static const uint32_t RAND_LIMIT = 32767;
+
+    function("RandomInt", optional_override([]() -> int {
+        uint32_t x = g_seed;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        g_seed = x;
+        return (int)(x % (RAND_LIMIT + 1));
+    }));
+    function("RandomIntRange", optional_override([](int lo, int hi) -> int {
+        uint32_t x = g_seed;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        g_seed = x;
+        return lo + (int)(x % (RAND_LIMIT + 1)) % (hi - lo + 1);
+    }));
+    function("RandomFloat", optional_override([]() -> float {
+        uint32_t x = g_seed;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        g_seed = x;
+        float r = (float)(x & (RAND_LIMIT));
+        r /= RAND_LIMIT;
+        r = 2.0f * r - 1.0f;
+        return r;
+    }));
+    function("RandomFloatRange", optional_override([](float lo, float hi) -> float {
+        uint32_t x = g_seed;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        g_seed = x;
+        float r = (float)(x & (RAND_LIMIT));
+        r /= RAND_LIMIT;
+        r = (hi - lo) * r + lo;
+        return r;
+    }));
+    function("RandomVec2", optional_override([](float lo, float hi) -> b2Vec2 {
+        b2Vec2 v;
+
+        uint32_t x = g_seed;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        g_seed = x;
+        float rx = (float)(x & (RAND_LIMIT));
+        rx /= RAND_LIMIT;
+        v.x = (hi - lo) * rx + lo;
+
+        x = g_seed;
+        x ^= x << 13;
+        x ^= x >> 17;
+        x ^= x << 5;
+        g_seed = x;
+        float ry = (float)(x & (RAND_LIMIT));
+        ry /= RAND_LIMIT;
+        v.y = (hi - lo) * ry + lo;
+
+        return v;
+    }));
+
 }

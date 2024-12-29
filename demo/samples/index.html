@@ -4,15 +4,30 @@
 	<meta charset='utf-8'>
 	<meta name='viewport' content='width=device-width,initial-scale=1'>
 
-	<title>Box2D3 in WebAssembly</title>
+	<title>Box2D3 in WebAssembly - Samples</title>
 
   <link rel="icon" href="data:,">
   <style>
-    body {
-      font-family: "Helvetica Neue", Helvetica, "Lucida Grande", sans-serif;
+    html,body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
     }
     canvas {
       background-color: #373737;
+    }
+    #main-settings,
+    #sample-settings {
+      position: fixed;
+      padding: 20px;
+    }
+    #main-settings {
+      top: 0;
+      right: 0;
+    }
+    #sample-settings {
+      bottom: 0;
+      left: 0;
     }
   </style>
 
@@ -27,11 +42,12 @@
 </head>
 
 <body>
-  <h1>Box2D3 in WebAssembly</h1>
+  <div id="main-settings"></div>
+  <div id="sample-settings"></div>
   <canvas id="demo-canvas" width="800" height="700"></canvas>
-  <p>
+  <!-- <p>
     Demonstration of <a href="https://github.com/Birch-san/box2d3-wasm">box2d3-wasm</a> by Alex Birch of <a href="https://birchlabs.co.uk/">Birchlabs.co.uk</a> & Erik Sombroek. MIT-licensed.<br>
     Links against MIT-licensed code from Erin Catto's <a href="https://github.com/erincatto/box2d">box2d</a>.
-  </p>
+  </p> -->
 </body>
 </html>

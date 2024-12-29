@@ -5,6 +5,8 @@ export default class DebugDrawRenderer {
         this.scale = scale;
         this.offset = { x: 0, y: 0 };
 
+        this.debugDrawCommandBuffer = new Module.DebugDrawCommandBuffer();
+
         this.colorCache = {};
         this.colorCache[1.0] = this.initializeColorCache();
         this.colorCache[0.5] = this.initializeColorCache(0.5);
@@ -319,6 +321,12 @@ export default class DebugDrawRenderer {
         this.ctx.fill();
         this.ctx.strokeStyle = this.colorToHTML(cmd.color);
         this.ctx.stroke();
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(p1.x, p1.y);
+        this.ctx.lineTo(p2.x, p2.y);
+        this.ctx.strokeStyle = this.colorToHTML(cmd.color);
+        this.ctx.stroke();
     }
 
     drawSegment(cmd) {
@@ -362,7 +370,7 @@ export default class DebugDrawRenderer {
 
     drawPoint(cmd) {
         this.ctx.beginPath();
-        this.ctx.arc(cmd.data[0], cmd.data[1], cmd.data[2]/2, 0, 2 * Math.PI);
+        this.ctx.arc(cmd.data[0], cmd.data[1], (cmd.data[2]/2) / this.scale, 0, 2 * Math.PI);
         this.ctx.fillStyle = this.colorToHTML(cmd.color);
         this.ctx.fill();
     }
@@ -388,5 +396,30 @@ export default class DebugDrawRenderer {
             x: xf.p.x + xf.q.c * v.x - xf.q.s * v.y,
             y: xf.p.y + xf.q.s * v.x + xf.q.c * v.y
         };
+    }
+
+    SetFlags(flags) {
+        const debugDraw = this.debugDrawCommandBuffer.GetDebugDraw();
+        for (const [key, value] of Object.entries(flags)) {
+            debugDraw[key] = value;
+        }
+    }
+
+    Draw(worldId, camera) {
+        if (camera) {
+            this.ctx.canvas.width = camera.width;
+            this.ctx.canvas.height = camera.height;
+            const transform = camera.getTransform();
+            this.scale = transform.scale.x;
+            this.offset.x = transform.offset.x;
+            this.offset.y = transform.offset.y;
+        }
+
+        this.Module.b2World_Draw(worldId, this.debugDrawCommandBuffer.GetDebugDraw());
+        const commandsPtr = this.debugDrawCommandBuffer.GetCommandsData();
+        const commandsSize = this.debugDrawCommandBuffer.GetCommandsSize();
+        const commandStride = this.debugDrawCommandBuffer.GetCommandStride();
+        this.processCommands(commandsPtr, commandsSize, commandStride);
+        this.debugDrawCommandBuffer.ClearCommands();
     }
 }
