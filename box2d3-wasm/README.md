@@ -2,11 +2,12 @@
 
 [Box2D v3][] ported to the web via [wasm][]!
 
-## Online Demo
+## Online Demos
+- [box2d v3 samples](https://birch-san.github.io/box2d3-wasm/demo/samples)
+- [pyramid drop demo](https://birch-san.github.io/box2d3-wasm/demo/modern/?threads=auto&pyramidHeight=100)
+*You can change the size of the pyramid by editing the "pyramidHeight" URL parameter. Set it to 101 for a pyramid with 5,050 boxes!*
 
-Check out the [pyramid drop demo](https://birch-san.github.io/box2d3-wasm/?threads=auto&pyramidHeight=64). You can change the size of the pyramid by editing the "pyramidHeight" URL parameter. Set it to 101 for a pyramid with 5,050 boxes!
-
-## Usage 
+## Usage
 
 ### Web Usage
 
