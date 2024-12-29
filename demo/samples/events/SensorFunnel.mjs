@@ -1,3 +1,4 @@
+import {Pane} from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
 import Sample from "../sample.mjs";
 
 import settings from '../settings.mjs';
@@ -37,7 +38,7 @@ export default class SensorFunnel extends Sample{
 				b2MakeOffsetBox,
 				b2BodyType,
 				b2Rot_identity
-			} = box2d;
+			} = this.box2d;
 
 			const bodyDef = b2DefaultBodyDef();
 			const groundId = b2CreateBody( this.m_worldId, bodyDef );
@@ -98,15 +99,26 @@ export default class SensorFunnel extends Sample{
 			}
 		}
 
-		this.m_wait = e_wait;
-		this.m_side = -15.0;
 		this.m_type = params.get('m_type') ? parseInt(params.get('m_type')) : e_human;
 
+		this.Spawn(box2d);
+	}
+
+	Spawn(){
+		this.m_wait = e_wait;
+		this.m_side = -15.0;
 
 		this.m_elements = new Array(e_count).fill(null);
 		this.m_isSpawned = new Array(e_count).fill(false);
 
 		this.CreateElement();
+	}
+
+	Despawn(){
+		for ( let i = 0; i < e_count; i++ )
+		{
+			this.DestroyElement(i);
+		}
 	}
 
 	CreateElement()
@@ -192,6 +204,36 @@ export default class SensorFunnel extends Sample{
 			this.CreateElement();
 			this.m_wait += e_wait;
 		}
+	}
+
+	UpdateUI(){
+		const container = document.getElementById('sample-settings');
+
+		super.UpdateUI();
+
+		const PARAMS = {
+			shape: e_human,
+		};
+		const pane = new Pane({
+			title: 'Sample Settings',
+  			expanded: true,
+			container
+		});
+
+		pane.addBinding(PARAMS, 'shape', {
+			options: {
+				e_donut: e_donut,
+				e_human: e_human
+			},
+		}).on('change', (event) => {
+			this.Despawn();
+			this.m_type = event.value;
+			this.Spawn();
+
+			console.log(event.value);
+		});
+
+
 	}
 
 }

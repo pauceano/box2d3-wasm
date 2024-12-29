@@ -1,4 +1,3 @@
-
 import DebugDrawRenderer from '../utils/debugDraw.mjs';
 import Camera from '../utils/camera.mjs';
 
@@ -9,7 +8,7 @@ export default class Sample{
 
 		Object.assign(settings, DEFAULT_SETTINGS);
 
-		this.camera = new Camera({autoResize: true, controls: true});
+		this.camera = new Camera({autoResize: true, controls: true, canvas});
 		this.box2d = box2d;
 		this.canvas = canvas;
 		this.ctx = canvas.getContext('2d');
@@ -30,6 +29,8 @@ export default class Sample{
 		}
 
 		this.debugDraw = new DebugDrawRenderer(box2d, this.ctx, settings.ptm);
+
+		this.UpdateUI();
 	}
 
 	Step(){
@@ -64,15 +65,15 @@ export default class Sample{
 			b2World_Step( this.m_worldId, timeStep, settings.subStepCount );
 			this.m_taskSystem?.ClearTasks();
 		}
+	}
 
+	Draw(){
 		this.debugDraw.Draw(this.m_worldId, this.camera);
 	}
 
-	UpdateUI(){
-
-	}
+	UpdateUI(){}
 
 	Destroy(){
-
+		this.camera.Destroy();
 	}
 }

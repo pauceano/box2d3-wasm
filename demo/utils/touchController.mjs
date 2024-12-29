@@ -1,26 +1,27 @@
 export default class TouchController {
-    constructor(camera) {
+    constructor(camera, canvas) {
         this.camera = camera;
+		this.canvas = canvas;
         this.touches = [];
         this.lastTouchDistance = 0;
         this.enabled = false;
     }
 
-    enable() {
+    Enable() {
         if (this.enabled) return;
 
-        window.addEventListener('touchstart', this.onTouchStart, { passive: false });
-        window.addEventListener('touchmove', this.onTouchMove, { passive: false });
-        window.addEventListener('touchend', this.onTouchEnd, { passive: false });
+        this.canvas.addEventListener('touchstart', this.onTouchStart, { passive: false });
+        this.canvas.addEventListener('touchmove', this.onTouchMove, { passive: false });
+        this.canvas.addEventListener('touchend', this.onTouchEnd, { passive: false });
         this.enabled = true;
     }
 
-    disable() {
+    Disable() {
         if (!this.enabled) return;
 
-        window.removeEventListener('touchstart', this.onTouchStart, { passive: false });
-        window.removeEventListener('touchmove', this.onTouchMove, { passive: false });
-        window.removeEventListener('touchend', this.onTouchEnd, { passive: false });
+        this.canvas.removeEventListener('touchstart', this.onTouchStart, { passive: false });
+        this.canvas.removeEventListener('touchmove', this.onTouchMove, { passive: false });
+        this.canvas.removeEventListener('touchend', this.onTouchEnd, { passive: false });
         this.enabled = false;
     }
 
@@ -109,7 +110,7 @@ export default class TouchController {
         this.lastTouchDistance = 0;
     }
 
-    destroy() {
-        this.disable();
+    Destroy() {
+        this.Disable();
     }
 }

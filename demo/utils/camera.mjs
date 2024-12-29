@@ -6,7 +6,7 @@ const mouse = {
 };
 
 export default class Camera {
-    constructor(options = {autoResize: false, controls: false}) {
+    constructor(options = {autoResize: false, controls: false, canvas: null}) {
         this.center = { x: 0, y: 0 };
         this.zoom = 1.0;
         this.width = 1280;
@@ -23,7 +23,7 @@ export default class Camera {
 		this.touchController = null;
 
 		if (options.controls) {
-			this.addControls();
+			this.addControls(options.canvas);
 		}
     }
 
@@ -80,7 +80,7 @@ export default class Camera {
 	}
 
 
-	addControls() {
+	addControls(canvas) {
 		window.addEventListener('wheel', this.onScroll);
 		window.addEventListener('mousemove', this.onMouseMove);
 		window.addEventListener('mousedown', this.onMouseDown);
@@ -89,9 +89,19 @@ export default class Camera {
 			event.preventDefault();
 		});
 
-		this.touchController = new TouchController(this);
-		this.touchController.enable();
+		this.touchController = new TouchController(this, canvas);
+		this.touchController.Enable();
 	}
+
+	removeControls() {
+		window.removeEventListener('wheel', this.onScroll);
+		window.removeEventListener('mousemove', this.onMouseMove);
+		window.removeEventListener('mousedown', this.onMouseDown);
+		window.removeEventListener('mouseup', this.onMouseUp);
+		this.touchController?.Destroy();
+		this.touchController = null;
+	}
+
 
 	onMouseDown = (event) => {
 		this.mouseDown = event.button === 0 ? mouse.left : mouse.right;
@@ -138,7 +148,8 @@ export default class Camera {
 		this.center.y -= (worldPosBeforeZoom.y - worldPosAfterZoom.y);
 	}
 
-	destroy() {
+	Destroy() {
 		window.removeEventListener('resize', this.resizeWindow);
+		this.removeControls();
 	}
 }
