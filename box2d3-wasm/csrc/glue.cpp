@@ -546,7 +546,7 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("friction", &b2ShapeDef::friction)
         .property("restitution", &b2ShapeDef::restitution)
         .property("density", &b2ShapeDef::density)
-        .property("filter", &b2ShapeDef::filter)
+        .property("filter", &b2ShapeDef::filter, return_value_policy::reference())
         .property("customColor", &b2ShapeDef::customColor)
         .property("isSensor", &b2ShapeDef::isSensor)
         .property("enableSensorEvents", &b2ShapeDef::enableSensorEvents)
@@ -595,7 +595,7 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         })
         .property("friction", &b2ChainDef::friction)
         .property("restitution", &b2ChainDef::restitution)
-        .property("filter", &b2ChainDef::filter)
+        .property("filter", &b2ChainDef::filter, return_value_policy::reference)
         .property("customColor", &b2ChainDef::customColor)
         .property("isLoop", &b2ChainDef::isLoop)
         .function("GetPoints", +[](const b2ChainDef& self) -> emscripten::val {
