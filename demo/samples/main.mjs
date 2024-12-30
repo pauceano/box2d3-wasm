@@ -2,6 +2,8 @@ import {Pane} from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.
 
 import Box2DFactory from 'box2d3-wasm';
 import settings from './settings.mjs';
+import Camera from '../utils/camera.mjs';
+import DebugDrawRenderer from '../utils/debugDraw.mjs';
 
 const state = {
 	pause: false,
@@ -14,15 +16,20 @@ let sample = null;
 const canvas = document.getElementById("demo-canvas");
 const ctx = canvas.getContext("2d");
 
+const camera = new Camera({autoResize: true, controls: true, canvas});
+let debugDraw = null;
+
 function loadSample(url) {
 	import(url).then((module) => {
-		sample = new module.default(box2d, canvas);
+		sample = new module.default(box2d, camera);
 	});
 }
 
 
 async function initialize(){
 	box2d = await Box2DFactory();
+
+	debugDraw = new DebugDrawRenderer(box2d, ctx, settings.ptm);
 
 	requestAnimationFrame(update);
 
@@ -61,18 +68,31 @@ let frameTime = 0;
 function update(timestamp) {
     const deltaTime = timestamp - lastFrameTime;
 
-    if (deltaTime >= settings.maxFrameTime) {
+	debugDraw.SetFlags({
+		drawShapes: settings.drawShapes,
+		drawJoints: settings.drawJoints,
+		drawJointExtras: settings.drawJointExtras,
+		drawAABBs: settings.drawAABBs,
+		drawMass: settings.drawMass,
+		drawContacts: settings.drawContactPoints,
+		drawGraphColors: settings.drawGraphColors,
+		drawContactNormals: settings.drawContactNormals,
+		drawContactImpulses: settings.drawContactImpulses,
+		drawFrictionImpulses: settings.drawFrictionImpulses,
+	});
+
+    if (deltaTime >= settings.maxFrameTime && sample) {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const start = performance.now();
 		if (!state.pause || state.singleStep) {
-        	sample?.Step()
+        	sample.Step()
 		}
         const end = performance.now();
 
 		state.singleStep = false;
 
-		sample?.Draw();
+		debugDraw.Draw(sample.m_worldId, camera);
 
         frameTime = end - start;
 

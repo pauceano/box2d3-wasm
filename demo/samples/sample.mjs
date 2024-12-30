@@ -1,17 +1,11 @@
-import DebugDrawRenderer from '../utils/debugDraw.mjs';
-import Camera from '../utils/camera.mjs';
-
 import settings, {DEFAULT_SETTINGS} from './settings.mjs';
 
 export default class Sample{
-	constructor(box2d, canvas){
+	constructor(box2d){
 
 		Object.assign(settings, DEFAULT_SETTINGS);
 
-		this.camera = new Camera({autoResize: true, controls: true, canvas});
 		this.box2d = box2d;
-		this.canvas = canvas;
-		this.ctx = canvas.getContext('2d');
 		const {
 			b2DefaultWorldDef,
 			b2CreateWorld,
@@ -28,8 +22,6 @@ export default class Sample{
 			this.m_worldId = b2CreateWorld(this.worldDef);
 		}
 
-		this.debugDraw = new DebugDrawRenderer(box2d, this.ctx, settings.ptm);
-
 		this.UpdateUI();
 	}
 
@@ -43,19 +35,6 @@ export default class Sample{
 
 		const timeStep = settings.hertz > 0.0 ? 1.0 / settings.hertz : 0.0;
 
-		this.debugDraw.SetFlags({
-			drawShapes: settings.drawShapes,
-			drawJoints: settings.drawJoints,
-			drawJointExtras: settings.drawJointExtras,
-			drawAABBs: settings.drawAABBs,
-			drawMass: settings.drawMass,
-			drawContacts: settings.drawContactPoints,
-			drawGraphColors: settings.drawGraphColors,
-			drawContactNormals: settings.drawContactNormals,
-			drawContactImpulses: settings.drawContactImpulses,
-			drawFrictionImpulses: settings.drawFrictionImpulses,
-		});
-
 		b2World_EnableSleeping( this.m_worldId, settings.enableSleep );
 		b2World_EnableWarmStarting( this.m_worldId, settings.enableWarmStarting );
 		b2World_EnableContinuous( this.m_worldId, settings.enableContinuous );
@@ -65,10 +44,6 @@ export default class Sample{
 			b2World_Step( this.m_worldId, timeStep, settings.subStepCount );
 			this.m_taskSystem?.ClearTasks();
 		}
-	}
-
-	Draw(){
-		this.debugDraw.Draw(this.m_worldId, this.camera);
 	}
 
 	UpdateUI(){}
