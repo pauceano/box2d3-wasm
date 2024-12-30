@@ -7,6 +7,7 @@ const mouse = {
 
 export default class Camera {
     constructor(options = {autoResize: false, controls: false, canvas: null}) {
+		this.canvas = options.canvas;
         this.center = { x: 0, y: 0 };
         this.zoom = 1.0;
         this.width = 1280;
@@ -23,7 +24,7 @@ export default class Camera {
 		this.touchController = null;
 
 		if (options.controls) {
-			this.addControls(options.canvas);
+			this.addControls();
 		}
     }
 
@@ -67,7 +68,7 @@ export default class Camera {
         const transform = this.getTransform();
         return {
             x: (worldPoint.x - transform.offset.x) * transform.scale.x,
-            y: this.height - ((worldPoint.y - transform.offset.y) * transform.scale.y)
+            y: this.height + ((worldPoint.y - transform.offset.y) * transform.scale.y)
         };
     }
 
@@ -75,12 +76,12 @@ export default class Camera {
 		const transform = this.getTransform();
 		return {
 			x: (screenPoint.x / transform.scale.x) - (this.width / 2 / transform.scale.x) + this.center.x,
-			y: -((screenPoint.y / transform.scale.y) - (this.height / 2 / transform.scale.y) - this.center.y)
+			y: ((screenPoint.y / transform.scale.y) - (this.height / 2 / transform.scale.y) - this.center.y)
 		};
 	}
 
 
-	addControls(canvas) {
+	addControls() {
 		window.addEventListener('wheel', this.onScroll);
 		window.addEventListener('mousemove', this.onMouseMove);
 		window.addEventListener('mousedown', this.onMouseDown);
@@ -89,7 +90,7 @@ export default class Camera {
 			event.preventDefault();
 		});
 
-		this.touchController = new TouchController(this, canvas);
+		this.touchController = new TouchController(this, this.canvas);
 		this.touchController.Enable();
 	}
 
