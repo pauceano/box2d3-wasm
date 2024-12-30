@@ -12,9 +12,11 @@ const state = {
 
 let box2d = null;
 let sample = null;
+let pane = null;
 
 const canvas = document.getElementById("demo-canvas");
 const ctx = canvas.getContext("2d");
+
 
 const camera = new Camera({autoResize: true, controls: true, canvas});
 let debugDraw = null;
@@ -22,9 +24,18 @@ let debugDraw = null;
 function loadSample(url) {
 	import(url).then((module) => {
 		sample = new module.default(box2d, camera);
+		updateDebugDrawFlags();
 	});
 }
 
+const debugDrawFlagKeys = ['drawShapes', 'drawJoints', 'drawJointExtras', 'drawAABBs', 'drawMass', 'drawContactPoints', 'drawGraphColors', 'drawContactImpulses', 'drawContactNormals', 'drawContactImpulses', 'drawFrictionImpulses'];
+function updateDebugDrawFlags(){
+	const debugDrawFlags = {};
+	debugDrawFlagKeys.forEach((key) => {
+		debugDrawFlags[key] = settings[key];
+	});
+	debugDraw.SetFlags(debugDrawFlags);
+}
 
 async function initialize(){
 	box2d = await Box2DFactory();
@@ -44,7 +55,7 @@ function addUI(){
 	const PARAMS = {
 		pause: false,
 	  };
-	const pane = new Pane({
+	pane = new Pane({
 		title: 'Main Settings',
 		expanded: true,
 		container,
@@ -59,6 +70,15 @@ function addUI(){
 	}).on('click', () => {
 		state.singleStep = true;
 	});
+
+	// debug draw settings
+	const debugDrawFolder = pane.addFolder({
+		title: 'debugdraw',
+		expanded: false,
+	});
+	debugDrawFlagKeys.forEach((key) => {
+		debugDrawFolder.addBinding(settings, key).on('change', updateDebugDrawFlags);
+	});
 }
 
 let lastFrameTime = 0;
@@ -67,19 +87,6 @@ let frameTime = 0;
 
 function update(timestamp) {
     const deltaTime = timestamp - lastFrameTime;
-
-	debugDraw.SetFlags({
-		drawShapes: settings.drawShapes,
-		drawJoints: settings.drawJoints,
-		drawJointExtras: settings.drawJointExtras,
-		drawAABBs: settings.drawAABBs,
-		drawMass: settings.drawMass,
-		drawContacts: settings.drawContactPoints,
-		drawGraphColors: settings.drawGraphColors,
-		drawContactNormals: settings.drawContactNormals,
-		drawContactImpulses: settings.drawContactImpulses,
-		drawFrictionImpulses: settings.drawFrictionImpulses,
-	});
 
     if (deltaTime >= settings.maxFrameTime && sample) {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);

@@ -1,12 +1,15 @@
 export default class DebugDrawRenderer {
-    constructor(Module, context, scale) {
+    constructor(Module, context, scale, autoHD = true) {
         this.Module = Module;
         this.ctx = context;
-        this.scale = scale;
+        this.baseScale = scale;
         this.offset = { x: 0, y: 0 };
 
-        this.debugDrawCommandBuffer = new Module.DebugDrawCommandBuffer();
+        this.autoHD = autoHD;
+        this.dpr = autoHD ? Math.min(window.devicePixelRatio || 1, 2) : 1;
+        this.finalScale = this.baseScale * this.dpr;
 
+        this.debugDrawCommandBuffer = new Module.DebugDrawCommandBuffer();
         this.colorCache = {};
         this.colorCache[1.0] = this.initializeColorCache();
         this.colorCache[0.5] = this.initializeColorCache(0.5);
@@ -171,14 +174,16 @@ export default class DebugDrawRenderer {
 
     processCommands(ptr, size, stride) {
         this.ctx.save();
-        this.ctx.scale(this.scale, -this.scale);
+        this.ctx.scale(this.finalScale, -this.finalScale);
         this.ctx.translate(this.offset.x, this.offset.y);
-        this.ctx.lineWidth = 1 / this.scale;
+        this.ctx.lineWidth = 1 / this.finalScale;
 
         // type: 0 (uint8_t)
         // color: 4 (uint32_t)
         // vertexCount: 8 (uint16_t)
         // data: 12 (float[32])
+
+        const { DebugDrawCommandType } = this.Module;
 
         for (let i = 0; i < size; i++) {
             const baseOffset = ptr + (i * stride);
@@ -190,31 +195,31 @@ export default class DebugDrawRenderer {
             };
 
             switch (cmd.type) {
-                case 0:
+                case DebugDrawCommandType.e_polygon.value:
                     this.drawPolygon(cmd);
                     break;
-                case 1:
+                case DebugDrawCommandType.e_solidPolygon.value:
                     this.drawSolidPolygon(cmd);
                     break;
-                case 2:
+                case DebugDrawCommandType.e_circle.value:
                     this.drawCircle(cmd);
                     break;
-                case 3:
+                case DebugDrawCommandType.e_solidCircle.value:
                     this.drawSolidCircle(cmd);
                     break;
-                case 4:
+                case DebugDrawCommandType.e_solidCapsule.value:
                     this.drawSolidCapsule(cmd);
                     break;
-                case 5:
+                case DebugDrawCommandType.e_segment.value:
                     this.drawSegment(cmd);
                     break;
-                case 6:
+                case DebugDrawCommandType.e_transform.value:
                     this.drawTransform(cmd);
                     break;
-                case 7:
+                case DebugDrawCommandType.e_point.value:
                     this.drawPoint(cmd);
                     break;
-                case 8:
+                case DebugDrawCommandType.e_string.value:
                     this.drawString(cmd);
                     break;
             }
@@ -370,14 +375,35 @@ export default class DebugDrawRenderer {
 
     drawPoint(cmd) {
         this.ctx.beginPath();
-        this.ctx.arc(cmd.data[0], cmd.data[1], (cmd.data[2]/2) / this.scale, 0, 2 * Math.PI);
+        this.ctx.arc(cmd.data[0], cmd.data[1], (cmd.data[2]/2) / this.finalScale, 0, 2 * Math.PI);
         this.ctx.fillStyle = this.colorToHTML(cmd.color);
         this.ctx.fill();
     }
 
     drawString(cmd) {
+        let text = '';
+        const x = cmd.data[0];
+        const y = cmd.data[1];
+
+        for (let i = 2; i < 32; i++) {
+            const code = cmd.data[i];
+            if (code <= 0) break;
+            const char = String.fromCharCode(Math.round(code));
+            text += char;
+        }
+
+        const fontSize = 12 * this.dpr;
+
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        this.ctx.font = `${fontSize}px Arial`;
         this.ctx.fillStyle = 'rgb(230, 230, 230)';
-        this.ctx.fillText(cmd.text, cmd.data[0], cmd.data[1]);
+
+        const screenX = (x + this.offset.x) * this.finalScale;
+        const screenY = (-y - this.offset.y) * this.finalScale;
+
+        this.ctx.fillText(text, screenX, screenY);
+        this.ctx.restore();
     }
 
     colorToHTML(color, alpha = 1.0) {
@@ -407,12 +433,27 @@ export default class DebugDrawRenderer {
 
     Draw(worldId, camera) {
         if (camera) {
-            this.ctx.canvas.width = camera.width;
-            this.ctx.canvas.height = camera.height;
+            this.ctx.canvas.width = camera.width * this.dpr;
+            this.ctx.canvas.height = camera.height * this.dpr;
+            this.ctx.canvas.style.width = `${camera.width}px`;
+            this.ctx.canvas.style.height = `${camera.height}px`;
+
             const transform = camera.getTransform();
-            this.scale = transform.scale.x;
+            this.baseScale = transform.scale.x;
+            this.finalScale = this.baseScale * this.dpr;
             this.offset.x = transform.offset.x;
             this.offset.y = transform.offset.y;
+        } else {
+            // get bounds of the canvas
+            const clientWidth = this.ctx.canvas.clientWidth;
+            const clientHeight = this.ctx.canvas.clientHeight;
+
+            this.ctx.canvas.width = clientWidth * this.dpr;
+            this.ctx.canvas.height = clientHeight * this.dpr;
+            this.ctx.canvas.style.width = `${clientWidth}px`;
+            this.ctx.canvas.style.height = `${clientHeight}px`;
+
+            console.log(this.ctx.canvas.width, this.ctx.canvas.height);
         }
 
         this.Module.b2World_Draw(worldId, this.debugDrawCommandBuffer.GetDebugDraw());
