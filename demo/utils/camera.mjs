@@ -54,7 +54,7 @@ export default class Camera {
 
         const offset = {
             x: this.center.x + (this.width / 2 / scale.x),
-            y: this.center.y - (this.height / 2 / scale.y)
+            y: -this.center.y - (this.height / 2 / scale.y)
         };
 
         return {

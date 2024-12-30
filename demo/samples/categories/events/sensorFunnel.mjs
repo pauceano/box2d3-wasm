@@ -1,10 +1,10 @@
 import {Pane} from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
-import Sample from "../sample.mjs";
+import Sample from "../../sample.mjs";
 
-import settings from '../settings.mjs';
+import settings from '../../settings.mjs';
 
-import CreateHuman from "../prefabs/human.mjs";
-import Donut from "../prefabs/donut.mjs";
+import CreateHuman from "../../prefabs/human.mjs";
+import Donut from "../../prefabs/donut.mjs";
 
 const params = new URLSearchParams(window.location.search);
 
@@ -101,6 +101,7 @@ export default class SensorFunnel extends Sample{
 
 		this.m_type = params.get('m_type') ? parseInt(params.get('m_type')) : e_human;
 
+		this.CreateUI();
 		this.Spawn(box2d);
 	}
 
@@ -206,21 +207,21 @@ export default class SensorFunnel extends Sample{
 		}
 	}
 
-	UpdateUI(){
+	CreateUI(){
 		const container = document.getElementById('sample-settings');
 
-		super.UpdateUI();
+		super.CreateUI();
 
 		const PARAMS = {
 			shape: e_human,
 		};
-		const pane = new Pane({
+		this.pane = new Pane({
 			title: 'Sample Settings',
   			expanded: true,
 			container
 		});
 
-		pane.addBinding(PARAMS, 'shape', {
+		this.pane.addBinding(PARAMS, 'shape', {
 			options: {
 				e_donut: e_donut,
 				e_human: e_human
@@ -231,10 +232,20 @@ export default class SensorFunnel extends Sample{
 			this.Despawn();
 			this.m_type = event.value;
 			this.Spawn();
-
 		});
-
-
 	}
 
+	Destroy(){
+		super.Destroy();
+		this.Despawn();
+
+		console.log('pane', this.pane);
+
+		if (this.pane){
+			this.pane.dispose();
+			this.pane = null;
+
+			console.log('pane disposed');
+		}
+	}
 }

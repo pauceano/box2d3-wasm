@@ -16,13 +16,13 @@ export default class Sample{
 		this.worldDef.enableSleep = settings.enableSleep;
 
 		if(settings.workerCount > 1){
-			this.m_taskSystem = new TaskSystem(navigator.hardwareConcurrency);
+			this.m_taskSystem = new TaskSystem(settings.workerCount);
 			this.m_worldId = b2CreateThreadedWorld(this.worldDef, this.m_taskSystem);
 		} else {
 			this.m_worldId = b2CreateWorld(this.worldDef);
 		}
 
-		this.UpdateUI();
+		this.pane = null;
 	}
 
 	Step(){
@@ -46,9 +46,9 @@ export default class Sample{
 		}
 	}
 
+	Spawn(){}
+	Despawn(){}
+	CreateUI(){}
 	UpdateUI(){}
-
-	Destroy(){
-		this.camera.Destroy();
-	}
+	Destroy(){}
 }

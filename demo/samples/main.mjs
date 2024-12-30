@@ -1,9 +1,11 @@
 import {Pane} from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
 
 import Box2DFactory from 'box2d3-wasm';
-import settings from './settings.mjs';
 import Camera from '../utils/camera.mjs';
 import DebugDrawRenderer from '../utils/debugDraw.mjs';
+
+import samples from './categories/list.mjs';
+import settings from './settings.mjs';
 
 const state = {
 	pause: false,
@@ -22,6 +24,11 @@ const camera = new Camera({autoResize: true, controls: true, canvas});
 let debugDraw = null;
 
 function loadSample(url) {
+	if(sample){
+		sample.Destroy();
+		sample = null;
+	}
+
 	import(url).then((module) => {
 		sample = new module.default(box2d, camera);
 		updateDebugDrawFlags();
@@ -44,7 +51,7 @@ async function initialize(){
 
 	requestAnimationFrame(update);
 
-	loadSample('./events/SensorFunnel.mjs');
+	loadSample('./categories/events/SensorFunnel.mjs');
 
 	addUI();
 }
@@ -61,24 +68,55 @@ function addUI(){
 		container,
 	});
 
-	pane.addBinding(PARAMS, 'pause').on('change', (event) => {
+
+	const tab = pane.addTab({
+		pages: [
+			{title: 'Controls'},
+			{title: 'Samples'},
+		],
+	});
+
+	const main = tab.pages[0];
+
+	main.addBinding(PARAMS, 'pause').on('change', (event) => {
 		state.pause = event.value;
 	});
 
-	pane.addButton({
+	main.addButton({
 		title: 'single step',
 	}).on('click', () => {
 		state.singleStep = true;
 	});
 
 	// debug draw settings
-	const debugDrawFolder = pane.addFolder({
+	const debugDrawFolder = main.addFolder({
 		title: 'debugdraw',
 		expanded: false,
 	});
 	debugDrawFlagKeys.forEach((key) => {
 		debugDrawFolder.addBinding(settings, key).on('change', updateDebugDrawFlags);
 	});
+
+	const samplesTab = tab.pages[1];
+	Object.keys(samples).forEach((type) => {
+		// add folder for each sample
+		const folder = samplesTab.addFolder({
+			title: type,
+			expanded: false,
+		});
+
+		Object.keys(samples[type]).forEach((sample) => {
+
+			const url = samples[type][sample];
+			folder.addButton({
+				title: sample,
+			}).on('click', () => {
+				loadSample(url);
+			});
+		});
+	});
+
+
 }
 
 let lastFrameTime = 0;

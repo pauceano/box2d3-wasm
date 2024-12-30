@@ -33,11 +33,7 @@ const {
   TaskSystem,
   b2CreateThreadedWorld,
   b2World_GetProfile,
-  DebugDrawCommandBuffer,
 } = box2d;
-
-
-const debugDrawCommandBuffer = new DebugDrawCommandBuffer();
 
 const worldDef = b2DefaultWorldDef();
 worldDef.gravity.Set(0, -10);
