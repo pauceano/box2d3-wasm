@@ -153,7 +153,7 @@ let handle;
 function loop(prevMs) {
     const nowMs = window.performance.now();
     handle = requestAnimationFrame(loop.bind(null, nowMs));
-    const deltaMs = nowMs-prevMs;
+    const deltaMs = Math.min(nowMs-prevMs, 1000/120);
 
     const start = performance.now();
     b2World_Step(worldId, deltaMs / 1000, subStepCount);
