@@ -408,6 +408,8 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .property("leafVisits", &b2TreeStats::leafVisits)
         ;
 
+    function("b2DefaultQueryFilter", &b2DefaultQueryFilter);
+
     class_<b2QueryFilter>("b2QueryFilter")
         .constructor()
         .property("categoryBits",
@@ -1332,60 +1334,59 @@ EMSCRIPTEN_BINDINGS(box2d) {
     });
     // function("b2World_DumpMemoryStats", &b2World_DumpMemoryStats);
     function("b2World_OverlapAABB",
-        +[](b2WorldId worldId, const b2AABB& aabb, b2QueryFilter filter, emscripten::val callback, emscripten::val context) {
+        +[](b2WorldId worldId, const b2AABB& aabb, b2QueryFilter filter, emscripten::val callback) {
             return b2World_OverlapAABB(worldId, aabb, filter,
                 +[](b2ShapeId shapeId, void* ctx) -> bool {
-                    auto callback = *reinterpret_cast<emscripten::val*>(ctx);
-                    return callback(emscripten::val(shapeId)).as<bool>();
+                    return (*reinterpret_cast<emscripten::val*>(ctx))(emscripten::val(shapeId)).as<bool>();
                 },
                 &callback
             );
         }
     );
     function("b2World_OverlapPoint",
-        +[](b2WorldId worldId, b2Vec2 point, b2Transform transform, b2QueryFilter filter, emscripten::val callback, emscripten::val context) {
+        +[](b2WorldId worldId, b2Vec2 point, b2Transform transform, b2QueryFilter filter, emscripten::val callback) {
             return b2World_OverlapPoint(worldId, point, transform, filter,
                 +[](b2ShapeId shapeId, void* ctx) -> bool {
-                    auto callback = *reinterpret_cast<emscripten::val*>(ctx);
-                    return callback(emscripten::val(shapeId)).as<bool>();
+                    return (*reinterpret_cast<emscripten::val*>(ctx))(emscripten::val(shapeId)).as<bool>();
                 },
                 &callback
             );
         }
     );
+
     function("b2World_OverlapCircle",
-        +[](b2WorldId worldId, const b2Circle* circle, b2Transform transform, b2QueryFilter filter, emscripten::val callback, emscripten::val context) {
+        +[](b2WorldId worldId, const b2Circle* circle, b2Transform transform, b2QueryFilter filter, emscripten::val callback) {
             return b2World_OverlapCircle(worldId, circle, transform, filter,
                 +[](b2ShapeId shapeId, void* ctx) -> bool {
-                    auto callback = *reinterpret_cast<emscripten::val*>(ctx);
-                    return callback(emscripten::val(shapeId)).as<bool>();
+                    return (*reinterpret_cast<emscripten::val*>(ctx))(emscripten::val(shapeId)).as<bool>();
                 },
                 &callback
             );
         }
     , allow_raw_pointers());
+
     function("b2World_OverlapCapsule",
-        +[](b2WorldId worldId, const b2Capsule* capsule, b2Transform transform, b2QueryFilter filter, emscripten::val callback, emscripten::val context) {
+        +[](b2WorldId worldId, const b2Capsule* capsule, b2Transform transform, b2QueryFilter filter, emscripten::val callback) {
             return b2World_OverlapCapsule(worldId, capsule, transform, filter,
                 +[](b2ShapeId shapeId, void* ctx) -> bool {
-                    auto callback = *reinterpret_cast<emscripten::val*>(ctx);
-                    return callback(emscripten::val(shapeId)).as<bool>();
+                    return (*reinterpret_cast<emscripten::val*>(ctx))(emscripten::val(shapeId)).as<bool>();
                 },
                 &callback
             );
         }
     , allow_raw_pointers());
+
     function("b2World_OverlapPolygon",
-        +[](b2WorldId worldId, const b2Polygon* polygon, b2Transform transform, b2QueryFilter filter, emscripten::val callback, emscripten::val context) {
+        +[](b2WorldId worldId, const b2Polygon* polygon, b2Transform transform, b2QueryFilter filter, emscripten::val callback) {
             return b2World_OverlapPolygon(worldId, polygon, transform, filter,
                 +[](b2ShapeId shapeId, void* ctx) -> bool {
-                    auto callback = *reinterpret_cast<emscripten::val*>(ctx);
-                    return callback(emscripten::val(shapeId)).as<bool>();
+                    return (*reinterpret_cast<emscripten::val*>(ctx))(emscripten::val(shapeId)).as<bool>();
                 },
                 &callback
             );
         }
     , allow_raw_pointers());
+
     function("b2World_CastRay",
         +[](b2WorldId worldId, b2Vec2 origin, b2Vec2 translation, b2QueryFilter filter, emscripten::val callback) {
             return b2World_CastRay(worldId, origin, translation, filter,
@@ -1631,7 +1632,37 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2CreateWeldJoint", &b2CreateWeldJoint, allow_raw_pointers());
     function("b2DefaultWheelJointDef", &b2DefaultWheelJointDef);
     function("b2CreateWheelJoint", &b2CreateWheelJoint, allow_raw_pointers());
+    
+    function("b2Joint_IsValid", &b2Joint_IsValid);
+    function("b2Joint_GetType", &b2Joint_GetType);
+    function("b2Joint_GetBodyA", &b2Joint_GetBodyA);
+    function("b2Joint_GetBodyB", &b2Joint_GetBodyB);
+    function("b2Joint_GetWorld", &b2Joint_GetWorld);
+    function("b2Joint_GetLocalAnchorA", &b2Joint_GetLocalAnchorA);
+    function("b2Joint_GetLocalAnchorB", &b2Joint_GetLocalAnchorB);
+    function("b2Joint_SetCollideConnected", &b2Joint_SetCollideConnected);
+    function("b2Joint_GetCollideConnected", &b2Joint_GetCollideConnected);
+    function("b2Joint_SetUserData", +[](b2JointId jointId, int id) {
+        void* userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(id));
+        b2Joint_SetUserData(jointId, userData);
+    });
 
+    function("b2Joint_GetUserData", +[](b2JointId jointId) {
+        void* userData = b2Joint_GetUserData(jointId);
+        return static_cast<int>(reinterpret_cast<std::uintptr_t>(userData));
+    });
+    function("b2Joint_WakeBodies", &b2Joint_WakeBodies);
+    function("b2Joint_GetConstraintForce", &b2Joint_GetConstraintForce);
+    function("b2Joint_GetConstraintTorque", &b2Joint_GetConstraintTorque);
+
+    function("b2MouseJoint_SetTarget", &b2MouseJoint_SetTarget);
+    function("b2MouseJoint_GetTarget", &b2MouseJoint_GetTarget);
+    function("b2MouseJoint_SetSpringHertz", &b2MouseJoint_SetSpringHertz);
+    function("b2MouseJoint_GetSpringHertz", &b2MouseJoint_GetSpringHertz);
+    function("b2MouseJoint_SetSpringDampingRatio", &b2MouseJoint_SetSpringDampingRatio);
+    function("b2MouseJoint_GetSpringDampingRatio", &b2MouseJoint_GetSpringDampingRatio);
+    function("b2MouseJoint_SetMaxForce", &b2MouseJoint_SetMaxForce);
+    function("b2MouseJoint_GetMaxForce", &b2MouseJoint_GetMaxForce);
 
     // ------------------------------------------------------------------------
     // Misc
