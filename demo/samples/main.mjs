@@ -51,11 +51,11 @@ function updateDebugDrawFlags(){
 async function initialize(){
 	box2d = await Box2DFactory();
 
-	debugDraw = new DebugDrawRenderer(box2d, ctx, settings.ptm, false);
+	debugDraw = new DebugDrawRenderer(box2d, ctx, settings.ptm);
 
 	requestAnimationFrame(update);
 
-	loadSample('./categories/events/sensorBooked.mjs');
+	loadSample('./categories/events/sensorFunnel.mjs');
 
 	addUI();
 	addControls();
@@ -163,8 +163,21 @@ let lastFrameTime = 0;
 let frame = 0;
 let frameTime = 0;
 
+let m_textLine = 0;
+
+function DrawString(x, y, text){
+	const fontHeight = 16 * Math.min(window.devicePixelRatio || 1, 2);
+	ctx.font = `${fontHeight}px Arial`;
+	ctx.fillStyle = 'rgba(230, 153, 153, 1)';
+	ctx.fillText(text, x, y + fontHeight);
+	const linePadding = 2;
+	m_textLine += fontHeight + linePadding;
+}
+
 function update(timestamp) {
     const deltaTime = timestamp - lastFrameTime;
+
+	m_textLine = 0;
 
     if (deltaTime >= settings.maxFrameTime && sample) {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -178,6 +191,7 @@ function update(timestamp) {
 		state.singleStep = false;
 
 		debugDraw.Draw(sample.m_worldId, camera);
+		sample?.UpdateUI(DrawString, m_textLine);
 
         frameTime = end - start;
 

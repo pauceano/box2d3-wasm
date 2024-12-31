@@ -141,11 +141,38 @@ export default class SensorBooked extends Sample{
 	Step(){
 		const {
 			b2World_GetSensorEvents,
-			b2Shape_GetBody,
-			b2Body_GetUserData
+			b2Shape_IsValid,
+			B2_ID_EQUALS
 		} = this.box2d;
 
 		super.Step();
+
+		const sensorEvents = b2World_GetSensorEvents( this.m_worldId );
+		const beginEvents = sensorEvents.GetBeginEvents();
+
+		for ( let i = 0; i < beginEvents.length; i++ )
+		{
+			const event = beginEvents[i];
+			if ( B2_ID_EQUALS( event.visitorShapeId, this.m_visitorShapeId ) )
+			{
+				console.assert( this.m_isVisiting == false );
+				this.m_isVisiting = true;
+			}
+		}
+
+		const endEvents = sensorEvents.GetEndEvents();
+
+		for ( let i = 0; i < endEvents.length; ++i )
+		{
+			const event = endEvents[i];
+
+			const wasVisitorDestroyed = b2Shape_IsValid( event.visitorShapeId ) == false;
+			if ( wasVisitorDestroyed || B2_ID_EQUALS( event.visitorShapeId, this.m_visitorShapeId ) )
+			{
+				console.assert( this.m_isVisiting == true );
+				this.m_isVisiting = false;
+			}
+		}
 	}
 
 	CreateUI(){
@@ -196,6 +223,12 @@ export default class SensorBooked extends Sample{
 		super.CreateUI();
 	}
 
+	UpdateUI(DrawString, textLine){
+		super.UpdateUI(DrawString, textLine);
+
+		DrawString(5, textLine, 'visiting === ' + this.m_isVisiting.toString());
+	}
+
 	Destroy(){
 		super.Destroy();
 		this.Despawn();
@@ -203,8 +236,6 @@ export default class SensorBooked extends Sample{
 		if (this.pane){
 			this.pane.dispose();
 			this.pane = null;
-
-			console.log('pane disposed');
 		}
 	}
 }

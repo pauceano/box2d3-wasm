@@ -9,8 +9,6 @@ export default class DebugDrawRenderer {
         this.dpr = autoHD ? Math.min(window.devicePixelRatio || 1, 2) : 1;
         this.finalScale = this.baseScale * this.dpr;
 
-        console.log('DebugDrawRenderer', this.dpr);
-
         this.debugDrawCommandBuffer = new Module.DebugDrawCommandBuffer();
         this.colorCache = {};
         this.colorCache[1.0] = this.initializeColorCache();

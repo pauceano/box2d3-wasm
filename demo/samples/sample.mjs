@@ -101,7 +101,6 @@ export default class Sample{
 		b2World_OverlapAABB( this.m_worldId, box, new b2DefaultQueryFilter(), (shapeId) => this.QueryCallback(shapeId, queryContext));
 
 		if(queryContext.bodyId){
-			console.log('blabla', queryContext.bodyId);
 			const bodyDef = b2DefaultBodyDef();
 			this.m_groundBodyId = b2CreateBody( this.m_worldId, bodyDef );
 
