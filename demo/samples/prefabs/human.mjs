@@ -161,15 +161,14 @@ export default function CreateHuman(box2d, worldId, position, scale, frictionTor
 
 	if(userData) bodyDef.SetUserData(userData);
 
-	const shapeDef = b2DefaultShapeDef();
+	const shapeDef = new b2DefaultShapeDef();
 	shapeDef.friction = 0.2;
 	shapeDef.filter.groupIndex = -groupIndex;
 	shapeDef.filter.categoryBits = 2;
 	shapeDef.filter.maskBits = ( 1 | 2 );
 
-	const footShapeDef = shapeDef;
+	const footShapeDef = new b2DefaultShapeDef();
 	footShapeDef.friction = 0.05;
-
 	// feet don't collide with ragdolls
 	footShapeDef.filter.categoryBits = 2;
 	footShapeDef.filter.maskBits = 1;
