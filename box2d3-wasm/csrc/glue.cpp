@@ -7,9 +7,6 @@
 using namespace emscripten;
 using namespace b2;
 
-// EMSCRIPTEN_DECLARE_VAL_TYPE(b2TaskCallback)
-// EMSCRIPTEN_DECLARE_VAL_TYPE(b2EnqueueTaskCallback)
-
 template<typename T>
 struct GetInterfaceType;
 
@@ -46,24 +43,12 @@ emscripten::val getArrayWrapper(const ObjectType& object,
     return result;
 }
 
-// needed to get the events array from the b2ContactListener
 template<typename T>
 emscripten::val getEventsArray(T* events, int count) {
     if (count == 0) return emscripten::val::array();
     auto result = emscripten::val::array();
     for (int i = 0; i < count; i++) {
         result.set(i, events[i]);
-    }
-    return result;
-}
-
-emscripten::val b2ChainDef_getPoints(const b2ChainDef& self) {
-    auto result = emscripten::val::array();
-    for (int i = 0; i < self.count; i++) {
-        auto point = emscripten::val::object();
-        point.set("x", self.points[i].x);
-        point.set("y", self.points[i].y);
-        result.set(i, point);
     }
     return result;
 }
@@ -1501,6 +1486,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
         void* userData = b2Shape_GetUserData(shapeId);
         return static_cast<int>(reinterpret_cast<std::uintptr_t>(userData));
     });
+    function("b2Shape_IsValid", &b2Shape_IsValid);
     function("b2Shape_IsSensor", &b2Shape_IsSensor);
     function("b2Shape_TestPoint", &b2Shape_TestPoint);
     function("b2Shape_RayCast", &b2Shape_RayCast, allow_raw_pointers());
@@ -1680,6 +1666,11 @@ EMSCRIPTEN_BINDINGS(box2d) {
 
     function("b2RelativeAngle", b2RelativeAngle);
     function("b2MakeRot", b2MakeRot);
+    function("B2_ID_EQUALS", +[](const emscripten::val& id1, const emscripten::val& id2) -> bool {
+        return  id1["index1"].as<int32_t>() == id2["index1"].as<int32_t>() &&
+                id1["world0"].as<uint16_t>() == id2["world0"].as<uint16_t>() &&
+                id1["revision"].as<uint16_t>() == id2["revision"].as<uint16_t>();
+    });
 
     // ------------------------------------------------------------------------
     // Random
