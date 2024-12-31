@@ -68,7 +68,7 @@ public:
             cmd.color = color;
 
             const uint16_t maxVertices = (COMMAND_DATA_SIZE - 4) / 2; // reserve 4 floats for transform
-            cmd.vertexCount = std::min((uint16_t)vertexCount, maxVertices);
+            cmd.vertexCount = std::min((uint16_t)vertexCount, maxVertices) + 2;
 
             cmd.data[0] = transform.p.x;
             cmd.data[1] = transform.p.y;
