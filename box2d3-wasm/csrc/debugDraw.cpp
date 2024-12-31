@@ -3,11 +3,25 @@
 #include <vector>
 #include <box2d/box2d.h>
 
+enum DebugDrawCommandType {
+    e_polygon = 0,
+    e_solidPolygon = 1,
+    e_circle = 2,
+    e_solidCircle = 3,
+    e_solidCapsule = 4,
+    e_segment = 5,
+    e_transform = 6,
+    e_point = 7,
+    e_string = 8,
+};
+
+static constexpr size_t COMMAND_DATA_SIZE = 32;
+
 struct DebugDrawCommand {
     uint8_t commandType;
     uint32_t color;
     uint16_t vertexCount;
-    float data[32];
+    float data[COMMAND_DATA_SIZE];
 };
 
 class DebugDrawCommandBuffer {
@@ -33,9 +47,9 @@ public:
             if (self->commands.size() >= self->maxCommands) return;
 
             DebugDrawCommand cmd;
-            cmd.commandType = 0;  // DRAW_POLYGON
+            cmd.commandType = DebugDrawCommandType::e_polygon;
             cmd.color = color;
-            cmd.vertexCount = std::min((uint16_t)vertexCount, (uint16_t)16);
+            cmd.vertexCount = std::min((uint16_t)vertexCount, (uint16_t)(COMMAND_DATA_SIZE / 2));
 
             for (int i = 0; i < cmd.vertexCount; i++) {
                 cmd.data[i*2] = vertices[i].x;
@@ -50,9 +64,11 @@ public:
             if (self->commands.size() >= self->maxCommands) return;
 
             DebugDrawCommand cmd;
-            cmd.commandType = 1;  // DRAW_SOLID_POLYGON
+            cmd.commandType = DebugDrawCommandType::e_solidPolygon;
             cmd.color = color;
-            cmd.vertexCount = std::min((uint16_t)vertexCount, (uint16_t)14) + 2;
+
+            const uint16_t maxVertices = (COMMAND_DATA_SIZE - 4) / 2; // reserve 4 floats for transform
+            cmd.vertexCount = std::min((uint16_t)vertexCount, maxVertices);
 
             cmd.data[0] = transform.p.x;
             cmd.data[1] = transform.p.y;
@@ -72,7 +88,7 @@ public:
             if (self->commands.size() >= self->maxCommands) return;
 
             DebugDrawCommand cmd;
-            cmd.commandType = 2;  // DRAW_CIRCLE
+            cmd.commandType = DebugDrawCommandType::e_circle;
             cmd.color = color;
             cmd.vertexCount = 1;
             cmd.data[0] = center.x;
@@ -87,7 +103,7 @@ public:
             if (self->commands.size() >= self->maxCommands) return;
 
             DebugDrawCommand cmd;
-            cmd.commandType = 3;  // DRAW_SOLID_CIRCLE
+            cmd.commandType = DebugDrawCommandType::e_solidCircle;
             cmd.color = color;
             cmd.vertexCount = 1;
             cmd.data[0] = transform.p.x;
@@ -104,7 +120,7 @@ public:
             if (self->commands.size() >= self->maxCommands) return;
 
             DebugDrawCommand cmd;
-            cmd.commandType = 4;  // DRAW_SOLID_CAPSULE
+            cmd.commandType = DebugDrawCommandType::e_solidCapsule;
             cmd.color = color;
             cmd.vertexCount = 2;
             cmd.data[0] = p1.x;
@@ -121,7 +137,7 @@ public:
             if (self->commands.size() >= self->maxCommands) return;
 
             DebugDrawCommand cmd;
-            cmd.commandType = 5;  // DRAW_SEGMENT
+            cmd.commandType = DebugDrawCommandType::e_segment;
             cmd.color = color;
             cmd.vertexCount = 2;
             cmd.data[0] = p1.x;
@@ -137,7 +153,7 @@ public:
             if (self->commands.size() >= self->maxCommands) return;
 
             DebugDrawCommand cmd;
-            cmd.commandType = 6;  // DRAW_TRANSFORM
+            cmd.commandType = DebugDrawCommandType::e_transform;
             cmd.vertexCount = 1;
             cmd.data[0] = transform.p.x;
             cmd.data[1] = transform.p.y;
@@ -152,7 +168,7 @@ public:
             if (self->commands.size() >= self->maxCommands) return;
 
             DebugDrawCommand cmd;
-            cmd.commandType = 7;  // DRAW_POINT
+            cmd.commandType = DebugDrawCommandType::e_point;
             cmd.color = color;
             cmd.vertexCount = 1;
             cmd.data[0] = p.x;
@@ -167,11 +183,17 @@ public:
             if (self->commands.size() >= self->maxCommands) return;
 
             DebugDrawCommand cmd;
-            cmd.commandType = 8;  // DRAW_STRING
+            cmd.commandType = DebugDrawCommandType::e_string;
             cmd.vertexCount = 1;
+
             cmd.data[0] = p.x;
             cmd.data[1] = p.y;
-            // Skip string handling for now
+
+            std::string_view sv(s);
+            auto dst = std::transform(sv.begin(),
+                                   sv.begin() + std::min(sv.length(), size_t(COMMAND_DATA_SIZE - 2)),
+                                   cmd.data + 2,
+                                   [](char c) { return static_cast<float>(std::byte(c)); });
 
             self->commands.push_back(cmd);
         };
@@ -208,5 +230,17 @@ EMSCRIPTEN_BINDINGS(debug_draw_buffer) {
         .function("GetCommandsSize", &DebugDrawCommandBuffer::GetCommandsSize)
         .function("GetCommandStride", &DebugDrawCommandBuffer::GetCommandStride)
         .function("ClearCommands", &DebugDrawCommandBuffer::ClearCommands)
+        ;
+
+    emscripten::enum_<DebugDrawCommandType>("DebugDrawCommandType")
+        .value("e_polygon", DebugDrawCommandType::e_polygon)
+        .value("e_solidPolygon", DebugDrawCommandType::e_solidPolygon)
+        .value("e_circle", DebugDrawCommandType::e_circle)
+        .value("e_solidCircle", DebugDrawCommandType::e_solidCircle)
+        .value("e_solidCapsule", DebugDrawCommandType::e_solidCapsule)
+        .value("e_segment", DebugDrawCommandType::e_segment)
+        .value("e_transform", DebugDrawCommandType::e_transform)
+        .value("e_point", DebugDrawCommandType::e_point)
+        .value("e_string", DebugDrawCommandType::e_string)
         ;
 }

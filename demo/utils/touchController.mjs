@@ -56,6 +56,8 @@ export default class TouchController {
     }
 
     onTouchMove = (event) => {
+        if(this.canvas.blockCameraControls) return;
+
 		event.preventDefault();
 
 		if (this.touches.length === 0) {
@@ -80,7 +82,7 @@ export default class TouchController {
 				const worldPosAfterZoom = this.camera.convertScreenToWorld(center);
 
 				this.camera.center.x += (worldPosAfterZoom.x - worldPosBeforeZoom.x);
-				this.camera.center.y -= (worldPosBeforeZoom.y - worldPosAfterZoom.y);
+				this.camera.center.y -= (worldPosAfterZoom.y - worldPosBeforeZoom.y);
 
 				this.lastTouchDistance = newDistance;
 			}
@@ -98,7 +100,7 @@ export default class TouchController {
 			});
 
 			this.camera.center.x -= (prevWorldPos.x - currentWorldPos.x);
-			this.camera.center.y -= (prevWorldPos.y - currentWorldPos.y);
+			this.camera.center.y += (prevWorldPos.y - currentWorldPos.y);
 		}
 
 		this.touches = newTouches;

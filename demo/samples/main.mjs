@@ -1,34 +1,64 @@
 import {Pane} from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
 
 import Box2DFactory from 'box2d3-wasm';
+import Camera from '../utils/camera.mjs';
+import DebugDrawRenderer from '../utils/debugDraw.mjs';
+
+import samples from './categories/list.mjs';
 import settings from './settings.mjs';
 
 const state = {
 	pause: false,
 	singleStep: false,
+	mouseDown: false,
+	mousePos: {x: 0, y: 0},
+	mouseDownPos: {x: 0, y: 0},
+	mouseJoint: null,
 }
 
 let box2d = null;
 let sample = null;
+let pane = null;
 
 const canvas = document.getElementById("demo-canvas");
 const ctx = canvas.getContext("2d");
 
+
+const camera = new Camera({autoResize: true, controls: true, canvas});
+let debugDraw = null;
+
 function loadSample(url) {
+	if(sample){
+		sample.Destroy();
+		sample = null;
+	}
+
 	import(url).then((module) => {
-		sample = new module.default(box2d, canvas);
+		sample = new module.default(box2d, camera);
+		updateDebugDrawFlags();
 	});
 }
 
+const debugDrawFlagKeys = ['drawShapes', 'drawJoints', 'drawJointExtras', 'drawAABBs', 'drawMass', 'drawContactPoints', 'drawGraphColors', 'drawContactImpulses', 'drawContactNormals', 'drawContactImpulses', 'drawFrictionImpulses'];
+function updateDebugDrawFlags(){
+	const debugDrawFlags = {};
+	debugDrawFlagKeys.forEach((key) => {
+		debugDrawFlags[key] = settings[key];
+	});
+	debugDraw.SetFlags(debugDrawFlags);
+}
 
 async function initialize(){
 	box2d = await Box2DFactory();
 
+	debugDraw = new DebugDrawRenderer(box2d, ctx, settings.ptm);
+
 	requestAnimationFrame(update);
 
-	loadSample('./events/SensorFunnel.mjs');
+	loadSample('./categories/events/sensorFunnel.mjs');
 
 	addUI();
+	addControls();
 }
 
 function addUI(){
@@ -37,42 +67,131 @@ function addUI(){
 	const PARAMS = {
 		pause: false,
 	  };
-	const pane = new Pane({
+	pane = new Pane({
 		title: 'Main Settings',
 		expanded: true,
 		container,
 	});
 
-	pane.addBinding(PARAMS, 'pause').on('change', (event) => {
+
+	const tab = pane.addTab({
+		pages: [
+			{title: 'Controls'},
+			{title: 'Samples'},
+		],
+	});
+
+	const main = tab.pages[0];
+
+	main.addBinding(PARAMS, 'pause').on('change', (event) => {
 		state.pause = event.value;
 	});
 
-	pane.addButton({
+	main.addButton({
 		title: 'single step',
 	}).on('click', () => {
 		state.singleStep = true;
 	});
+
+	// debug draw settings
+	const debugDrawFolder = main.addFolder({
+		title: 'debugdraw',
+		expanded: false,
+	});
+	debugDrawFlagKeys.forEach((key) => {
+		debugDrawFolder.addBinding(settings, key).on('change', updateDebugDrawFlags);
+	});
+
+	const samplesTab = tab.pages[1];
+	Object.keys(samples).forEach((type) => {
+		// add folder for each sample
+		const folder = samplesTab.addFolder({
+			title: type,
+			expanded: false,
+		});
+
+		Object.keys(samples[type]).forEach((sample) => {
+
+			const url = samples[type][sample];
+			folder.addButton({
+				title: sample,
+			}).on('click', () => {
+				loadSample(url);
+			});
+		});
+	});
+}
+
+function onPointerDown(event){
+	state.mouseDown = true;
+	state.mousePos = {x: event.clientX, y: event.clientY};
+	state.mouseDownPos = {x: event.clientX, y: event.clientY};
+	const idleClickTime = 100;
+	setTimeout(() => {
+		const maxMovementForClick = 10;
+		if (
+			state.mouseDown
+			&& Math.abs(state.mousePos.x - state.mouseDownPos.x) < maxMovementForClick
+			&& Math.abs(state.mousePos.y - state.mouseDownPos.y) < maxMovementForClick
+		) {
+			const p = camera.convertScreenToWorld(state.mousePos);
+			const worldPos = new box2d.b2Vec2().Set(p.x, p.y);
+			sample?.MouseDown(worldPos);
+		}
+	}, idleClickTime);
+}
+
+function onPointerMove(event){
+	state.mousePos = {x: event.clientX, y: event.clientY};
+	const p = camera.convertScreenToWorld(state.mousePos);
+	const worldPos = new box2d.b2Vec2().Set(p.x, p.y);
+	sample?.MouseMove(worldPos);
+}
+
+function onPointerUp(event){
+	state.mouseDown = false;
+	sample?.MouseUp();
+}
+
+function addControls(){
+	canvas.addEventListener('pointerdown', onPointerDown);
+	canvas.addEventListener('pointerup', onPointerUp);
+	canvas.addEventListener('pointermove', onPointerMove);
 }
 
 let lastFrameTime = 0;
 let frame = 0;
 let frameTime = 0;
 
+let m_textLine = 0;
+
+function DrawString(x, y, text){
+	const fontHeight = 16 * Math.min(window.devicePixelRatio || 1, 2);
+	ctx.font = `${fontHeight}px Arial`;
+	ctx.fillStyle = 'rgba(230, 153, 153, 1)';
+	ctx.fillText(text, x, y + fontHeight);
+	const linePadding = 2;
+	m_textLine += fontHeight + linePadding;
+}
+
 function update(timestamp) {
     const deltaTime = timestamp - lastFrameTime;
 
-    if (deltaTime >= settings.maxFrameTime) {
+	m_textLine = 0;
+
+    if (deltaTime >= settings.maxFrameTime && sample) {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const start = performance.now();
 		if (!state.pause || state.singleStep) {
-        	sample?.Step()
+        	sample.Step()
 		}
         const end = performance.now();
 
 		state.singleStep = false;
 
-		sample?.Draw();
+		debugDraw.Draw(sample.m_worldId, camera);
+		sample?.UpdateUI(DrawString, m_textLine);
 
         frameTime = end - start;
 
