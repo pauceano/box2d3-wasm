@@ -9,6 +9,8 @@ export default class DebugDrawRenderer {
         this.dpr = autoHD ? Math.min(window.devicePixelRatio || 1, 2) : 1;
         this.finalScale = this.baseScale * this.dpr;
 
+        console.log('DebugDrawRenderer', this.dpr);
+
         this.debugDrawCommandBuffer = new Module.DebugDrawCommandBuffer();
         this.colorCache = {};
         this.colorCache[1.0] = this.initializeColorCache();
@@ -452,8 +454,6 @@ export default class DebugDrawRenderer {
             this.ctx.canvas.height = clientHeight * this.dpr;
             this.ctx.canvas.style.width = `${clientWidth}px`;
             this.ctx.canvas.style.height = `${clientHeight}px`;
-
-            console.log(this.ctx.canvas.width, this.ctx.canvas.height);
         }
 
         this.Module.b2World_Draw(worldId, this.debugDrawCommandBuffer.GetDebugDraw());

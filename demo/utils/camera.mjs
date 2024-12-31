@@ -54,8 +54,8 @@ export default class Camera {
         };
 
         const offset = {
-            x: this.center.x + (this.width / 2 / scale.x),
-            y: -this.center.y - (this.height / 2 / scale.y)
+            x: this.center.x + extents.x,
+            y: -this.center.y - extents.y
         };
 
         return {
@@ -64,22 +64,13 @@ export default class Camera {
         };
     }
 
-	convertWorldToScreen(worldPoint) {
-        const transform = this.getTransform();
-        return {
-            x: (worldPoint.x - transform.offset.x) * transform.scale.x,
-            y: this.height + ((worldPoint.y - transform.offset.y) * transform.scale.y)
-        };
-    }
-
     convertScreenToWorld(screenPoint) {
-		const transform = this.getTransform();
+		const { offset, scale } = this.getTransform();
 		return {
-			x: (screenPoint.x / transform.scale.x) - (this.width / 2 / transform.scale.x) + this.center.x,
-			y: ((screenPoint.y / transform.scale.y) - (this.height / 2 / transform.scale.y) - this.center.y)
+			x: (screenPoint.x / scale.x) - offset.x,
+			y: -((screenPoint.y / scale.y) + offset.y)
 		};
 	}
-
 
 	addControls() {
 		window.addEventListener('wheel', this.onScroll);
@@ -129,7 +120,7 @@ export default class Camera {
             });
 
 			this.center.x += (currentWorldPos.x - prevWorldPos.x);
-            this.center.y += (currentWorldPos.y - prevWorldPos.y);
+            this.center.y -= (currentWorldPos.y - prevWorldPos.y);
         }
 
         this.mousePos = {x: event.clientX, y: event.clientY};
