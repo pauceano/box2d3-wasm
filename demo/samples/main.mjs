@@ -10,6 +10,10 @@ import settings from './settings.mjs';
 const state = {
 	pause: false,
 	singleStep: false,
+	mouseDown: false,
+	mousePos: {x: 0, y: 0},
+	mouseDownPos: {x: 0, y: 0},
+	mouseJoint: null,
 }
 
 let box2d = null;
@@ -47,13 +51,14 @@ function updateDebugDrawFlags(){
 async function initialize(){
 	box2d = await Box2DFactory();
 
-	debugDraw = new DebugDrawRenderer(box2d, ctx, settings.ptm);
+	debugDraw = new DebugDrawRenderer(box2d, ctx, settings.ptm, false);
 
 	requestAnimationFrame(update);
 
-	loadSample('./categories/events/SensorFunnel.mjs');
+	loadSample('./categories/events/sensorBooked.mjs');
 
 	addUI();
+	addControls();
 }
 
 function addUI(){
@@ -115,8 +120,43 @@ function addUI(){
 			});
 		});
 	});
+}
 
+function onPointerDown(event){
+	state.mouseDown = true;
+	state.mousePos = {x: event.clientX, y: event.clientY};
+	state.mouseDownPos = {x: event.clientX, y: event.clientY};
+	const idleClickTime = 100;
+	setTimeout(() => {
+		const maxMovementForClick = 10;
+		if (
+			state.mouseDown
+			&& Math.abs(state.mousePos.x - state.mouseDownPos.x) < maxMovementForClick
+			&& Math.abs(state.mousePos.y - state.mouseDownPos.y) < maxMovementForClick
+		) {
+			const p = camera.convertScreenToWorld(state.mousePos);
+			const worldPos = new box2d.b2Vec2().Set(p.x, p.y);
+			sample?.MouseDown(worldPos);
+		}
+	}, idleClickTime);
+}
 
+function onPointerMove(event){
+	state.mousePos = {x: event.clientX, y: event.clientY};
+	const p = camera.convertScreenToWorld(state.mousePos);
+	const worldPos = new box2d.b2Vec2().Set(p.x, p.y);
+	sample?.MouseMove(worldPos);
+}
+
+function onPointerUp(event){
+	state.mouseDown = false;
+	sample?.MouseUp();
+}
+
+function addControls(){
+	canvas.addEventListener('pointerdown', onPointerDown);
+	canvas.addEventListener('pointerup', onPointerUp);
+	canvas.addEventListener('pointermove', onPointerMove);
 }
 
 let lastFrameTime = 0;
