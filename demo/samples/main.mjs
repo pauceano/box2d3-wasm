@@ -136,7 +136,10 @@ function onPointerDown(event){
 		) {
 			const p = camera.convertScreenToWorld(state.mousePos);
 			const worldPos = new box2d.b2Vec2().Set(p.x, p.y);
-			sample?.MouseDown(worldPos);
+
+			const interacting = sample?.MouseDown(worldPos);
+			// block camera controls if interacting with the sample
+			canvas.blockTouchCameraControls = interacting;
 		}
 	}, idleClickTime);
 }
@@ -150,6 +153,7 @@ function onPointerMove(event){
 
 function onPointerUp(event){
 	state.mouseDown = false;
+	delete canvas.blockTouchCameraControls;
 	sample?.MouseUp();
 }
 

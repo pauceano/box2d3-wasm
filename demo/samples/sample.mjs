@@ -95,8 +95,6 @@ export default class Sample{
 		box.lowerBound.Copy(p).Sub(d);
 		box.upperBound.Copy(p).Add(d);
 
-		// console.log('MouseDown', box.lowerBound, box.upperBound);
-
 		const queryContext = { point: p, bodyId: null };
 		b2World_OverlapAABB( this.m_worldId, box, new b2DefaultQueryFilter(), (shapeId) => this.QueryCallback(shapeId, queryContext));
 
@@ -114,6 +112,7 @@ export default class Sample{
 			this.m_mouseJointId = b2CreateMouseJoint( this.m_worldId, mouseDef );
 
 			b2Body_SetAwake( queryContext.bodyId, true );
+			return true;
 		}
 	}
 	MouseUp(){

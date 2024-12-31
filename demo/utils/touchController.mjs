@@ -56,7 +56,7 @@ export default class TouchController {
     }
 
     onTouchMove = (event) => {
-        if(this.canvas.blockCameraControls) return;
+        if(this.canvas.blockTouchCameraControls) return;
 
 		event.preventDefault();
 
