@@ -15,11 +15,13 @@ enum DebugDrawCommandType {
     e_string = 8,
 };
 
+static constexpr size_t COMMAND_DATA_SIZE = 32;
+
 struct DebugDrawCommand {
     uint8_t commandType;
     uint32_t color;
     uint16_t vertexCount;
-    float data[32];
+    float data[COMMAND_DATA_SIZE];
 };
 
 class DebugDrawCommandBuffer {
@@ -47,7 +49,7 @@ public:
             DebugDrawCommand cmd;
             cmd.commandType = DebugDrawCommandType::e_polygon;
             cmd.color = color;
-            cmd.vertexCount = std::min((uint16_t)vertexCount, (uint16_t)16);
+            cmd.vertexCount = std::min((uint16_t)vertexCount, (uint16_t)(COMMAND_DATA_SIZE / 2));
 
             for (int i = 0; i < cmd.vertexCount; i++) {
                 cmd.data[i*2] = vertices[i].x;
@@ -64,7 +66,9 @@ public:
             DebugDrawCommand cmd;
             cmd.commandType = DebugDrawCommandType::e_solidPolygon;
             cmd.color = color;
-            cmd.vertexCount = std::min((uint16_t)vertexCount, (uint16_t)14) + 2;
+
+            const uint16_t maxVertices = (COMMAND_DATA_SIZE - 4) / 2; // reserve 4 floats for transform
+            cmd.vertexCount = std::min((uint16_t)vertexCount, maxVertices);
 
             cmd.data[0] = transform.p.x;
             cmd.data[1] = transform.p.y;
@@ -185,19 +189,12 @@ public:
             cmd.data[0] = p.x;
             cmd.data[1] = p.y;
 
-            int i = 2;
-            while (i < 32 && *s)
-            {
-                cmd.data[i] = static_cast<float>(static_cast<unsigned char>(*s));
-                ++s;
-                ++i;
-            }
+            std::string_view sv(s);
+            auto dst = std::transform(sv.begin(),
+                                   sv.begin() + std::min(sv.length(), size_t(COMMAND_DATA_SIZE - 2)),
+                                   cmd.data + 2,
+                                   [](char c) { return static_cast<float>(std::byte(c)); });
 
-            while (i < 32)
-            {
-                cmd.data[i] = 0.0f;
-                ++i;
-            }
             self->commands.push_back(cmd);
         };
     }
