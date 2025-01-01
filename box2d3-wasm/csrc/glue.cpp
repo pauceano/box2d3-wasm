@@ -69,7 +69,6 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             self.y = other.y;
             return self;
         }, return_value_policy::reference())
-        // Clone should stay as is since it returns a new vector
         .function("Clone", +[](const b2Vec2& self) -> b2Vec2 {
             return b2Vec2{self.x, self.y};
         })
@@ -178,13 +177,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.userData = nullptr;
             } else {
-                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             }
         })
         .function("GetUserData", +[](const b2WorldDef& self) -> emscripten::val {
             void* userData = self.userData;
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
         .property("internalValue", &b2WorldDef::internalValue)
         ;
@@ -203,13 +202,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.userData = nullptr;
             } else {
-                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             }
         })
         .function("GetUserData", +[](const b2BodyMoveEvent& self) -> emscripten::val {
             void* userData = self.userData;
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
         .property("fellAsleep", &b2BodyMoveEvent::fellAsleep)
         ;
@@ -490,13 +489,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.SetUserData(nullptr);
             } else {
-                self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>())));
+                self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1)));
             }
         })
         .function("GetUserData", +[](const b2::World& self) -> emscripten::val {
             void* userData = self.GetUserData();
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
         .function("CreateBody", +[](b2::World& world, const b2BodyDef& def) -> Body* {
             Body* body = new Body();
@@ -545,13 +544,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.userData = nullptr;
             } else {
-                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             }
         })
         .function("GetUserData", +[](const b2ShapeDef& self) -> emscripten::val {
             void* userData = self.userData;
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
         .property("friction", &b2ShapeDef::friction)
         .property("restitution", &b2ShapeDef::restitution)
@@ -601,13 +600,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.userData = nullptr;
             } else {
-                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             }
         })
         .function("GetUserData", +[](const b2ChainDef& self) -> emscripten::val {
             void* userData = self.userData;
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
         .property("friction", &b2ChainDef::friction)
         .property("restitution", &b2ChainDef::restitution)
@@ -776,13 +775,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.SetUserData(nullptr);
             } else {
-                self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>())));
+                self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1)));
             }
         })
         .function("GetUserData", +[](const Shape& self) -> emscripten::val {
             void* userData = self.GetUserData();
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
         ;
 
@@ -828,13 +827,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.userData = nullptr;
             } else {
-                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             }
         })
         .function("GetUserData", +[](const b2BodyDef& self) -> emscripten::val {
             void* userData = self.userData;
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
         .property("enableSleep", &b2BodyDef::enableSleep)
         .property("isAwake", &b2BodyDef::isAwake)
@@ -939,13 +938,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.SetUserData(nullptr);
             } else {
-                self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>())));
+                self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1)));
             }
         })
         .function("GetUserData", +[](const Body& self) -> emscripten::val {
             void* userData = self.GetUserData();
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
         .function("GetWorld", select_overload<WorldRef()>(&Body::GetWorld))
         .function("GetWorldCenterOfMass", &Body::GetWorldCenterOfMass)
@@ -992,13 +991,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.SetUserData(nullptr);
             } else {
-                self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>())));
+                self.SetUserData(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1)));
             }
         })
         .function("GetUserData", +[](const Joint& self) -> emscripten::val {
             void* userData = self.GetUserData();
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
         ;
 
@@ -1057,13 +1056,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.userData = nullptr;
             } else {
-                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             }
         })
         .function("GetUserData", +[](const b2DistanceJointDef& self) -> emscripten::val {
             void* userData = self.userData;
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
     ;
 
@@ -1082,13 +1081,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.userData = nullptr;
             } else {
-                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             }
         })
         .function("GetUserData", +[](const b2MotorJointDef& self) -> emscripten::val {
             void* userData = self.userData;
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
     ;
 
@@ -1106,13 +1105,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.userData = nullptr;
             } else {
-                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             }
         })
         .function("GetUserData", +[](const b2MouseJointDef& self) -> emscripten::val {
             void* userData = self.userData;
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
     ;
 
@@ -1125,13 +1124,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.userData = nullptr;
             } else {
-                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             }
         })
         .function("GetUserData", +[](const b2NullJointDef& self) -> emscripten::val {
             void* userData = self.userData;
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
     ;
 
@@ -1158,13 +1157,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.userData = nullptr;
             } else {
-                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             }
         })
         .function("GetUserData", +[](const b2PrismaticJointDef& self) -> emscripten::val {
             void* userData = self.userData;
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
     ;
 
@@ -1191,13 +1190,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.userData = nullptr;
             } else {
-                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             }
         })
         .function("GetUserData", +[](const b2RevoluteJointDef& self) -> emscripten::val {
             void* userData = self.userData;
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
     ;
 
@@ -1218,13 +1217,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.userData = nullptr;
             } else {
-                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             }
         })
         .function("GetUserData", +[](const b2WeldJointDef& self) -> emscripten::val {
             void* userData = self.userData;
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
     ;
 
@@ -1250,13 +1249,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
             if (value.isNull()) {
                 self.userData = nullptr;
             } else {
-                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+                self.userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             }
         })
         .function("GetUserData", +[](const b2WheelJointDef& self) -> emscripten::val {
             void* userData = self.userData;
             if (userData == nullptr) return emscripten::val::null();
-            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+            return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
         })
     ;
 
@@ -1446,14 +1445,14 @@ EMSCRIPTEN_BINDINGS(box2d) {
         if (value.isNull()) {
             b2World_SetUserData(worldId, nullptr);
         } else {
-            void* userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+            void* userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             b2World_SetUserData(worldId, userData);
         }
     });
     function("b2World_GetUserData", +[](b2WorldId worldId) -> emscripten::val {
         void* userData = b2World_GetUserData(worldId);
         if (userData == nullptr) return emscripten::val::null();
-        return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+        return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
     });
     // function("b2World_DumpMemoryStats", &b2World_DumpMemoryStats);
     function("b2World_OverlapAABB",
@@ -1619,7 +1618,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
         if (value.isNull()) {
             b2Shape_SetUserData(shapeId, nullptr);
         } else {
-            void* userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+            void* userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             b2Shape_SetUserData(shapeId, userData);
         }
     });
@@ -1627,7 +1626,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2Shape_GetUserData", +[](b2ShapeId shapeId) -> emscripten::val {
         void* userData = b2Shape_GetUserData(shapeId);
         if (userData == nullptr) return emscripten::val::null();
-        return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+        return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
     });
     function("b2Shape_IsValid", &b2Shape_IsValid);
     function("b2Shape_IsSensor", &b2Shape_IsSensor);
@@ -1740,14 +1739,14 @@ EMSCRIPTEN_BINDINGS(box2d) {
         if (value.isNull()) {
             b2Body_SetUserData(bodyId, nullptr);
         } else {
-            void* userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+            void* userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             b2Body_SetUserData(bodyId, userData);
         }
     });
     function("b2Body_GetUserData", +[](b2BodyId bodyId) -> emscripten::val {
         void* userData = b2Body_GetUserData(bodyId);
         if (userData == nullptr) return emscripten::val::null();
-        return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+        return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1 - 1);
     });
     function("b2Body_EnableSensorEvents", &b2Body_EnableSensorEvents);
     function("b2Body_EnableContactEvents", &b2Body_EnableContactEvents);
@@ -1804,7 +1803,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
         if (value.isNull()) {
             b2Joint_SetUserData(jointId, nullptr);
         } else {
-            void* userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>()));
+            void* userData = reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.as<int>() + 1));
             b2Joint_SetUserData(jointId, userData);
         }
     });
@@ -1812,7 +1811,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2Joint_GetUserData", +[](b2JointId jointId) -> emscripten::val {
         void* userData = b2Joint_GetUserData(jointId);
         if (userData == nullptr) return emscripten::val::null();
-        return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)));
+        return emscripten::val(static_cast<int>(reinterpret_cast<std::uintptr_t>(userData)) - 1);
     });
     function("b2Joint_WakeBodies", &b2Joint_WakeBodies);
     function("b2Joint_GetConstraintForce", &b2Joint_GetConstraintForce);
