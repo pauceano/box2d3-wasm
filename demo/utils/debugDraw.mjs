@@ -172,11 +172,19 @@ export default class DebugDrawRenderer {
         return cache;
     }
 
-    processCommands(ptr, size, stride) {
+    prepareCanvas() {
         this.ctx.save();
         this.ctx.scale(this.finalScale, -this.finalScale);
         this.ctx.translate(this.offset.x, this.offset.y);
         this.ctx.lineWidth = 1 / this.finalScale;
+    }
+
+    restoreCanvas() {
+        this.ctx.restore();
+    }
+
+    processCommands(ptr, size, stride) {
+        this.prepareCanvas();
 
         // type: 0 (uint8_t)
         // color: 4 (uint32_t)
@@ -225,7 +233,7 @@ export default class DebugDrawRenderer {
             }
         }
 
-        this.ctx.restore();
+        this.restoreCanvas();
     }
 
     drawPolygon(cmd) {

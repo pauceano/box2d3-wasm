@@ -3,6 +3,7 @@ import {Pane} from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.
 import Box2DFactory from 'box2d3-wasm';
 import Camera from '../utils/camera.mjs';
 import DebugDrawRenderer from '../utils/debugDraw.mjs';
+import Keyboard, { Key } from '../utils/keyboard.mjs';
 
 import samples from './categories/list.mjs';
 import settings from './settings.mjs';
@@ -18,11 +19,11 @@ const state = {
 
 let box2d = null;
 let sample = null;
+let sampleUrl = null;
 let pane = null;
 
 const canvas = document.getElementById("demo-canvas");
 const ctx = canvas.getContext("2d");
-
 
 const camera = new Camera({autoResize: true, controls: true, canvas});
 let debugDraw = null;
@@ -33,13 +34,14 @@ function loadSample(url) {
 		sample = null;
 	}
 
+	sampleUrl = url;
 	import(url).then((module) => {
 		sample = new module.default(box2d, camera);
 		updateDebugDrawFlags();
 	});
 }
 
-const debugDrawFlagKeys = ['drawShapes', 'drawJoints', 'drawJointExtras', 'drawAABBs', 'drawMass', 'drawContactPoints', 'drawGraphColors', 'drawContactImpulses', 'drawContactNormals', 'drawContactImpulses', 'drawFrictionImpulses'];
+const debugDrawFlagKeys = ['drawShapes', 'drawJoints', 'drawJointExtras', 'drawAABBs', 'drawMass', 'drawContacts', 'drawGraphColors', 'drawContactNormals', 'drawContactImpulses', 'drawFrictionImpulses'];
 function updateDebugDrawFlags(){
 	const debugDrawFlags = {};
 	debugDrawFlagKeys.forEach((key) => {
@@ -54,6 +56,8 @@ async function initialize(){
 	debugDraw = new DebugDrawRenderer(box2d, ctx, settings.ptm);
 
 	requestAnimationFrame(update);
+
+	Keyboard.Init();
 
 	loadSample('./categories/events/sensorFunnel.mjs');
 
@@ -183,6 +187,10 @@ function update(timestamp) {
 
 	m_textLine = 0;
 
+	if(Keyboard.IsPressed(Key.R)){
+		loadSample(sampleUrl);
+	}
+
     if (deltaTime >= settings.maxFrameTime && sample) {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -195,13 +203,15 @@ function update(timestamp) {
 		state.singleStep = false;
 
 		debugDraw.Draw(sample.m_worldId, camera);
-		sample?.UpdateUI(DrawString, m_textLine);
+		sample?.UpdateUI(DrawString, m_textLine, debugDraw);
 
         frameTime = end - start;
 
         lastFrameTime = timestamp - (deltaTime % settings.maxFrameTime);
         frame++;
     }
+
+	Keyboard.Update();
 
     requestAnimationFrame(update);
 }
