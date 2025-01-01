@@ -6,7 +6,7 @@ export const DEFAULT_SETTINGS = {
 	drawJointExtras: false,
 	drawAABBs: false,
 	drawMass: false,
-	drawContactPoints: false,
+	drawContacts: false,
 	drawGraphColors: false,
 	drawContactNormals: false,
 	drawContactImpulses: false,
@@ -17,7 +17,6 @@ export const DEFAULT_SETTINGS = {
 	enableContinuous: true,
 	subStepCount: 4,
 }
-
 
 export default {
 	...DEFAULT_SETTINGS,
