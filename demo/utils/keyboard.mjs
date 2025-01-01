@@ -1,7 +1,8 @@
 const state = {
 	initialized: false,
 	down: {},
-	pressed: {}
+	pressed: {},
+	touchControlElement: null,
 };
 
 class Keyboard {
@@ -42,6 +43,65 @@ class Keyboard {
 
 	static Update() {
 		state.pressed = {};
+	}
+
+	static ShowTouchControls(keys) {
+		Keyboard.HideTouchControls();
+
+		const container = document.createElement('div');
+		container.style.position = 'absolute';
+		container.style.bottom = '50px';
+		container.style.left = '50%';
+		container.style.transform = 'translateX(-50%)';
+		container.style.margin = '8px';
+		container.style.padding = '8px';
+		container.style.display = 'flex';
+		container.style.borderRadius = '8px';
+		container.style.justifyContent = 'center';
+		container.style.alignItems = 'center';
+		container.style.gap = '8px';
+		container.style.backgroundColor = 'rgba(0,0,0,0.5)';
+		container.style.zIndex = '1000';
+		container.style.flexWrap = 'wrap';
+
+		const size = 44;
+		keys.forEach((key) => {
+			const button = document.createElement('button');
+			button.style.height = `${size}px`;
+			button.style.fontSize = '24px';
+			button.style.minWidth = `${size}px`;
+			button.style.border = 'none';
+			button.style.borderRadius = '6px';
+			button.style.background = 'rgba(255,255,255,0.5)';
+			button.style.cursor = 'pointer';
+			button.style['-webkit-tap-highlight-color'] = 'rgba(0,0,0,0)';
+			button.style.userSelect = 'none';
+
+			button.innerText = key;
+			button.addEventListener('pointerdown', (event) => {
+				event.preventDefault();
+				state.down[key] = true;
+				const keyup = () => {
+					state.down[key] = false;
+					button.style.background = 'rgba(255,255,255,0.5)';
+					window.removeEventListener('pointerup', keyup);
+				};
+				button.style.background = 'rgba(255,255,255,0.8)';
+				window.addEventListener('pointerup', keyup);
+				button.addEventListener('pointerleave', keyup);
+			});
+			container.appendChild(button);
+		});
+
+		document.body.appendChild(container);
+		state.touchControlElement = container;
+	}
+
+	static HideTouchControls() {
+		if (state.touchControlElement) {
+			state.touchControlElement.remove();
+			state.touchControlElement = null;
+		}
 	}
 }
 

@@ -73,6 +73,7 @@ export default class SensorBooked extends Sample{
 
 		this.m_overlapCount = 0;
 		this.m_overlapPoints = [];
+		this.m_touchKeyboard = false;
 
 		this.Spawn();
 		this.CreateUI();
@@ -82,6 +83,7 @@ export default class SensorBooked extends Sample{
 	}
 
 	Despawn(){
+		Keyboard.HideTouchControls();
 	}
 
 	Step(){
@@ -167,6 +169,34 @@ export default class SensorBooked extends Sample{
 		});
 
 		debugDraw.restoreCanvas();
+	}
+
+	CreateUI(){
+		const container = document.getElementById('sample-settings');
+
+		if(this.pane){
+			this.pane.dispose();
+		}
+
+		this.pane = new Pane({
+			title: 'Sample Settings',
+  			expanded: true,
+			container
+		});
+
+		this.pane.addButton({
+			title: this.m_touchKeyboard ? 'hide touch keyboard' : 'show touch keyboard',
+		}).on('click', () => {
+			this.m_touchKeyboard = !this.m_touchKeyboard;
+
+			if (this.m_touchKeyboard){
+				Keyboard.ShowTouchControls([Key.A, Key.D]);
+			} else {
+				Keyboard.HideTouchControls();
+			}
+
+			this.CreateUI();
+		});
 	}
 
 	Destroy(){
