@@ -50,7 +50,7 @@ function loadSample(url) {
 	window.history.pushState({}, sampleName, `?sample=${sampleName}`);
 
 	import(url).then((module) => {
-		sample = new module.default(box2d, camera);
+		sample = new module.default(box2d, camera, debugDraw);
 		updateDebugDrawFlags();
 	});
 }
@@ -215,10 +215,8 @@ function update(timestamp) {
 
 		state.singleStep = false;
 
-		debugDraw.Draw(sample.m_worldId, camera);
-
 		DrawString(5, m_textLine, sampleName);
-		sample?.UpdateUI(DrawString, m_textLine, debugDraw);
+		sample?.UpdateUI(DrawString, m_textLine);
 
         frameTime = end - start;
 
