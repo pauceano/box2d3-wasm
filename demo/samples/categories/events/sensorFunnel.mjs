@@ -14,8 +14,8 @@ const e_human = 1;
 const e_wait = params.get('e_wait') ? parseFloat(params.get('e_wait')) : 0.5;
 
 export default class SensorFunnel extends Sample{
-	constructor(box2d, camera){
-		super(box2d, camera);
+	constructor(box2d, camera, debugDraw){
+		super(box2d, camera, debugDraw);
 
 		camera.center = {x: 0.0, y: 0.0 };
 		camera.zoom = 25 * 1.333;

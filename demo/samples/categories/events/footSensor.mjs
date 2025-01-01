@@ -1,14 +1,11 @@
 import {Pane} from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
 import Sample from "../../sample.mjs";
 
-import settings from '../../settings.mjs';
 import Keyboard, { Key } from '../../../utils/keyboard.mjs';
 
-const params = new URLSearchParams(window.location.search);
-
-export default class SensorBooked extends Sample{
-	constructor(box2d, camera){
-		super(box2d, camera);
+export default class FootSensor extends Sample{
+	constructor(box2d, camera, debugDraw){
+		super(box2d, camera, debugDraw);
 
 		camera.center = {x: 0.0, y: 6.0 };
 		camera.zoom = 7.5;
@@ -153,22 +150,22 @@ export default class SensorBooked extends Sample{
 		}
 	}
 
-	UpdateUI(DrawString, m_textLine, debugDraw){
+	UpdateUI(DrawString, m_textLine){
 		super.UpdateUI(DrawString, m_textLine);
 
 		DrawString( 5, m_textLine, `count == ${this.m_overlapCount}`);
 
-		debugDraw.prepareCanvas();
+		this.debugDraw.prepareCanvas();
 
 		this.m_overlapPoints.forEach( (point, i) => {
 			const drawCommand = {
 				data: [point.x, point.y, 10.0],
 				color: 0xFFFFFF,
 			};
-			debugDraw.drawPoint(drawCommand);
+			this.debugDraw.drawPoint(drawCommand);
 		});
 
-		debugDraw.restoreCanvas();
+		this.debugDraw.restoreCanvas();
 	}
 
 	CreateUI(){
