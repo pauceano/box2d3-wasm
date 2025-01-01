@@ -19,8 +19,19 @@ const state = {
 
 let box2d = null;
 let sample = null;
-let sampleUrl = null;
+let sampleUrl = './categories/events/sensorFunnel.mjs';
+let sampleName = null;
 let pane = null;
+
+const params = new URLSearchParams(window.location.search);
+if(params.has('sample')){
+	const sampleName = params.get('sample');
+	const paths = Object.values(samples).flatMap(category => Object.values(category));
+	const sample = paths.find((url) => url.includes(sampleName));
+	if(sample){
+		sampleUrl = sample;
+	}
+}
 
 const canvas = document.getElementById("demo-canvas");
 const ctx = canvas.getContext("2d");
@@ -35,6 +46,9 @@ function loadSample(url) {
 	}
 
 	sampleUrl = url;
+	sampleName = url.slice(13);
+	window.history.pushState({}, sampleName, `?sample=${sampleName}`);
+
 	import(url).then((module) => {
 		sample = new module.default(box2d, camera);
 		updateDebugDrawFlags();
@@ -59,7 +73,7 @@ async function initialize(){
 
 	Keyboard.Init();
 
-	loadSample('./categories/events/sensorFunnel.mjs');
+	loadSample(sampleUrl);
 
 	addUI();
 	addControls();
@@ -203,7 +217,7 @@ function update(timestamp) {
 
 		debugDraw.Draw(sample.m_worldId, camera);
 
-		DrawString(5, m_textLine, `${sampleUrl.slice(13)}`);
+		DrawString(5, m_textLine, sampleName);
 		sample?.UpdateUI(DrawString, m_textLine, debugDraw);
 
         frameTime = end - start;
