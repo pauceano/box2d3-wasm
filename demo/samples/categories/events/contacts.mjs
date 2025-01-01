@@ -74,7 +74,8 @@ export default class Contacts extends Sample{
 		this.m_wait = 0.5;
 		this.m_force = 200.0;
 
-		this.Spawn();
+		this.m_touchKeyboard = false;
+
 		this.CreateUI();
 	}
 
@@ -148,9 +149,6 @@ export default class Contacts extends Sample{
 			const box = b2MakeBox( 0.4, 0.6 );
 			b2CreatePolygonShape( this.m_debrisIds[index], shapeDef, box );
 		}
-	}
-
-	Spawn(){
 	}
 
 	Despawn(){
@@ -492,13 +490,32 @@ export default class Contacts extends Sample{
 			this.m_touchKeyboard = !this.m_touchKeyboard;
 
 			if (this.m_touchKeyboard){
-				Keyboard.ShowTouchControls([Key.A, Key.D]);
+				Keyboard.ShowTouchControls([Key.W, Key.A, Key.S, Key.D]);
 			} else {
 				Keyboard.HideTouchControls();
 			}
 
 			this.CreateUI();
 		});
+
+		const PARAMS = {
+			force: this.m_force,
+		};
+
+		this.pane.addBinding(PARAMS, 'force', {
+			step: 0.1,
+			min: 100,
+			max: 500,
+		}).on('change', event => {
+			this.m_force = event.value;
+		});
+	}
+
+	UpdateUI(DrawString, m_textLine){
+		super.UpdateUI(DrawString, m_textLine);
+
+		DrawString(5, m_textLine, 'move using WASD');
+
 	}
 
 	Destroy(){
