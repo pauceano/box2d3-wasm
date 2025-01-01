@@ -115,7 +115,6 @@ function addUI(){
 		});
 
 		Object.keys(samples[type]).forEach((sample) => {
-
 			const url = samples[type][sample];
 			folder.addButton({
 				title: sample,
@@ -174,7 +173,7 @@ let frameTime = 0;
 let m_textLine = 0;
 
 function DrawString(x, y, text){
-	const fontHeight = 16 * Math.min(window.devicePixelRatio || 1, 2);
+	const fontHeight = 14 * Math.min(window.devicePixelRatio || 1, 2);
 	ctx.font = `${fontHeight}px Arial`;
 	ctx.fillStyle = 'rgba(230, 153, 153, 1)';
 	ctx.fillText(text, x, y + fontHeight);
@@ -203,6 +202,8 @@ function update(timestamp) {
 		state.singleStep = false;
 
 		debugDraw.Draw(sample.m_worldId, camera);
+
+		DrawString(5, m_textLine, `${sampleUrl.slice(13)}`);
 		sample?.UpdateUI(DrawString, m_textLine, debugDraw);
 
         frameTime = end - start;

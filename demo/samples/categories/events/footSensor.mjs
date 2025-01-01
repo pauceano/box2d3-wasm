@@ -151,29 +151,6 @@ export default class SensorBooked extends Sample{
 		}
 	}
 
-	CreateUI(){
-		super.CreateUI();
-
-		const container = document.getElementById('sample-settings');
-
-
-		this.pane = new Pane({
-			title: 'Sample Settings',
-			expanded: true,
-			container
-		});
-
-		if(!this.m_sensorBodyId){
-			this.pane.addButton({
-				title: 'create sensor',
-			}).on('click', () => {
-				this.CreateSensor();
-				this.CreateUI();
-			});
-		}
-
-	}
-
 	UpdateUI(DrawString, m_textLine, debugDraw){
 		super.UpdateUI(DrawString, m_textLine);
 
