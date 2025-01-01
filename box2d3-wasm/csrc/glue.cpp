@@ -698,7 +698,9 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
         .function("AreHitEventsEnabled", &Shape::AreHitEventsEnabled)
         .function("IsSensor", &Shape::IsSensor)
         .function("GetSensorCapacity", &Shape::GetSensorCapacity)
-        .function("GetSensorOverlaps", &Shape::GetSensorOverlaps, allow_raw_pointers())
+        .function("GetSensorOverlaps", +[](const Shape& shape) {
+            return getArrayWrapper<b2ShapeId>(shape, &Shape::GetSensorCapacity, &Shape::GetSensorOverlaps);
+        })
         .function("EnableSensorEvents", &Shape::EnableSensorEvents)
         .function("AreSensorEventsEnabled", &Shape::AreSensorEventsEnabled)
         .function("EnablePreSolveEvents", &Shape::EnablePreSolveEvents)
@@ -1520,7 +1522,15 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2Shape_GetContactCapacity", &b2Shape_GetContactCapacity);
     function("b2Shape_GetContactData", &b2Shape_GetContactData, allow_raw_pointers());
     function("b2Shape_GetSensorCapacity", &b2Shape_GetSensorCapacity);
-    function("b2Shape_GetSensorOverlaps", &b2Shape_GetSensorOverlaps, allow_raw_pointers());
+    function("b2Shape_GetSensorOverlaps", +[](b2ShapeId shapeId, int capacity) -> emscripten::val {
+        std::vector<b2ShapeId> overlappedShapes(capacity);
+        int count = b2Shape_GetSensorOverlaps(shapeId, overlappedShapes.data(), capacity);
+        auto result = emscripten::val::array();
+        for (int i = 0; i < count; i++) {
+            result.set(i, overlappedShapes[i]);
+        }
+        return result;
+    }, allow_raw_pointers());
     function("b2Shape_GetAABB", &b2Shape_GetAABB);
     function("b2Shape_GetClosestPoint", &b2Shape_GetClosestPoint);
 
@@ -1671,6 +1681,11 @@ EMSCRIPTEN_BINDINGS(box2d) {
                 id1["world0"].as<uint16_t>() == id2["world0"].as<uint16_t>() &&
                 id1["revision"].as<uint16_t>() == id2["revision"].as<uint16_t>();
     });
+
+    function("b2AABB_Contains", &b2AABB_Contains);
+    function("b2AABB_Center", &b2AABB_Center);
+    function("b2AABB_Extents", &b2AABB_Extents);
+    function("b2AABB_Union", &b2AABB_Union);
 
     // ------------------------------------------------------------------------
     // Random
