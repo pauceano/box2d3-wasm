@@ -239,13 +239,9 @@ export default class SensorFunnel extends Sample{
 		super.Destroy();
 		this.Despawn();
 
-		console.log('pane', this.pane);
-
 		if (this.pane){
 			this.pane.dispose();
 			this.pane = null;
-
-			console.log('pane disposed');
 		}
 	}
 }
