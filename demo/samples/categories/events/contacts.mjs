@@ -99,7 +99,7 @@ export default class Contacts extends Sample{
 		let index = -1;
 		for ( let i = 0; i < e_count; i++ )
 		{
-			if (this.m_debrisIds[i] == null)
+			if (this.m_debrisIds[i] === null)
 			{
 				index = i;
 				break;
@@ -240,8 +240,6 @@ export default class Contacts extends Sample{
 			const capacityA = b2Shape_GetContactCapacity( event.shapeIdA );
 			const capacityB = b2Shape_GetContactCapacity( event.shapeIdB );
 
-			console.log( capacityA, capacityB );
-
 			if ( capacityA < capacityB )
 			{
 				// The count may be less than the capacity
@@ -249,7 +247,6 @@ export default class Contacts extends Sample{
 				const countA = contactData.length;
 
 				console.assert( countA >= 1 );
-
 
 				for ( let j = 0; j < countA; j++ )
 				{
@@ -280,7 +277,7 @@ export default class Contacts extends Sample{
 			else
 			{
 				// The count may be less than the capacity
-				const contactData = b2Shape_GetContactData( event.shapeIdB, capacityA );
+				const contactData = b2Shape_GetContactData( event.shapeIdB, capacityB );
 				const countB = contactData.length;
 
 				for ( let j = 0; j < countB; j++ )
@@ -315,7 +312,7 @@ export default class Contacts extends Sample{
 			if ( B2_ID_EQUALS( bodyIdA, this.m_playerId ) )
 			{
 				const userDataB = b2Body_GetUserData( bodyIdB );
-				if ( userDataB == null )
+				if ( userDataB === null )
 				{
 					if ( B2_ID_EQUALS( event.shapeIdA, this.m_coreShapeId ) == false && destroyCount < e_count )
 					{
@@ -350,7 +347,7 @@ export default class Contacts extends Sample{
 				// Only expect events for the player
 				console.assert( B2_ID_EQUALS( bodyIdB, this.m_playerId ) );
 				const userDataA = b2Body_GetUserData( bodyIdA );
-				if ( userDataA == null )
+				if ( userDataA === null )
 				{
 					if ( B2_ID_EQUALS( event.shapeIdB, this.m_coreShapeId ) == false && destroyCount < e_count )
 					{
@@ -386,8 +383,6 @@ export default class Contacts extends Sample{
 		for ( let i = 0; i < attachCount; ++i )
 		{
 			let index = debrisToAttach[i];
-
-			console.log('attach', index);
 
 			const debrisId = this.m_debrisIds[index];
 			if ( debrisId == null )
