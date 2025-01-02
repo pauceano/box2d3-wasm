@@ -39,9 +39,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     # Only use release environment if we're publishing
-    environment: ${{ github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release' && 'release' || '' }}
+    environment: ${{ (github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release') && 'release' || '' }}
     permissions:
-      contents: ${{ github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release' && 'write' || 'read' }}
+      contents: write  # this permission is only exercised in mode == 'release'
     steps:
       - name: Validate inputs
         run: |
