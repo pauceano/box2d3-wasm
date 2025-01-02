@@ -193,6 +193,7 @@ function DrawString(x, y, text){
 	ctx.fillText(text, x, y + fontHeight);
 	const linePadding = 2;
 	m_textLine += fontHeight + linePadding;
+	return m_textLine;
 }
 
 function update(timestamp) {
@@ -222,9 +223,9 @@ function update(timestamp) {
 
         lastFrameTime = timestamp - (deltaTime % settings.maxFrameTime);
         frame++;
-    }
 
-	Keyboard.Update();
+		Keyboard.Update();
+    }
 
     requestAnimationFrame(update);
 }
