@@ -1375,7 +1375,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
                        emscripten::val(shapeIdB)
                    ).as<bool>();
                },
-               &callback
+               new emscripten::val(callback)
            );
        }
     );
@@ -1390,7 +1390,7 @@ EMSCRIPTEN_BINDINGS(box2d) {
                        emscripten::val(manifold)
                    ).as<bool>();
                },
-               &callback
+               new emscripten::val(callback)
            );
        }
     );
@@ -1535,7 +1535,15 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2Body_GetJointCount", &b2Body_GetJointCount);
     function("b2Body_GetJoints", &b2Body_GetJoints, allow_raw_pointers());
     function("b2Body_GetContactCapacity", &b2Body_GetContactCapacity);
-    function("b2Body_GetContactData", &b2Body_GetContactData, allow_raw_pointers());
+    function("b2Body_GetContactData", +[](b2BodyId bodyId, int capacity) -> emscripten::val {
+        std::vector<b2ContactData> contactData(capacity);
+        int count = b2Body_GetContactData(bodyId, contactData.data(), capacity);
+        auto result = emscripten::val::array();
+        for (int i = 0; i < count; i++) {
+            result.set(i, contactData[i]);
+        }
+        return result;
+    }, allow_raw_pointers());
     function("b2Body_ComputeAABB", &b2Body_ComputeAABB);
     function("b2Body_GetWorld", &b2Body_GetWorld);
 

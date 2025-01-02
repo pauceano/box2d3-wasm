@@ -22,22 +22,31 @@ class Keyboard {
 		state.initialized = false;
 	}
 
+	static getKey(key) {
+		if(key === ' ') key = 'Space';
+		return key;
+	}
+
 	static keyDown(event) {
-		if (!state.down[event.key]) {
-			state.pressed[event.key] = true;
+		const key = Keyboard.getKey(event.key);
+		if (!state.down[key]) {
+			state.pressed[key] = true;
 		}
-		state.down[event.key] = true;
+		state.down[key] = true;
 	}
 
 	static keyUp(event) {
-		state.down[event.key] = false;
+		const key = Keyboard.getKey(event.key);
+		state.down[key] = false;
 	}
 
 	static IsDown(key) {
+		key = Keyboard.getKey(key);
 		return state.down[key];
 	}
 
 	static IsPressed(key) {
+		key = Keyboard.getKey(key);
 		return state.pressed[key];
 	}
 
@@ -76,13 +85,13 @@ class Keyboard {
 			button.style.cursor = 'pointer';
 			button.style['-webkit-tap-highlight-color'] = 'rgba(0,0,0,0)';
 			button.style.userSelect = 'none';
-
-			button.innerText = key;
+			button.innerText = Keyboard.getKey(key);
 			button.addEventListener('pointerdown', (event) => {
 				event.preventDefault();
-				state.down[key] = true;
+				state.down[Keyboard.getKey(key)] = true;
+				state.pressed[Keyboard.getKey(key)] = true
 				const keyup = () => {
-					state.down[key] = false;
+					state.down[Keyboard.getKey(key)] = false;
 					button.style.background = 'rgba(255,255,255,0.5)';
 					window.removeEventListener('pointerup', keyup);
 				};
