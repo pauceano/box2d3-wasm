@@ -99,16 +99,17 @@ jobs:
         run: |
           # Get current version and add prerelease suffix
           CURRENT_VERSION=$(node -p "require('./package.json').version")
-          PRERELEASE_VERSION="$CURRENT_VERSION-pre.$(date +%Y%m%d%H%M%S)"
-          npm version $PRERELEASE_VERSION --no-git-tag-version
-          echo "Created prerelease version $PRERELEASE_VERSION"
-          - name: Pack and upload
-          if: github.event.inputs.action == 'pack'
-          working-directory: box2d3-wasm
-          run: |
-            npm pack
-            echo "Package created:"
-            ls *.tgz
+          PRERELEASE_VERSION="${CURRENT_VERSION}-pre.$(date +%Y%m%d%H%M%S)"
+          # Use the full version string with npm version
+          npm version "${PRERELEASE_VERSION}" --no-git-tag-version
+          echo "Created prerelease version ${PRERELEASE_VERSION}"
+      - name: Pack and upload
+        if: github.event.inputs.action == 'pack'
+        working-directory: box2d3-wasm
+        run: |
+          npm pack
+          echo "Package created:"
+          ls *.tgz
       - name: Upload package artifact
         if: github.event.inputs.action == 'pack'
         uses: actions/upload-artifact@v4
