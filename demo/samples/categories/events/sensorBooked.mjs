@@ -3,11 +3,9 @@ import Sample from "../../sample.mjs";
 
 import settings from '../../settings.mjs';
 
-const params = new URLSearchParams(window.location.search);
-
 export default class SensorBooked extends Sample{
-	constructor(box2d, camera){
-		super(box2d, camera);
+	constructor(box2d, camera, debugDraw){
+		super(box2d, camera, debugDraw);
 
 		camera.center = {x: 0.0, y: 6.0 };
 		camera.zoom = 7.5;

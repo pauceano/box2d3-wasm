@@ -14,6 +14,8 @@ const boneId_upperRightArm = 9;
 const boneId_lowerRightArm = 10;
 const boneId_count = 11;
 
+const human_userData = {};
+
 class Human {
 	constructor(box2d) {
 		this.box2d = box2d;
@@ -35,6 +37,8 @@ class Human {
 		for ( let i = 0; i < boneId_count; ++i )
 		{
 			if (this.bones[i].bodyId){
+				const bodyPointer = this.box2d.b2Body_GetPointer( this.bones[i].bodyId );
+				delete human_userData[bodyPointer];
 				this.box2d.b2DestroyBody( this.bones[i].bodyId );
 			}
 		}
@@ -110,7 +114,6 @@ class Human {
 			b2RevoluteJoint_SetSpringDampingRatio( this.bones[i].jointId, dampingRatio );
 		}
 	}
-
 }
 
 class Bone {
@@ -158,8 +161,6 @@ export default function CreateHuman(box2d, worldId, position, scale, frictionTor
 	const bodyDef = b2DefaultBodyDef();
 	bodyDef.type = b2BodyType.b2_dynamicBody;
 	bodyDef.sleepThreshold = 0.1;
-
-	if(userData) bodyDef.SetUserData(userData);
 
 	const shapeDef = new b2DefaultShapeDef();
 	shapeDef.friction = 0.2;
@@ -641,6 +642,18 @@ export default function CreateHuman(box2d, worldId, position, scale, frictionTor
 		bone.jointId = b2CreateRevoluteJoint(worldId, jointDef);
 	}
 
+	// set user data
+	human.bones.forEach(bone => {
+		const bodyPointer = box2d.b2Body_GetPointer(bone.bodyId);
+		human_userData[bodyPointer] = userData;
+	});
+
 	human.isSpawned = true;
 	return human;
+}
+
+export function Human_GetUserData(box2d, bodyId)
+{
+	const bodyPointer = box2d.b2Body_GetPointer(bodyId);
+	return human_userData[bodyPointer];
 }

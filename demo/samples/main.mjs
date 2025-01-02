@@ -3,6 +3,7 @@ import {Pane} from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.
 import Box2DFactory from 'box2d3-wasm';
 import Camera from '../utils/camera.mjs';
 import DebugDrawRenderer from '../utils/debugDraw.mjs';
+import Keyboard, { Key } from '../utils/keyboard.mjs';
 
 import samples from './categories/list.mjs';
 import settings from './settings.mjs';
@@ -18,11 +19,22 @@ const state = {
 
 let box2d = null;
 let sample = null;
+let sampleUrl = './categories/events/sensorFunnel.mjs';
+let sampleName = null;
 let pane = null;
+
+const params = new URLSearchParams(window.location.search);
+if(params.has('sample')){
+	const sampleName = params.get('sample');
+	const paths = Object.values(samples).flatMap(category => Object.values(category));
+	const sample = paths.find((url) => url.includes(sampleName));
+	if(sample){
+		sampleUrl = sample;
+	}
+}
 
 const canvas = document.getElementById("demo-canvas");
 const ctx = canvas.getContext("2d");
-
 
 const camera = new Camera({autoResize: true, controls: true, canvas});
 let debugDraw = null;
@@ -33,13 +45,17 @@ function loadSample(url) {
 		sample = null;
 	}
 
+	sampleUrl = url;
+	sampleName = url.slice(13);
+	window.history.pushState({}, sampleName, `?sample=${sampleName}`);
+
 	import(url).then((module) => {
-		sample = new module.default(box2d, camera);
+		sample = new module.default(box2d, camera, debugDraw);
 		updateDebugDrawFlags();
 	});
 }
 
-const debugDrawFlagKeys = ['drawShapes', 'drawJoints', 'drawJointExtras', 'drawAABBs', 'drawMass', 'drawContactPoints', 'drawGraphColors', 'drawContactImpulses', 'drawContactNormals', 'drawContactImpulses', 'drawFrictionImpulses'];
+const debugDrawFlagKeys = ['drawShapes', 'drawJoints', 'drawJointExtras', 'drawAABBs', 'drawMass', 'drawContacts', 'drawGraphColors', 'drawContactNormals', 'drawContactImpulses', 'drawFrictionImpulses'];
 function updateDebugDrawFlags(){
 	const debugDrawFlags = {};
 	debugDrawFlagKeys.forEach((key) => {
@@ -55,7 +71,9 @@ async function initialize(){
 
 	requestAnimationFrame(update);
 
-	loadSample('./categories/events/sensorFunnel.mjs');
+	Keyboard.Init();
+
+	loadSample(sampleUrl);
 
 	addUI();
 	addControls();
@@ -111,7 +129,6 @@ function addUI(){
 		});
 
 		Object.keys(samples[type]).forEach((sample) => {
-
 			const url = samples[type][sample];
 			folder.addButton({
 				title: sample,
@@ -170,7 +187,7 @@ let frameTime = 0;
 let m_textLine = 0;
 
 function DrawString(x, y, text){
-	const fontHeight = 16 * Math.min(window.devicePixelRatio || 1, 2);
+	const fontHeight = 14 * Math.min(window.devicePixelRatio || 1, 2);
 	ctx.font = `${fontHeight}px Arial`;
 	ctx.fillStyle = 'rgba(230, 153, 153, 1)';
 	ctx.fillText(text, x, y + fontHeight);
@@ -183,6 +200,10 @@ function update(timestamp) {
 
 	m_textLine = 0;
 
+	if(Keyboard.IsPressed(Key.R)){
+		loadSample(sampleUrl);
+	}
+
     if (deltaTime >= settings.maxFrameTime && sample) {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -194,7 +215,7 @@ function update(timestamp) {
 
 		state.singleStep = false;
 
-		debugDraw.Draw(sample.m_worldId, camera);
+		DrawString(5, m_textLine, sampleName);
 		sample?.UpdateUI(DrawString, m_textLine);
 
         frameTime = end - start;
@@ -202,6 +223,8 @@ function update(timestamp) {
         lastFrameTime = timestamp - (deltaTime % settings.maxFrameTime);
         frame++;
     }
+
+	Keyboard.Update();
 
     requestAnimationFrame(update);
 }

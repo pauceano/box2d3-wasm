@@ -1,11 +1,13 @@
 import settings, {DEFAULT_SETTINGS} from './settings.mjs';
 
 export default class Sample{
-	constructor(box2d){
+	constructor(box2d, camera, debugDraw){
 
 		Object.assign(settings, DEFAULT_SETTINGS);
 
 		this.box2d = box2d;
+		this.debugDraw = debugDraw;
+		this.camera = camera;
 
 		this.m_groundBodyId = null;
 		this.m_mouseJointId = null;
@@ -48,6 +50,8 @@ export default class Sample{
 			b2World_Step( this.m_worldId, timeStep, settings.subStepCount );
 			this.m_taskSystem?.ClearTasks();
 		}
+
+		this.debugDraw.Draw(this.m_worldId, this.camera);
 	}
 
 	QueryCallback(shapeId, context)
