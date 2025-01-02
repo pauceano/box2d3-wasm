@@ -3,7 +3,7 @@ import Sample from "../../sample.mjs";
 
 import settings from '../../settings.mjs';
 
-import CreateHuman from "../../prefabs/human.mjs";
+import CreateHuman, { Human_GetUserData } from "../../prefabs/human.mjs";
 import Donut from "../../prefabs/donut.mjs";
 
 const params = new URLSearchParams(window.location.search);
@@ -176,7 +176,6 @@ export default class SensorFunnel extends Sample{
 		const {
 			b2World_GetSensorEvents,
 			b2Shape_GetBody,
-			b2Body_GetUserData
 		} = this.box2d;
 
 		super.Step();
@@ -190,7 +189,7 @@ export default class SensorFunnel extends Sample{
 			const event = beginEvents[i];
 			const visitorId = event.visitorShapeId;
 			const bodyId = b2Shape_GetBody( visitorId );
-			const elementId = b2Body_GetUserData( bodyId );
+			const elementId = Human_GetUserData(this.box2d, bodyId );
 			deferredDestructions.add(elementId);
 		}
 

@@ -64,11 +64,10 @@ export default class Contacts extends Sample{
 		}
 
 		this.m_debrisIds = new Array(e_count);
-		this.m_bodyUserData = new Array(e_count);
+		this.m_bodyUserData = {};
 		for ( let i = 0; i < e_count; i++ )
 		{
 			this.m_debrisIds[i] = null;
-			this.m_bodyUserData[i] = i;
 		}
 
 		this.m_wait = 0.5;
@@ -95,6 +94,7 @@ export default class Contacts extends Sample{
 			b2Capsule,
 			RandomFloatRange,
 			B2_PI,
+			b2Body_GetPointer,
 		} = this.box2d;
 
 		let index = -1;
@@ -120,8 +120,12 @@ export default class Contacts extends Sample{
 		bodyDef.linearVelocity.Set(RandomFloatRange( -5.0, 5.0 ), RandomFloatRange( -5.0, 5.0 ));
 		bodyDef.angularVelocity = RandomFloatRange( -1.0, 1.0 );
 		bodyDef.gravityScale = 0.0;
-		bodyDef.SetUserData(index);
+
 		this.m_debrisIds[index] = b2CreateBody( this.m_worldId, bodyDef );
+
+		// store userdata
+		const bodyPointer = b2Body_GetPointer( this.m_debrisIds[index] );
+		this.m_bodyUserData[bodyPointer] = index;
 
 		const shapeDef = b2DefaultShapeDef();
 		shapeDef.restitution = 0.8;
@@ -166,7 +170,7 @@ export default class Contacts extends Sample{
 			b2Shape_GetContactData,
 			b2Length,
 			B2_ID_EQUALS,
-			b2Body_GetUserData,
+			b2Body_GetPointer,
 			b2DestroyBody,
 			b2DestroyShape,
 			b2Body_ApplyMassFromShapes,
@@ -309,8 +313,8 @@ export default class Contacts extends Sample{
 
 			if ( B2_ID_EQUALS( bodyIdA, this.m_playerId ) )
 			{
-				const userDataB = b2Body_GetUserData( bodyIdB );
-				if ( userDataB === null )
+				const userDataB = this.m_bodyUserData[b2Body_GetPointer( bodyIdB )];
+				if ( userDataB === undefined )
 				{
 					if ( B2_ID_EQUALS( event.shapeIdA, this.m_coreShapeId ) == false && destroyCount < e_count )
 					{
@@ -344,8 +348,8 @@ export default class Contacts extends Sample{
 			{
 				// Only expect events for the player
 				console.assert( B2_ID_EQUALS( bodyIdB, this.m_playerId ) );
-				const userDataA = b2Body_GetUserData( bodyIdA );
-				if ( userDataA === null )
+				const userDataA = this.m_bodyUserData[b2Body_GetPointer( bodyIdA )];
+				if ( userDataA === undefined )
 				{
 					if ( B2_ID_EQUALS( event.shapeIdB, this.m_coreShapeId ) == false && destroyCount < e_count )
 					{
@@ -441,6 +445,7 @@ export default class Contacts extends Sample{
 					console.assert( false );
 			}
 
+			delete this.m_bodyUserData[b2Body_GetPointer( debrisId )];
 			b2DestroyBody( debrisId );
 			this.m_debrisIds[index] = null;
 		}
