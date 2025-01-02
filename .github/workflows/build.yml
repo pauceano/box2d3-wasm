@@ -4,9 +4,32 @@
 name: Build box2d3-wasm
 
 on:
-  # release:
-  #   types: [created]
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Build mode'
+        required: true
+        type: choice
+        options:
+          - debug
+          - relwithdebinfo
+          - release
+      action:
+        description: 'Package action'
+        required: true
+        type: choice
+        options:
+          - pack
+          - publish
+        default: pack
+      version_type:
+        description: 'Version increment type'
+        required: true
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
 
 env:
   EM_VERSION: 3.1.73
@@ -15,7 +38,17 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Only use release environment if we're publishing
+    environment: ${{ github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release' && 'release' || '' }}
+    permissions:
+      contents: ${{ github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release' && 'write' || 'read' }}
     steps:
+      - name: Validate inputs
+        run: |
+          if [ "${{ github.event.inputs.action }}" = "publish" ] && [ "${{ github.event.inputs.mode }}" != "release" ]; then
+            echo "::error::Publish action is only allowed in release mode"
+            exit 1
+          fi
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -34,12 +67,22 @@ jobs:
           node-version: 20
       - name: install global deps
         run: npm i -g typescript yarn
+      - name: Set build type
+        id: build-type
+        run: |
+          if [ "${{ github.event.inputs.mode }}" = "debug" ]; then
+            echo "target_type=Debug" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.inputs.mode }}" = "relwithdebinfo" ]; then
+            echo "target_type=RelWithDebInfo" >> $GITHUB_OUTPUT
+          else
+            echo "target_type=Release" >> $GITHUB_OUTPUT
+          fi
       - name: build makefile
         working-directory: box2d3-wasm
         run: shell/0_build_makefile.sh
         env:
           FLAVOUR: simd
-          TARGET_TYPE: Debug
+          TARGET_TYPE: ${{ steps.build-type.outputs.target_type }}
       - name: emmake
         working-directory: box2d3-wasm
         run: emmake make -j8 -C cmake-build
@@ -48,21 +91,57 @@ jobs:
         run: shell/1_build_wasm.sh
         env:
           FLAVOUR: simd
-          TARGET_TYPE: Debug
-
-  # publish-gpr:
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: read
-  #     packages: write
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 20
-  #         registry-url: https://npm.pkg.github.com/
-  #     - run: npm ci
-  #     - run: npm publish
-  #       env:
-  #         NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          TARGET_TYPE: ${{ steps.build-type.outputs.target_type }}
+      # Pack mode: Create prerelease version without git tags
+      - name: Version for pack
+        if: github.event.inputs.action == 'pack'
+        working-directory: box2d3-wasm
+        run: |
+          # Get current version and add prerelease suffix
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          PRERELEASE_VERSION="$CURRENT_VERSION-pre.$(date +%Y%m%d%H%M%S)"
+          npm version $PRERELEASE_VERSION --no-git-tag-version
+          echo "Created prerelease version $PRERELEASE_VERSION"
+          - name: Pack and upload
+          if: github.event.inputs.action == 'pack'
+          working-directory: box2d3-wasm
+          run: |
+            npm pack
+            echo "Package created:"
+            ls *.tgz
+      - name: Upload package artifact
+        if: github.event.inputs.action == 'pack'
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-package
+          path: box2d3-wasm/*.tgz
+      - name: configure git
+        if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      - name: version and tag
+        if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
+        working-directory: box2d3-wasm
+        run: |
+          npm version ${{ github.event.inputs.version_type }} -m "Release %s [skip ci]"
+      - name: publish to npm
+        if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
+        working-directory: box2d3-wasm
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+      - name: Push changes
+        if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
+        working-directory: box2d3-wasm
+        run: |
+          echo "Pushing commits and tags..."
+          git push
+          git push --tags
+          echo "Done!"
+      - name: Trigger deploy workflow
+        if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          event-type: deploy-triggered
+          token: ${{ secrets.GITHUB_TOKEN }}
