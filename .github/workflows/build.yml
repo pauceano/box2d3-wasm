@@ -42,6 +42,7 @@ jobs:
     environment: ${{ (github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release') && 'release' || '' }}
     permissions:
       contents: write  # this permission is only exercised in mode == 'release'
+      id-token: write  # for npm publish --provenance # https://docs.npmjs.com/generating-provenance-statements
     steps:
       - name: validate inputs
         run: |
@@ -68,6 +69,8 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - name: install global deps
         run: npm i -g typescript yarn
+      - name: install local deps
+        run: npm ci
       - name: set build type
         id: build-type
         run: |
@@ -132,7 +135,7 @@ jobs:
       - name: publish to npm
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
         working-directory: box2d3-wasm
-        run: npm publish
+        run: npm publish --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
       - name: push changes
