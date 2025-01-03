@@ -72,6 +72,7 @@ jobs:
         run: npm i -g typescript yarn
       - name: install local deps
         run: npm ci
+        working-directory: box2d3-wasm
       - name: set build type
         id: build-type
         run: |
