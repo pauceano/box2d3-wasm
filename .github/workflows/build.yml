@@ -67,6 +67,7 @@ jobs:
         with:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
+          scope: ''
       - name: install global deps
         run: npm i -g typescript yarn
       - name: install local deps
