@@ -102,6 +102,7 @@ jobs:
           PRERELEASE_VERSION="${CURRENT_VERSION}-pre.$(date +%Y%m%d%H%M%S)"
           # Use the full version string with npm version
           npm version "${PRERELEASE_VERSION}" --no-git-tag-version
+          echo "version=${PRERELEASE_VERSION}" >> $GITHUB_OUTPUT
           echo "Created prerelease version ${PRERELEASE_VERSION}"
       - name: Pack and upload
         if: github.event.inputs.action == 'pack'
@@ -110,11 +111,11 @@ jobs:
           npm pack
           echo "Package created:"
           ls *.tgz
-      - name: Upload package artifact
+      - name: upload package artifact
         if: github.event.inputs.action == 'pack'
         uses: actions/upload-artifact@v4
         with:
-          name: npm-package
+          name: box2d3-wasm-${{ steps.pack_version.outputs.version }}
           path: box2d3-wasm/*.tgz
       - name: configure git
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
@@ -125,14 +126,14 @@ jobs:
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
         working-directory: box2d3-wasm
         run: |
-          npm version ${{ github.event.inputs.version_type }} -m "Release %s [skip ci]"
+          npm version ${{ github.event.inputs.version_type }} -m "release %s [skip ci]"
       - name: publish to npm
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
         working-directory: box2d3-wasm
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
-      - name: Push changes
+      - name: push changes
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
         working-directory: box2d3-wasm
         run: |
@@ -140,7 +141,7 @@ jobs:
           git push
           git push --tags
           echo "Done!"
-      - name: Trigger deploy workflow
+      - name: trigger deploy workflow
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
         uses: peter-evans/repository-dispatch@v2
         with:
