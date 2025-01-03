@@ -43,7 +43,7 @@ jobs:
     permissions:
       contents: write  # this permission is only exercised in mode == 'release'
     steps:
-      - name: Validate inputs
+      - name: validate inputs
         run: |
           if [ "${{ github.event.inputs.action }}" = "publish" ] && [ "${{ github.event.inputs.mode }}" != "release" ]; then
             echo "::error::Publish action is only allowed in release mode"
@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Setup cache
+      - name: setup cache
         id: cache-system-libraries
         uses: actions/cache@v4
         with:
@@ -67,7 +67,7 @@ jobs:
           node-version: 20
       - name: install global deps
         run: npm i -g typescript yarn
-      - name: Set build type
+      - name: set build type
         id: build-type
         run: |
           if [ "${{ github.event.inputs.mode }}" = "debug" ]; then
@@ -93,7 +93,8 @@ jobs:
           FLAVOUR: simd
           TARGET_TYPE: ${{ steps.build-type.outputs.target_type }}
       # Pack mode: Create prerelease version without git tags
-      - name: Version for pack
+      - name: version for pack
+        id: pack_version
         if: github.event.inputs.action == 'pack'
         working-directory: box2d3-wasm
         run: |
@@ -104,7 +105,7 @@ jobs:
           npm version "${PRERELEASE_VERSION}" --no-git-tag-version
           echo "version=${PRERELEASE_VERSION}" >> $GITHUB_OUTPUT
           echo "Created prerelease version ${PRERELEASE_VERSION}"
-      - name: Pack and upload
+      - name: pack and upload
         if: github.event.inputs.action == 'pack'
         working-directory: box2d3-wasm
         run: |
