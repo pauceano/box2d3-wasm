@@ -23,7 +23,7 @@ on:
           - publish
         default: pack
       version_type:
-        description: '[if publishing] Version increment type'
+        description: '[if publishing] Version bump'
         required: true
         type: choice
         options:
