@@ -115,7 +115,7 @@ jobs:
         if: github.event.inputs.action == 'pack'
         uses: actions/upload-artifact@v4
         with:
-          name: box2d3-wasm-${{ steps.pack_version.outputs.version }}
+          name: box2d3-wasm-${{ steps.pack_version.outputs.version }}-${{ github.event.inputs.mode }}
           path: box2d3-wasm/*.tgz
       - name: configure git
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
