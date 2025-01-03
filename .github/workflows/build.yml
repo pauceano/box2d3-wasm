@@ -23,7 +23,7 @@ on:
           - publish
         default: pack
       version_type:
-        description: 'Version increment type'
+        description: '[if publishing] Version increment type'
         required: true
         type: choice
         options:
