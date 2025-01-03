@@ -40,7 +40,7 @@ jobs:
 
       - name: Install npm dependencies
         working-directory: gh-pages
-        run: npm i
+        run: npm ci
       - working-directory: gh-pages
         run: mkdir -p box2d3-wasm
       - working-directory: gh-pages
