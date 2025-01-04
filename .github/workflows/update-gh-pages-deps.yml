@@ -67,7 +67,7 @@ jobs:
           exit 1
       - name: update gh-pages box2d3-wasm version
         working-directory: gh-pages
-        run: npm install "box2d3-wasm@^${{ steps.get_version.outputs.version }}"
+        run: npm install --save "box2d3-wasm@^${{ steps.get_version.outputs.version }}"
       - name: commit updated gh-pages
         working-directory: gh-pages
         run: |
