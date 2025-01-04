@@ -139,7 +139,8 @@ ES_FILE="$ES_DIR/$BASENAME.mjs"
 ES_TSD="$ES_DIR/$BASENAME.d.ts"
 >&2 echo -e "${Blue}Building ES module, $ES_DIR/$BASENAME.{mjs,wasm}${NC}"
 set -x
-emcc "${LINK_OPTS[@]}" -s EXPORT_ES6=1 -o "$ES_PRECURSOR" --emit-tsd "$ES_TSD"
+emcc "${LINK_OPTS[@]}" -s EXPORT_ES6=1 -o "$ES_FILE" --emit-tsd "$ES_TSD"
+cp "$ES_FILE" "$ES_PRECURSOR"
 
 awk '
 BEGIN { found1=0; found2=0; found3=0; found4=0 }
