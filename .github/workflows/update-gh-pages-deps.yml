@@ -40,6 +40,12 @@ jobs:
             VERSION="$(npm pkg get version | tr -d '"')"
           fi
           echo "got version: $VERSION"
+
+          if [ -z "$VERSION" ]; then
+            echo "Error: Version is empty"
+            exit 1
+          fi
+
           echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: configure git
         run: |
