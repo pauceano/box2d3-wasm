@@ -129,24 +129,46 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
       - name: version and tag
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
+        id: versioning
         working-directory: box2d3-wasm
         run: |
-          npm version ${{ github.event.inputs.version_type }} -m "release %s [skip ci]"
+          NEW_VERSION=$(npm version ${{ github.event.inputs.version_type }} -m "release %s [skip ci]")
+          # Remove the 'v' prefix
+          NEW_VERSION=${NEW_VERSION#v}
+          echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
       - name: publish to npm
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
         working-directory: box2d3-wasm
         run: npm publish --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
-      - name: push changes
+      - name: push box2d3-wasm changes
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
         working-directory: box2d3-wasm
         run: |
           echo "Pushing commits and tags..."
-          git push
-          git push --tags
+          git push || { echo "Push failed"; exit 1; }
+          git push --tags || { echo "Push tags failed"; exit 1; }
+          echo "Done!"
+      - name: update gh-pages box2d3-wasm version
+        if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
+        working-directory: gh-pages
+        run: npm install "box2d3-wasm@^${{ steps.versioning.outputs.version }}"
+      - name: commit updated gh-pages
+        if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
+        working-directory: gh-pages
+        run: |
+          git add package.json package-lock.json
+          git commit -m "update gh-pages box2d3-wasm to v${{ steps.versioning.outputs.version }} [skip ci]"
+      - name: push gh-pages changes
+        if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
+        working-directory: gh-pages
+        run: |
+          echo "Pushing commit..."
+          git push || { echo "Push failed"; exit 1; }
           echo "Done!"
       - name: trigger deploy workflow
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
@@ -154,3 +176,4 @@ jobs:
         with:
           event-type: deploy-triggered
           token: ${{ secrets.GITHUB_TOKEN }}
+          # client-payload: '{"version": "${{ steps.versioning.outputs.version }}"}'
