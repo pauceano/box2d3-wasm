@@ -7,7 +7,7 @@ We'll write a demo into [`static/index.html`](static/index.html).
 Fetch libraries:
 
 ```bash
-npm i
+npm ci
 ```
 
 Copy library assets into static/lib:
