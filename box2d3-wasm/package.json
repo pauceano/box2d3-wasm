@@ -6,8 +6,7 @@
   "type": "commonjs",
   "types": "build/dist/es/entry.d.ts",
   "exports": {
-    "import": "./build/dist/es/entry.mjs",
-    "require": "./build/dist/umd/entry.js"
+    "import": "./build/dist/es/entry.mjs"
   },
   "module": "build/dist/es/entry.mjs",
   "files": [
