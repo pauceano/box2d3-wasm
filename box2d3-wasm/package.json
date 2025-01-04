@@ -22,7 +22,7 @@
   },
   "author": "Alex Birch & Erik Sombroek",
   "repository": {
-    "url": "https://github.com/Birch-san/box2d3-wasm.git",
+    "url": "git+https://github.com/Birch-san/box2d3-wasm.git",
     "directory": "box2d3-wasm"
   },
   "license": "MIT",
