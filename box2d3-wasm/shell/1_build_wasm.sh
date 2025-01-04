@@ -144,7 +144,7 @@ emcc "${LINK_OPTS[@]}" -s EXPORT_ES6=1 -o "$ES_PRECURSOR" --emit-tsd "$ES_TSD"
 awk '
 BEGIN { found1=0; found2=0 }
 !found1 && $0 ~ /^var Module = \(\(\) => \{$/ {
-  print "var Module = (({ pthreadCount=globalThis.navigator?.hardwareConcurrency ?? 4 } = {}) => {"
+  print "var Module = (({ pthreadCount=globalThis.navigator?.hardwareConcurrency ?? 4, sharedMemEnabled=true } = {}) => {"
   found1=1
   next
 }
