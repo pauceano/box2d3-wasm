@@ -142,9 +142,9 @@ set -x
 emcc "${LINK_OPTS[@]}" -s EXPORT_ES6=1 -o "$ES_PRECURSOR" --emit-tsd "$ES_TSD"
 
 awk '
-BEGIN { found1=0; found2=0 }
+BEGIN { found1=0; found2=0; found3=0; found4=0 }
 !found1 && $0 ~ /^var Module = \(\(\) => \{$/ {
-  print "var Module = (({ pthreadCount=globalThis.navigator?.hardwareConcurrency ?? 4, sharedMemEnabled=true } = {}) => {"
+  print "var Module = (({ pthreadCount=globalThis.navigator?.hardwareConcurrency ?? 4, sharedMemEnabled=true, maxHeapOverride=2147483648 } = {}) => {"
   found1=1
   next
 }
@@ -154,8 +154,25 @@ BEGIN { found1=0; found2=0 }
   found2=1
   next
 }
+!found3 && /^var getHeapMax = \(\) =>/ {
+  collecting=1
+  found3=1
+  print "var getHeapMax = () => maxHeapOverride;"
+  next
+}
+collecting && /^2147483648;$/ {
+  collecting=0
+  next
+}
+collecting { next }
+!found4 && /^[[:space:]]*"shared": true/ {
+  sub(/"shared": true/, "\"shared\": sharedMemEnabled")
+  print
+  found4=1
+  next
+}
 { print }
-END { exit !(found1 && found2) }
+END { exit !(found1 && found2 && found3 && found4) }
 ' "$ES_PRECURSOR" > "$ES_FILE"
 
 >&2 echo -e "${Green}Successfully built $ES_DIR/$BASENAME.{js,wasm}${NC}\n"
