@@ -1,3 +1,4 @@
+name: Update gh-pages dependency on box2d3-wasm
 
 on:
   workflow_dispatch:
