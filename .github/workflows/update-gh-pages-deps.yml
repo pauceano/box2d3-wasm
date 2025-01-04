@@ -7,7 +7,7 @@ on:
         description: 'box2d3-wasm ver. [default: package.json]'
         required: false
   repository_dispatch:
-    types: [deploy-triggered]
+    types: [box2d3-wasm-released]
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 concurrency:
@@ -82,6 +82,5 @@ jobs:
       - name: trigger update-gh-pages workflow
         uses: peter-evans/repository-dispatch@v3
         with:
-          event-type: deploy-triggered
+          event-type: gh-pages-deps-updated
           token: ${{ secrets.GITHUB_TOKEN }}
-          workflow-id: static.yml

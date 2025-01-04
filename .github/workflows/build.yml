@@ -168,7 +168,6 @@ jobs:
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
         uses: peter-evans/repository-dispatch@v3
         with:
-          event-type: deploy-triggered
+          event-type: box2d3-wasm-released
           token: ${{ secrets.GITHUB_TOKEN }}
-          workflow-id: update-gh-pages-deps.yml
           client-payload: '{"version": "${{ steps.versioning.outputs.version }}"}'
