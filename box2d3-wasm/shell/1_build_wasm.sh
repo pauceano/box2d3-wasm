@@ -48,7 +48,7 @@ EMCC_OPTS=(
   # threading
   -pthread
   -s USE_PTHREADS=1
-  -s PTHREAD_POOL_SIZE=navigator.hardwareConcurrency
+  -s PTHREAD_POOL_SIZE=pthreadCount
   ${FLAVOUR_EMCC_OPTS[@]}
   )
 DEBUG_OPTS=(
@@ -130,14 +130,32 @@ LINK_OPTS=(
   -pthread
   -s USE_PTHREADS=1
   -s ALLOW_MEMORY_GROWTH=1
-  -s PTHREAD_POOL_SIZE=navigator.hardwareConcurrency
+  -s PTHREAD_POOL_SIZE='_emscripten_num_logical_cores()'
   --post-link "$BARE_WASM"
 )
 
+ES_PRECURSOR="$ES_DIR/$BASENAME.orig.mjs"
 ES_FILE="$ES_DIR/$BASENAME.mjs"
 ES_TSD="$ES_DIR/$BASENAME.d.ts"
 >&2 echo -e "${Blue}Building ES module, $ES_DIR/$BASENAME.{mjs,wasm}${NC}"
 set -x
-emcc "${LINK_OPTS[@]}" -s EXPORT_ES6=1 -o "$ES_FILE" --emit-tsd "$ES_TSD"
-{ set +x; } 2>&-
+emcc "${LINK_OPTS[@]}" -s EXPORT_ES6=1 -o "$ES_PRECURSOR" --emit-tsd "$ES_TSD"
+
+awk '
+BEGIN { found1=0; found2=0 }
+!found1 && $0 ~ /^var Module = \(\(\) => \{$/ {
+  print "var Module = (({ pthreadCount=globalThis.navigator?.hardwareConcurrency ?? 4 } = {}) => {"
+  found1=1
+  next
+}
+!found2 && /^[[:space:]]*var pthreadPoolSize = _emscripten_num_logical_cores\(\);$/ {
+  sub(/_emscripten_num_logical_cores\(\)/, "pthreadCount")
+  print
+  found2=1
+  next
+}
+{ print }
+END { exit !(found1 && found2) }
+' "$ES_PRECURSOR" > "$ES_FILE"
+
 >&2 echo -e "${Green}Successfully built $ES_DIR/$BASENAME.{js,wasm}${NC}\n"

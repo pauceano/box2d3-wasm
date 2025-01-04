@@ -11,8 +11,8 @@
   "module": "build/dist/es/entry.mjs",
   "files": [
     "build/dist/**/*.d.ts",
-    "build/dist/**/*.js",
     "build/dist/**/*.mjs",
+    "!build/dist/**/*.orig.mjs",
     "build/dist/**/*.wasm",
     "build/dist/**/*.map"
   ],
