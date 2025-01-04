@@ -43,6 +43,7 @@ jobs:
     permissions:
       contents: write  # this permission is only exercised in mode == 'release'
       id-token: write  # for npm publish --provenance # https://docs.npmjs.com/generating-provenance-statements
+      actions: write   # for triggering other workflows
     steps:
       - name: validate inputs
         run: |
@@ -67,7 +68,6 @@ jobs:
         with:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
-          scope: ''
       - name: install global deps
         run: npm i -g typescript yarn
       - name: install local deps
@@ -134,11 +134,22 @@ jobs:
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
         id: versioning
         working-directory: box2d3-wasm
+        # we use --no-git-tag-version because npm version can't use git from a subdirectory of a repository(?) https://github.com/npm/cli/issues/2010
         run: |
-          NEW_VERSION=$(npm version ${{ github.event.inputs.version_type }} -m "release %s [skip ci]")
+          NEW_VERSION=$(npm version ${{ github.event.inputs.version_type }} --no-git-tag-version -m "release %s [skip ci]")
           # Remove the 'v' prefix
           NEW_VERSION=${NEW_VERSION#v}
           echo "version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+      - name: commit updated version
+        if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
+        working-directory: box2d3-wasm
+        run: |
+          git add package.json package-lock.json
+          git commit -m "box2d3-wasm v${{ steps.versioning.outputs.version }} [skip ci]"
+      - name: tag updated version
+        if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
+        working-directory: box2d3-wasm
+        run: git tag "v${{ steps.versioning.outputs.version }}"
       - name: publish to npm
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
         working-directory: box2d3-wasm
@@ -153,27 +164,11 @@ jobs:
           git push || { echo "Push failed"; exit 1; }
           git push --tags || { echo "Push tags failed"; exit 1; }
           echo "Done!"
-      - name: update gh-pages box2d3-wasm version
+      - name: trigger update-gh-pages workflow
         if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
-        working-directory: gh-pages
-        run: npm install "box2d3-wasm@^${{ steps.versioning.outputs.version }}"
-      - name: commit updated gh-pages
-        if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
-        working-directory: gh-pages
-        run: |
-          git add package.json package-lock.json
-          git commit -m "update gh-pages box2d3-wasm to v${{ steps.versioning.outputs.version }} [skip ci]"
-      - name: push gh-pages changes
-        if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
-        working-directory: gh-pages
-        run: |
-          echo "Pushing commit..."
-          git push || { echo "Push failed"; exit 1; }
-          echo "Done!"
-      - name: trigger deploy workflow
-        if: github.event.inputs.action == 'publish' && github.event.inputs.mode == 'release'
-        uses: peter-evans/repository-dispatch@v2
+        uses: peter-evans/repository-dispatch@v3
         with:
           event-type: deploy-triggered
           token: ${{ secrets.GITHUB_TOKEN }}
-          # client-payload: '{"version": "${{ steps.versioning.outputs.version }}"}'
+          workflow-id: update-gh-pages-deps.yml
+          client-payload: '{"version": "${{ steps.versioning.outputs.version }}"}'
