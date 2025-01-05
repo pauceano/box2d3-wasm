@@ -3,7 +3,7 @@ import settings, {DEFAULT_SETTINGS} from './settings.mjs';
 export default class Sample{
 	constructor(box2d, camera, debugDraw){
 
-		Object.assign(settings, DEFAULT_SETTINGS);
+		// Object.assign(settings, DEFAULT_SETTINGS);
 
 		this.box2d = box2d;
 		this.debugDraw = debugDraw;
@@ -41,7 +41,25 @@ export default class Sample{
 			b2World_Step,
 		} = this.box2d;
 
-		const timeStep = settings.hertz > 0.0 ? 1.0 / settings.hertz : 0.0;
+		let timeStep = settings.hertz > 0.0 ? 1.0 / settings.hertz : 0.0;
+
+		if ( settings.pause )
+		{
+			if ( settings.singleStep )
+			{
+				settings.singleStep = false;
+			}
+			else
+			{
+				timeStep = 0.0;
+			}
+		}
+
+		function f32(n) {
+			return new Float32Array([n])[0];
+		}
+
+		timeStep = f32(timeStep);
 
 		b2World_EnableSleeping( this.m_worldId, settings.enableSleep );
 		b2World_EnableWarmStarting( this.m_worldId, settings.enableWarmStarting );

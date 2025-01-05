@@ -53,6 +53,16 @@ emscripten::val getEventsArray(T* events, int count) {
     return result;
 }
 
+template<typename T>
+emscripten::val toBytes(const T& value) {
+    auto array = emscripten::val::global("Uint8Array").new_(sizeof(T));
+    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&value);
+    for (size_t i = 0; i < sizeof(T); i++) {
+        array.set(i, bytes[i]);
+    }
+    return array;
+}
+
 EMSCRIPTEN_BINDINGS(box2dcpp) {
     class_<b2Vec2>("b2Vec2")
         .constructor()
@@ -117,11 +127,13 @@ EMSCRIPTEN_BINDINGS(box2dcpp) {
 
     constant("b2Rot_identity", b2Rot_identity);
 
-
     class_<b2Transform>("b2Transform")
         .constructor()
         .property("p", &b2Transform::p, return_value_policy::reference())
         .property("q", &b2Transform::q, return_value_policy::reference())
+        .function("ToBytes", +[](const b2Transform& self) -> emscripten::val {
+            return toBytes(self);
+        });
         ;
 
     class_<b2Mat22>("b2Mat22")
@@ -1721,6 +1733,21 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2AABB_Center", &b2AABB_Center);
     function("b2AABB_Extents", &b2AABB_Extents);
     function("b2AABB_Union", &b2AABB_Union);
+    function("b2Hash", +[](uint32_t hash, const emscripten::val& array) -> uint32_t {
+        if (!array.instanceof(emscripten::val::global("Uint8Array"))) {
+            throw std::runtime_error("Expected a Uint8Array.");
+        }
+        auto buffer = array["buffer"].as<emscripten::val>();
+        size_t length = array["length"].as<size_t>();
+        int byteOffset = array["byteOffset"].as<int>();
+        auto view = emscripten::val::global("Uint8Array").new_(buffer, byteOffset, length);
+        uint32_t result = hash;
+        for (size_t i = 0; i < length; i++) {
+            result = (result << 5) + result + view[i].as<uint8_t>();
+        }
+        return result;
+    }, allow_raw_pointers());
+    constant("B2_HASH_INIT", B2_HASH_INIT);
 
     // ------------------------------------------------------------------------
     // Random

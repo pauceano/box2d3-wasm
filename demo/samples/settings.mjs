@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS = {
 	maxFrameTime: 1000 / 60,
 	hertz: 60,
 	pause: false,
+	singleStep: false,
 	enableWarmStarting: true,
 	enableContinuous: true,
 	subStepCount: 4,
