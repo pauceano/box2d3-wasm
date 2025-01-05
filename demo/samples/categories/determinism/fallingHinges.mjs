@@ -1,0 +1,173 @@
+import {Pane} from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
+import Sample from "../../sample.mjs";
+
+import b2HexColor from '../../b2HexColor.mjs';
+
+import Keyboard, { Key } from '../../../utils/keyboard.mjs';
+import settings from '../../settings.mjs';
+
+const e_columns = 4;
+const e_rows = 30;
+
+export default class FallingHinges extends Sample{
+	constructor(box2d, camera, debugDraw){
+		super(box2d, camera, debugDraw);
+
+		camera.center = {x: 0.0, y: 7.5 };
+		camera.zoom = 10;
+
+		settings.drawJoints = true;
+
+		this.m_bodies = new Array(e_columns * e_rows);
+		this.m_hash = 0;
+		this.m_sleepStep = -1;
+
+		const {
+			b2DefaultBodyDef,
+			b2CreateBody,
+			b2MakeBox,
+			b2DefaultShapeDef,
+			b2CreatePolygonShape,
+			b2DefaultRevoluteJointDef,
+			b2CreateRevoluteJoint,
+			b2MakeRoundedBox,
+			b2BodyType,
+			B2_PI,
+			b2MakeRot,
+		} = this.box2d;
+
+		{
+			const bodyDef = b2DefaultBodyDef();
+			bodyDef.position.Set(0.0, -1.0);
+			const groundId = b2CreateBody( this.m_worldId, bodyDef );
+
+			const box = b2MakeBox( 20.0, 1.0 );
+			const shapeDef = b2DefaultShapeDef();
+			b2CreatePolygonShape( groundId, shapeDef, box );
+		}
+
+		const h = 0.25;
+		const r = 0.1 * h;
+		const box = b2MakeRoundedBox( h - r, h - r, r );
+
+		const shapeDef = b2DefaultShapeDef();
+		shapeDef.friction = 0.3;
+
+		const offset = 0.4 * h;
+		const dx = 10.0 * h;
+		const xroot = -0.5 * dx * ( e_columns - 1.0 );
+
+		const jointDef = b2DefaultRevoluteJointDef();
+		jointDef.enableLimit = true;
+		jointDef.lowerAngle = -0.1 * B2_PI;
+		jointDef.upperAngle = 0.2 * B2_PI;
+		jointDef.enableSpring = true;
+		jointDef.hertz = 0.5;
+		jointDef.dampingRatio = 0.5;
+		jointDef.localAnchorA.Set(h, h );
+		jointDef.localAnchorB.Set(offset, -h);
+		jointDef.drawSize = 0.1;
+
+		let bodyIndex = 0;
+		let bodyCount = e_rows * e_columns;
+
+
+		for ( let j = 0; j < e_columns; j++ )
+		{
+			let x = xroot + j * dx;
+
+			let prevBodyId = null;
+
+			for ( let i = 0; i < e_rows; i++ )
+			{
+				const bodyDef = b2DefaultBodyDef();
+				bodyDef.type = b2BodyType.b2_dynamicBody;
+
+				bodyDef.position.Set(
+					x + offset * i,
+					h + 2.0 * h * i
+				);
+
+				// this tests the deterministic cosine and sine functions
+				bodyDef.rotation = b2MakeRot( 0.1 * i - 1.0 );
+
+				const bodyId = b2CreateBody( this.m_worldId, bodyDef );
+
+				if ((i & 1) == 0)
+				{
+					prevBodyId = bodyId;
+				}
+				else
+				{
+					jointDef.bodyIdA = prevBodyId;
+					jointDef.bodyIdB = bodyId;
+					b2CreateRevoluteJoint( this.m_worldId, jointDef );
+					prevBodyId = null;
+				}
+
+				b2CreatePolygonShape( bodyId, shapeDef, box );
+
+				console.assert( bodyIndex < bodyCount );
+				this.m_bodies[bodyIndex] = bodyId;
+
+				bodyIndex += 1;
+			}
+		}
+
+		this.CreateUI();
+	}
+
+	Despawn(){
+		Keyboard.HideTouchControls();
+	}
+
+	Step(){
+		const {
+			b2World_GetBodyEvents,
+			b2Body_GetTransform,
+			b2Hash,
+			B2_HASH_INIT,
+		} = this.box2d;
+
+		super.Step();
+
+		if(this.m_hash === 0){
+			const bodyEvents = b2World_GetBodyEvents( this.m_worldId );
+
+			if ( bodyEvents.moveCount == 0 )
+			{
+				let hash = B2_HASH_INIT;
+
+				console.log(hash);
+				const bodyCount = e_rows * e_columns;
+				for ( let i = 0; i < bodyCount; i++ )
+				{
+					const xf = b2Body_GetTransform( this.m_bodies[i] );
+
+					console.log(xf.ToBytes());
+					//printf( "%d %.9f %.9f %.9f %.9f\n", i, xf.p.x, xf.p.y, xf.q.c, xf.q.s );
+					hash = b2Hash( hash, xf.ToBytes() );
+				}
+
+				this.m_sleepStep = this.m_stepCount - 1;
+				this.m_hash = hash;
+				console.log( "sleep step = ", this.m_sleepStep, ", hash = ", this.m_hash );
+			}
+		}
+	}
+
+	UpdateUI(DrawString, m_textLine){
+		// 		g_draw.DrawString( 5, m_textLine, "sleep step = %d, hash = 0x%08x", m_sleepStep, m_hash );
+		DrawString(5, m_textLine, `sleep step = ${this.m_sleepStep}, hash = 0x${this.m_hash.toString(16)}`);
+	}
+
+	Destroy(){
+		super.Destroy();
+		this.Despawn();
+
+		if (this.pane){
+			this.pane.dispose();
+			this.pane = null;
+		}
+	}
+}
