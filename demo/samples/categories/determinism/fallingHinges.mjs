@@ -1,13 +1,15 @@
-import {Pane} from 'https://cdn.jsdelivr.net/npm/tweakpane@4.0.5/dist/tweakpane.min.js';
 import Sample from "../../sample.mjs";
 
-import b2HexColor from '../../b2HexColor.mjs';
-
-import Keyboard, { Key } from '../../../utils/keyboard.mjs';
+import Keyboard from '../../../utils/keyboard.mjs';
 import settings from '../../settings.mjs';
 
 const e_columns = 4;
 const e_rows = 30;
+
+/*
+	Note, hash differs from C version due to different float precision (f32 vs f64)
+	But the wasm build should be deterministic cross-browser / cross-platform
+*/
 
 export default class FallingHinges extends Sample{
 	constructor(box2d, camera, debugDraw){
@@ -34,6 +36,7 @@ export default class FallingHinges extends Sample{
 			b2BodyType,
 			B2_PI,
 			b2MakeRot,
+			b2Body_GetTransform,
 		} = this.box2d;
 
 		{
@@ -70,7 +73,6 @@ export default class FallingHinges extends Sample{
 
 		let bodyIndex = 0;
 		let bodyCount = e_rows * e_columns;
-
 
 		for ( let j = 0; j < e_columns; j++ )
 		{
@@ -138,26 +140,21 @@ export default class FallingHinges extends Sample{
 			{
 				let hash = B2_HASH_INIT;
 
-				console.log(hash);
 				const bodyCount = e_rows * e_columns;
 				for ( let i = 0; i < bodyCount; i++ )
 				{
 					const xf = b2Body_GetTransform( this.m_bodies[i] );
-
-					console.log(xf.ToBytes());
 					//printf( "%d %.9f %.9f %.9f %.9f\n", i, xf.p.x, xf.p.y, xf.q.c, xf.q.s );
 					hash = b2Hash( hash, xf.ToBytes() );
 				}
 
 				this.m_sleepStep = this.m_stepCount - 1;
 				this.m_hash = hash;
-				console.log( "sleep step = ", this.m_sleepStep, ", hash = ", this.m_hash );
 			}
 		}
 	}
 
 	UpdateUI(DrawString, m_textLine){
-		// 		g_draw.DrawString( 5, m_textLine, "sleep step = %d, hash = 0x%08x", m_sleepStep, m_hash );
 		DrawString(5, m_textLine, `sleep step = ${this.m_sleepStep}, hash = 0x${this.m_hash.toString(16)}`);
 	}
 

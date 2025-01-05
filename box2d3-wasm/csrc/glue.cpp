@@ -1734,25 +1734,19 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2AABB_Extents", &b2AABB_Extents);
     function("b2AABB_Union", &b2AABB_Union);
     function("b2Hash", +[](uint32_t hash, const emscripten::val& array) -> uint32_t {
-    if (!array.instanceof(emscripten::val::global("Uint8Array"))) {
-        throw std::runtime_error("Expected a Uint8Array.");
-    }
-
-    auto buffer = array["buffer"].as<emscripten::val>();
-    size_t length = array["length"].as<size_t>();
-    int byteOffset = array["byteOffset"].as<int>();
-    
-    // Create a new Uint8Array view of the data
-    auto view = emscripten::val::global("Uint8Array").new_(buffer, byteOffset, length);
-    
-    // Access the data through the view
-    uint32_t result = hash;
-    for (size_t i = 0; i < length; i++) {
-        result = (result << 5) + result + view[i].as<uint8_t>();
-    }
-    
-    return result;
-}, allow_raw_pointers());
+        if (!array.instanceof(emscripten::val::global("Uint8Array"))) {
+            throw std::runtime_error("Expected a Uint8Array.");
+        }
+        auto buffer = array["buffer"].as<emscripten::val>();
+        size_t length = array["length"].as<size_t>();
+        int byteOffset = array["byteOffset"].as<int>();
+        auto view = emscripten::val::global("Uint8Array").new_(buffer, byteOffset, length);
+        uint32_t result = hash;
+        for (size_t i = 0; i < length; i++) {
+            result = (result << 5) + result + view[i].as<uint8_t>();
+        }
+        return result;
+    }, allow_raw_pointers());
     constant("B2_HASH_INIT", B2_HASH_INIT);
 
     // ------------------------------------------------------------------------

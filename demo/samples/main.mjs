@@ -214,6 +214,10 @@ function update(timestamp) {
 		loadSample(sampleUrl);
 	}
 
+	if(Keyboard.IsPressed(Key.P)){
+		settings.pause = !settings.pause;
+	}
+
     if (deltaTime >= settings.maxFrameTime) {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
