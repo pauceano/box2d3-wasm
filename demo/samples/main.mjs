@@ -9,7 +9,6 @@ import samples from './categories/list.mjs';
 import settings from './settings.mjs';
 
 const state = {
-	singleStep: false,
 	mouseDown: false,
 	mousePos: {x: 0, y: 0},
 	mouseDownPos: {x: 0, y: 0},
@@ -39,6 +38,7 @@ const camera = new Camera({autoResize: true, controls: true, canvas});
 let debugDraw = null;
 
 function loadSample(url) {
+	console.log('loading sample', url);
 	if(sample){
 		sample.Destroy();
 		sample = null;
@@ -83,6 +83,8 @@ function addUI(){
 
 	const PARAMS = {
 		pause: false,
+		'warm starting': settings.enableWarmStarting,
+		continuous: settings.enableContinuous,
 	  };
 	pane = new Pane({
 		title: 'Main Settings',
@@ -104,10 +106,18 @@ function addUI(){
 		settings.pause = event.value;
 	});
 
+	main.addBinding(PARAMS, 'warm starting').on('change', (event) => {
+		settings.enableWarmStarting = event.value;
+	});
+
+	main.addBinding(PARAMS, 'continuous').on('change', (event) => {
+		settings.enableContinuous = event.value;
+	});
+
 	main.addButton({
 		title: 'single step',
 	}).on('click', () => {
-		state.singleStep = true;
+		settings.singleStep = true;
 	});
 
 	// debug draw settings
@@ -204,24 +214,22 @@ function update(timestamp) {
 		loadSample(sampleUrl);
 	}
 
-    if (deltaTime >= settings.maxFrameTime && sample) {
+    if (deltaTime >= settings.maxFrameTime) {
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const start = performance.now();
-		if (!settings.pause || state.singleStep) {
-        	sample.Step()
+		if(sample){
+			const start = performance.now();
+			sample.Step()
+			const end = performance.now();
+
+			DrawString(5, m_textLine, sampleName);
+			sample?.UpdateUI(DrawString, m_textLine);
+
+			frameTime = end - start;
+
+			lastFrameTime = timestamp - (deltaTime % settings.maxFrameTime);
+			frame++;
 		}
-        const end = performance.now();
-
-		state.singleStep = false;
-
-		DrawString(5, m_textLine, sampleName);
-		sample?.UpdateUI(DrawString, m_textLine);
-
-        frameTime = end - start;
-
-        lastFrameTime = timestamp - (deltaTime % settings.maxFrameTime);
-        frame++;
 
 		Keyboard.Update();
     }
