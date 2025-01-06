@@ -144,8 +144,10 @@ cp "$ES_FILE" "$ES_PRECURSOR"
 
 awk '
 BEGIN { found1=0; found2=0; found3=0; found4=0 }
-!found1 && $0 ~ /^var Module = \(\(\) => \{$/ {
-  print "var Module = (({ pthreadCount=globalThis.navigator?.hardwareConcurrency ?? 4, sharedMemEnabled=true, maxHeapOverride=2147483648 } = {}) => {"
+!found1 && $0 ~ /^async function\(moduleArg = \{\}\) \{$/ {
+  print $0
+  print "  moduleArg = {pthreadCount: globalThis.navigator?.hardwareConcurrency ?? 4, sharedMemEnabled:true, ...moduleArg};"
+  print "  const {pthreadCount, sharedMemEnabled, maxHeapOverride} = moduleArg;"
   found1=1
   next
 }
@@ -155,20 +157,14 @@ BEGIN { found1=0; found2=0; found3=0; found4=0 }
   found2=1
   next
 }
-!found3 && /^var getHeapMax = \(\) =>/ {
-  collecting=1
-  found3=1
-  print "var getHeapMax = () => maxHeapOverride;"
-  next
-}
-collecting && /^2147483648;$/ {
-  collecting=0
-  next
-}
-collecting { next }
-!found4 && /^[[:space:]]*"shared": true/ {
+!found3 && /^[[:space:]]*"shared": true/ {
   sub(/"shared": true/, "\"shared\": sharedMemEnabled")
   print
+  found3=1
+  next
+}
+!found4 && /^[[:space:]]*PThread\.init\(\);$/ {
+  print "  if(pthreadCount > 0) { PThread.init(); }"
   found4=1
   next
 }
