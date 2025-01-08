@@ -1,5 +1,5 @@
 /**
- * @import { MainModule, ModuleOptions } from './simd/Box2D.simd'
+ * @import { MainModule, ModuleOptions } from './deluxe/Box2D.deluxe'
  * @param {ModuleOptions} options
  * @return {Promise<MainModule>}
  */
@@ -23,8 +23,8 @@ export default async (options, ...args) => {
     /** @type {{ 'default': (options?: unknown) => MainModule) }} */
     const Box2DModule = await (
       hasSIMD
-        ? import('./simd/Box2D.simd.mjs')
-        : import('./standard/Box2D.standard.mjs')
+        ? import('./deluxe/Box2D.deluxe.mjs')
+        : import('./compat/Box2D.compat.mjs')
     );
     const { 'default': Box2DFactory } = Box2DModule;
     // awaiting gives us a better stack trace (at the cost of an extra microtask)

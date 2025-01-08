@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# FLAVOUR=simd TARGET_TYPE=Debug ./shell/0_build_makefile.sh
+# FLAVOUR=deluxe TARGET_TYPE=Debug ./shell/0_build_makefile.sh
 set -eo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BOX2D_DIR="$(realpath "$DIR/../../box2d")"
@@ -18,23 +18,22 @@ NC='\033[0m' # No Color
 # fi
 
 CMAKE_OPTS=()
-CFLAGS=(-pthread -s USE_PTHREADS=1)
-CXXFLAGS=(-pthread -s USE_PTHREADS=1)
+CFLAGS=()
+CXXFLAGS=()
 case "$FLAVOUR" in
-  standard)
-    # maybe we don't need to disable SIMD? seems to compile fine
-    # CMAKE_OPTS=(${CMAKE_OPTS[@]} -DBOX2D_ENABLE_SIMD=OFF)
+  compat)
+    CMAKE_OPTS=(${CMAKE_OPTS[@]} -DBOX2D_ENABLE_SIMD=OFF)
     ;;
-  simd)
+  deluxe)
     # this is ON by default but let's be explicit
     CMAKE_OPTS=(${CMAKE_OPTS[@]} -DBOX2D_ENABLE_SIMD=ON)
-    CFLAGS=(${CFLAGS[@]} -msimd128 -msse2)
-    CXXFLAGS=(${CXXFLAGS[@]} -msimd128 -msse2)
+    CFLAGS=(${CFLAGS[@]} -msimd128 -msse2 -pthread -s USE_PTHREADS=1)
+    CXXFLAGS=(${CXXFLAGS[@]} -msimd128 -msse2 -pthread -s USE_PTHREADS=1)
     ;;
   *)
     >&2 echo -e "${Red}FLAVOUR not set.${NC}"
-    >&2 echo -e "Please set FLAVOUR to 'standard' or 'simd'. For example, with:"
-    >&2 echo -e "${Purple}export FLAVOUR='simd'${NC}"
+    >&2 echo -e "Please set FLAVOUR to 'compat' or 'deluxe'. For example, with:"
+    >&2 echo -e "${Purple}export FLAVOUR='deluxe'${NC}"
     exit 1
     ;;
 esac

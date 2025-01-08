@@ -17,20 +17,34 @@ Blue='\033[0;34m'
 Purple='\033[0;35m'
 NC='\033[0m' # No Color
 
-BASENAME=Box2D
+BASENAME="Box2D.$FLAVOUR"
 FLAVOUR_EMCC_OPTS=()
+FLAVOUR_LINK_OPTS=()
 case "$FLAVOUR" in
-  standard)
-    BASENAME="$BASENAME.standard"
+  compat)
     ;;
-  simd)
-    BASENAME="$BASENAME.simd"
-    FLAVOUR_EMCC_OPTS=(${FLAVOUR_EMCC_OPTS[@]} -msimd128)
+  deluxe)
+    FLAVOUR_EMCC_OPTS=(
+      ${FLAVOUR_EMCC_OPTS[@]}
+      # SIMD
+      -msimd128
+      -msse2 # probably not necessary now that we're past emmake, unless our glue code adds more SSE
+      # threading
+      -pthread
+      -s USE_PTHREADS=1
+      -s PTHREAD_POOL_SIZE=pthreadCount
+    )
+    FLAVOUR_LINK_OPTS=(
+      ${FLAVOUR_LINK_OPTS[@]}
+      -pthread
+      -s USE_PTHREADS=1
+      -s PTHREAD_POOL_SIZE='_emscripten_num_logical_cores()'
+    )
     ;;
   *)
     >&2 echo -e "${Red}FLAVOUR not set.${NC}"
-    >&2 echo -e "Please set FLAVOUR to 'standard' or 'simd'. For example, with:"
-    >&2 echo -e "${Purple}export FLAVOUR='simd'${NC}"
+    >&2 echo -e "Please set FLAVOUR to 'compat' or 'deluxe'. For example, with:"
+    >&2 echo -e "${Purple}export FLAVOUR='deluxe'${NC}"
     exit 1
     ;;
 esac
@@ -46,10 +60,6 @@ EMCC_OPTS=(
   # -s SUPPORT_LONGJMP=0 # this causes 'undefined symbol: _emscripten_stack_restore'
   -s EXPORTED_FUNCTIONS=_malloc,_free
   -s ALLOW_MEMORY_GROWTH=1
-  # threading
-  -pthread
-  -s USE_PTHREADS=1
-  -s PTHREAD_POOL_SIZE=pthreadCount
   ${FLAVOUR_EMCC_OPTS[@]}
   )
 DEBUG_OPTS=(
@@ -127,11 +137,9 @@ mkdir -p "$ES_DIR"
 
 LINK_OPTS=(
   ${DEBUG_OPTS[@]}
+  ${FLAVOUR_LINK_OPTS[@]}
   -lembind
-  -pthread
-  -s USE_PTHREADS=1
   -s ALLOW_MEMORY_GROWTH=1
-  -s PTHREAD_POOL_SIZE='_emscripten_num_logical_cores()'
   --post-link "$BARE_WASM"
 )
 
@@ -145,7 +153,15 @@ emcc "${LINK_OPTS[@]}" -s EXPORT_ES6=1 -o "$ES_FILE" --emit-tsd "$ES_TSD"
 cp "$ES_FILE" "$ES_PRECURSOR"
 cp "$ES_TSD" "$ES_TSD_PRECURSOR"
 
-awk -f "$DIR/modify_emscripten_mjs.awk" "$ES_PRECURSOR" > "$ES_FILE"
+# TODO: make awk error if any of the text replacements fail to match anything, to protect us when emscripten updates.
+case "$FLAVOUR" in
+  compat)
+    # all of our text replacements are just for disabling/tuning deluxe functionality. compat flavour doesn't need any text replacements.
+    ;;
+  deluxe)
+    awk -f "$DIR/modify_emscripten_mjs.$FLAVOUR.awk" "$ES_PRECURSOR" > "$ES_FILE"
+    ;;
+esac
 awk -f "$DIR/modify_emscripten_dts.awk" -v template="$BUILD_DIR/Box2D.template.d.ts" "$ES_TSD_PRECURSOR" > "$ES_TSD"
 
 set +x

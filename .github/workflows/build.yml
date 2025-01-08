@@ -83,35 +83,35 @@ jobs:
           else
             echo "target_type=Release" >> $GITHUB_OUTPUT
           fi
-      - name: "SIMD: build makefile"
+      - name: "deluxe: build makefile"
         working-directory: box2d3-wasm
         run: shell/0_build_makefile.sh
         env:
-          FLAVOUR: simd
+          FLAVOUR: deluxe
           TARGET_TYPE: ${{ steps.build-type.outputs.target_type }}
-      - name: "SIMD: emmake"
+      - name: "deluxe: emmake"
         working-directory: box2d3-wasm
-        run: emmake make -j8 -C cmake-build-simd
-      - name: "SIMD: build wasm"
+        run: emmake make -j8 -C cmake-build-deluxe
+      - name: "deluxe: build wasm"
         working-directory: box2d3-wasm
         run: shell/1_build_wasm.sh
         env:
-          FLAVOUR: simd
+          FLAVOUR: deluxe
           TARGET_TYPE: ${{ steps.build-type.outputs.target_type }}
-      - name: "Standard: build makefile"
+      - name: "compat: build makefile"
         working-directory: box2d3-wasm
         run: shell/0_build_makefile.sh
         env:
-          FLAVOUR: standard
+          FLAVOUR: compat
           TARGET_TYPE: ${{ steps.build-type.outputs.target_type }}
-      - name: "Standard: emmake"
+      - name: "compat: emmake"
         working-directory: box2d3-wasm
-        run: emmake make -j8 -C cmake-build-standard
-      - name: "Standard: build wasm"
+        run: emmake make -j8 -C cmake-build-compat
+      - name: "compat: build wasm"
         working-directory: box2d3-wasm
         run: shell/1_build_wasm.sh
         env:
-          FLAVOUR: standard
+          FLAVOUR: compat
           TARGET_TYPE: ${{ steps.build-type.outputs.target_type }}
       # Pack mode: Create prerelease version without git tags
       - name: version for pack
