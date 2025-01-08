@@ -1,9 +1,9 @@
 /**
- * @import { MainModule } from './Box2D.simd'
- * @param {options?: unknown} args
+ * @import { MainModule, ModuleOptions } from './simd/Box2D.simd'
+ * @param {ModuleOptions} options
  * @return {Promise<MainModule>}
  */
-export default async (...args) => {
+export default async (options, ...args) => {
     /**
      * This validation expression comes from wasm-feature-detect:
      * https://github.com/GoogleChromeLabs/wasm-feature-detect
@@ -28,5 +28,5 @@ export default async (...args) => {
     );
     const { 'default': Box2DFactory } = Box2DModule;
     // awaiting gives us a better stack trace (at the cost of an extra microtask)
-    return await Box2DFactory(...args);
+    return await Box2DFactory(options, ...args);
   };
