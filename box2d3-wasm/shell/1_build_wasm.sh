@@ -7,7 +7,7 @@ MONOREPO_DIR="$(realpath "$B2D_WASM_DIR/..")"
 BOX2D_DIR="$(realpath "$MONOREPO_DIR/box2d")"
 B2CPP_DIR="$(realpath "$MONOREPO_DIR/box2cpp")"
 ENKITS_DIR="$(realpath "$MONOREPO_DIR/enkiTS")"
-CMAKEBUILD_DIR="$(realpath "$B2D_WASM_DIR/cmake-build")"
+CMAKEBUILD_DIR="$(realpath "$B2D_WASM_DIR/cmake-build-$FLAVOUR")"
 BUILD_DIR="$(realpath "$B2D_WASM_DIR/build")"
 CSRC_DIR="$(realpath "$B2D_WASM_DIR/csrc")"
 
@@ -21,6 +21,7 @@ BASENAME=Box2D
 FLAVOUR_EMCC_OPTS=()
 case "$FLAVOUR" in
   standard)
+    BASENAME="$BASENAME.standard"
     ;;
   simd)
     BASENAME="$BASENAME.simd"
@@ -118,7 +119,7 @@ emcc -lembind \
 --oformat=bare -o "$BARE_WASM"
 >&2 echo -e "${Blue}Built bare WASM${NC}"
 
-ES_DIR="$BUILD_DIR/dist/es"
+ES_DIR="$BUILD_DIR/dist/es/$FLAVOUR"
 
 mkdir -p "$ES_DIR"
 

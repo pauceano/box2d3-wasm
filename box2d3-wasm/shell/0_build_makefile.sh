@@ -28,8 +28,8 @@ case "$FLAVOUR" in
   simd)
     # this is ON by default but let's be explicit
     CMAKE_OPTS=(${CMAKE_OPTS[@]} -DBOX2D_ENABLE_SIMD=ON)
-    CFLAGS=(${CFLAGS[@]} -msimd128)
-    CXXFLAGS=(${CXXFLAGS[@]} -msimd128)
+    CFLAGS=(${CFLAGS[@]} -msimd128 -msse2)
+    CXXFLAGS=(${CXXFLAGS[@]} -msimd128 -msse2)
     ;;
   *)
     >&2 echo -e "${Red}FLAVOUR not set.${NC}"
@@ -58,7 +58,7 @@ CFLAGS="${CFLAGS[@]}" \
 CXXFLAGS="${CXXFLAGS[@]}" \
 emcmake cmake \
 -DCMAKE_BUILD_TYPE="$TARGET_TYPE" \
--B"cmake-build" \
+-B"cmake-build-$FLAVOUR" \
 -S"$BOX2D_DIR" \
 "${CMAKE_OPTS[@]}" \
 -DBOX2D_VALIDATE=OFF \

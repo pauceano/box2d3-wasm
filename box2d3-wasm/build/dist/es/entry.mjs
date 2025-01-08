@@ -23,8 +23,8 @@ export default async (...args) => {
     /** @type {{ 'default': (options?: unknown) => MainModule) }} */
     const Box2DModule = await (
       hasSIMD
-        ? import('./Box2D.simd.mjs')
-        : import('./Box2D.mjs')
+        ? import('./simd/Box2D.simd.mjs')
+        : import('./standard/Box2D.standard.mjs')
     );
     const { 'default': Box2DFactory } = Box2DModule;
     // awaiting gives us a better stack trace (at the cost of an extra microtask)

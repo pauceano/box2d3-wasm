@@ -90,10 +90,16 @@ node integration-test/index.mjs
 From `box2d3-wasm` package's directory,
 
 ```bash
-git clean -dfx build cmake-build
+git clean -dfx build cmake-build-simd cmake-build-standard
+
 FLAVOUR=simd TARGET_TYPE=Release ./shell/0_build_makefile.sh
-emmake make -j8 -C cmake-build
+emmake make -j8 -C cmake-build-simd
 FLAVOUR=simd TARGET_TYPE=Release ./shell/1_build_wasm.sh
+
+FLAVOUR=standard TARGET_TYPE=Release ./shell/0_build_makefile.sh
+emmake make -j8 -C cmake-build-standard
+FLAVOUR=standard TARGET_TYPE=Release ./shell/1_build_wasm.sh
+
 # e.g. major | minor | patch, see https://docs.npmjs.com/cli/v10/commands/npm-version
 npm version minor
 npm publish
