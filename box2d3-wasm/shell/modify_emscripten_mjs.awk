@@ -4,7 +4,7 @@ BEGIN { found1=0; found2=0; found3=0; found4=0 }
 !found1 && $0 ~ /^async function\(moduleArg = \{\}\) \{$/ {
   print $0
   print "  moduleArg = {pthreadCount: globalThis.navigator?.hardwareConcurrency ?? 4, sharedMemEnabled:true, ...moduleArg};"
-  print "  const {pthreadCount, sharedMemEnabled, maxHeapOverride} = moduleArg;"
+  print "  const {pthreadCount, sharedMemEnabled} = moduleArg;"
   found1=1
   next
 }
