@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"license": "Zlib",
 	"scripts": {
-		"serve": "ws --https --cors.embedder-policy require-corp --cors.opener-policy same-origin --directory ../"
+		"serve": "ws --port 5500 --cors.embedder-policy require-corp --cors.opener-policy same-origin --directory ../"
 	},
 	"devDependencies": {
 		"local-web-server": "^5.4.0"
