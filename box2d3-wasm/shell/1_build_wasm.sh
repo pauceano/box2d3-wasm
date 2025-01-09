@@ -7,7 +7,7 @@ MONOREPO_DIR="$(realpath "$B2D_WASM_DIR/..")"
 BOX2D_DIR="$(realpath "$MONOREPO_DIR/box2d")"
 B2CPP_DIR="$(realpath "$MONOREPO_DIR/box2cpp")"
 ENKITS_DIR="$(realpath "$MONOREPO_DIR/enkiTS")"
-CMAKEBUILD_DIR="$(realpath "$B2D_WASM_DIR/cmake-build")"
+CMAKEBUILD_DIR="$(realpath "$B2D_WASM_DIR/cmake-build-$FLAVOUR")"
 BUILD_DIR="$(realpath "$B2D_WASM_DIR/build")"
 CSRC_DIR="$(realpath "$B2D_WASM_DIR/csrc")"
 
@@ -17,19 +17,34 @@ Blue='\033[0;34m'
 Purple='\033[0;35m'
 NC='\033[0m' # No Color
 
-BASENAME=Box2D
+BASENAME="Box2D.$FLAVOUR"
 FLAVOUR_EMCC_OPTS=()
+FLAVOUR_LINK_OPTS=()
 case "$FLAVOUR" in
-  standard)
+  compat)
     ;;
-  simd)
-    BASENAME="$BASENAME.simd"
-    FLAVOUR_EMCC_OPTS=(${FLAVOUR_EMCC_OPTS[@]} -msimd128)
+  deluxe)
+    FLAVOUR_EMCC_OPTS=(
+      ${FLAVOUR_EMCC_OPTS[@]}
+      # SIMD
+      -msimd128
+      -msse2 # probably not necessary now that we're past emmake, unless our glue code adds more SSE
+      # threading
+      -pthread
+      -s USE_PTHREADS=1
+      -s PTHREAD_POOL_SIZE=pthreadCount
+    )
+    FLAVOUR_LINK_OPTS=(
+      ${FLAVOUR_LINK_OPTS[@]}
+      -pthread
+      -s USE_PTHREADS=1
+      -s PTHREAD_POOL_SIZE='_emscripten_num_logical_cores()'
+    )
     ;;
   *)
     >&2 echo -e "${Red}FLAVOUR not set.${NC}"
-    >&2 echo -e "Please set FLAVOUR to 'standard' or 'simd'. For example, with:"
-    >&2 echo -e "${Purple}export FLAVOUR='simd'${NC}"
+    >&2 echo -e "Please set FLAVOUR to 'compat' or 'deluxe'. For example, with:"
+    >&2 echo -e "${Purple}export FLAVOUR='deluxe'${NC}"
     exit 1
     ;;
 esac
@@ -45,10 +60,6 @@ EMCC_OPTS=(
   # -s SUPPORT_LONGJMP=0 # this causes 'undefined symbol: _emscripten_stack_restore'
   -s EXPORTED_FUNCTIONS=_malloc,_free
   -s ALLOW_MEMORY_GROWTH=1
-  # threading
-  -pthread
-  -s USE_PTHREADS=1
-  -s PTHREAD_POOL_SIZE=pthreadCount
   ${FLAVOUR_EMCC_OPTS[@]}
   )
 DEBUG_OPTS=(
@@ -118,7 +129,7 @@ emcc -lembind \
 --oformat=bare -o "$BARE_WASM"
 >&2 echo -e "${Blue}Built bare WASM${NC}"
 
-ES_DIR="$BUILD_DIR/dist/es"
+ES_DIR="$BUILD_DIR/dist/es/$FLAVOUR"
 
 mkdir -p "$ES_DIR"
 
@@ -126,54 +137,35 @@ mkdir -p "$ES_DIR"
 
 LINK_OPTS=(
   ${DEBUG_OPTS[@]}
+  ${FLAVOUR_LINK_OPTS[@]}
   -lembind
-  -pthread
-  -s USE_PTHREADS=1
   -s ALLOW_MEMORY_GROWTH=1
-  -s PTHREAD_POOL_SIZE='_emscripten_num_logical_cores()'
   --post-link "$BARE_WASM"
 )
 
 ES_PRECURSOR="$ES_DIR/$BASENAME.orig.mjs"
 ES_FILE="$ES_DIR/$BASENAME.mjs"
 ES_TSD="$ES_DIR/$BASENAME.d.ts"
+ES_TSD_PRECURSOR="$ES_DIR/$BASENAME.orig.d.ts"
 >&2 echo -e "${Blue}Building ES module, $ES_DIR/$BASENAME.{mjs,wasm}${NC}"
 set -x
 emcc "${LINK_OPTS[@]}" -s EXPORT_ES6=1 -o "$ES_FILE" --emit-tsd "$ES_TSD"
 cp "$ES_FILE" "$ES_PRECURSOR"
+cp "$ES_TSD" "$ES_TSD_PRECURSOR"
 
-awk '
-BEGIN { found1=0; found2=0; found3=0; found4=0 }
-!found1 && $0 ~ /^var Module = \(\(\) => \{$/ {
-  print "var Module = (({ pthreadCount=globalThis.navigator?.hardwareConcurrency ?? 4, sharedMemEnabled=true, maxHeapOverride=2147483648 } = {}) => {"
-  found1=1
-  next
-}
-!found2 && /^[[:space:]]*var pthreadPoolSize = _emscripten_num_logical_cores\(\);$/ {
-  sub(/_emscripten_num_logical_cores\(\)/, "pthreadCount")
-  print
-  found2=1
-  next
-}
-!found3 && /^var getHeapMax = \(\) =>/ {
-  collecting=1
-  found3=1
-  print "var getHeapMax = () => maxHeapOverride;"
-  next
-}
-collecting && /^2147483648;$/ {
-  collecting=0
-  next
-}
-collecting { next }
-!found4 && /^[[:space:]]*"shared": true/ {
-  sub(/"shared": true/, "\"shared\": sharedMemEnabled")
-  print
-  found4=1
-  next
-}
-{ print }
-END { exit !(found1 && found2 && found3 && found4) }
-' "$ES_PRECURSOR" > "$ES_FILE"
+# TODO: make awk error if any of the text replacements fail to match anything, to protect us when emscripten updates.
+case "$FLAVOUR" in
+  compat)
+    # all of our text replacements are just for disabling/tuning deluxe functionality. compat flavour doesn't need any text replacements.
+    ;;
+  deluxe)
+    awk -f "$DIR/modify_emscripten_mjs.$FLAVOUR.awk" \
+    -v module_arg_template="$BUILD_DIR/module-arg.template.mjs" \
+    -v allocate_unused_worker_template="$BUILD_DIR/allocate-unused-worker.template.mjs" \
+    "$ES_PRECURSOR" > "$ES_FILE"
+    ;;
+esac
+awk -f "$DIR/modify_emscripten_dts.awk" -v template="$BUILD_DIR/Box2D.template.d.ts" "$ES_TSD_PRECURSOR" > "$ES_TSD"
 
+set +x
 >&2 echo -e "${Green}Successfully built $ES_DIR/$BASENAME.{js,wasm}${NC}\n"

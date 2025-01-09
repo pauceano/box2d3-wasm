@@ -1,4 +1,7 @@
 export default {
+  "Determinism": {
+    "Falling Hinges": "./categories/determinism/fallingHinges.mjs"
+  },
   "Events": {
     "Body Move": "./categories/events/bodyMove.mjs",
     "Contacts": "./categories/events/contacts.mjs",

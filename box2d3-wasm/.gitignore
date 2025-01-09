@@ -1,5 +1,6 @@
-/cmake-build/
+/cmake-build*/
 /build/*
+!/build/*.template.*
 !/build/dist/
 /build/dist/es/*
 !/build/dist/es/entry.mjs

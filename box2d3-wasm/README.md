@@ -55,9 +55,9 @@ git clone --recurse-submodules https://github.com/Birch-san/box2d3-wasm.git
 Run the following commands:
 
 ```bash
-FLAVOUR=simd TARGET_TYPE=Debug ./shell/0_build_makefile.sh
+FLAVOUR=deluxe TARGET_TYPE=Debug ./shell/0_build_makefile.sh
 emmake make -j8 -C cmake-build
-FLAVOUR=simd TARGET_TYPE=Debug ./shell/1_build_wasm.sh
+FLAVOUR=deluxe TARGET_TYPE=Debug ./shell/1_build_wasm.sh
 ```
 
 ## Run Demos
@@ -90,10 +90,16 @@ node integration-test/index.mjs
 From `box2d3-wasm` package's directory,
 
 ```bash
-git clean -dfx build cmake-build
-FLAVOUR=simd TARGET_TYPE=Release ./shell/0_build_makefile.sh
-emmake make -j8 -C cmake-build
-FLAVOUR=simd TARGET_TYPE=Release ./shell/1_build_wasm.sh
+git clean -dfx build cmake-build-deluxe cmake-build-compat
+
+FLAVOUR=deluxe TARGET_TYPE=Release ./shell/0_build_makefile.sh
+emmake make -j8 -C cmake-build-deluxe
+FLAVOUR=deluxe TARGET_TYPE=Release ./shell/1_build_wasm.sh
+
+FLAVOUR=compat TARGET_TYPE=Release ./shell/0_build_makefile.sh
+emmake make -j8 -C cmake-build-compat
+FLAVOUR=compat TARGET_TYPE=Release ./shell/1_build_wasm.sh
+
 # e.g. major | minor | patch, see https://docs.npmjs.com/cli/v10/commands/npm-version
 npm version minor
 npm publish

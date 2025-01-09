@@ -1,6 +1,10 @@
 {
   "name": "box2d3-wasm",
+<<<<<<< HEAD
   "version": "3.4.0",
+=======
+  "version": "3.7.0",
+>>>>>>> 5e3e2e2d967bd6e24dbadbe7af9e60a38ba471e2
   "description": "Let's try and use box2d v3 on the web.",
   "//": "we prefer ES modules, but we can just name those .mjs. we set the package type as commonjs so that the .js UMD module can be treated as CommonJS (a valid interpretation though not the only one) without having to name it .cjs (which would mislead, as its compatibility is not only CommonJS, but also AMD and browser globals)",
   "type": "commonjs",
