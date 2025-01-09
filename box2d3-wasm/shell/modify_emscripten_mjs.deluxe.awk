@@ -1,10 +1,12 @@
 #!/usr/bin/env awk -f
 
-BEGIN { found1=0; found2=0; found3=0; found4=0 }
+BEGIN { found1=0; found2=0; found3=0; found4=0; found5=0 }
 !found1 && $0 ~ /^async function\(moduleArg = \{\}\) \{$/ {
   print $0
-  print "  moduleArg = {pthreadCount: globalThis.navigator?.hardwareConcurrency ?? 4, sharedMemEnabled:true, ...moduleArg};"
-  print "  const {pthreadCount, sharedMemEnabled} = moduleArg;"
+  while ((getline line < module_arg_template) > 0) {
+    print line
+  }
+  close(module_arg_template)
   found1=1
   next
 }
@@ -23,6 +25,16 @@ BEGIN { found1=0; found2=0; found3=0; found4=0 }
 !found4 && /^[[:space:]]*PThread\.init\(\);$/ {
   print "  if(pthreadCount > 0) { PThread.init(); }"
   found4=1
+  next
+}
+!found5 && /^[[:space:]]*allocateUnusedWorker\(\) \{$/ {
+  while ((getline line < allocate_unused_worker_template) > 0) {
+    print line
+  }
+  close(allocate_unused_worker_template)
+  sub(/allocateUnusedWorker/, "allocateUnusedWorkerDirect")
+  print
+  found5=1
   next
 }
 { print }

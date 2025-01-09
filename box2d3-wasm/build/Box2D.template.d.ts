@@ -21,6 +21,10 @@ export interface OurModuleOptions {
   // some browsers (e.g. Safari <16.4) cannot grow shared memory, so turning this off
   // could improve compatibility in that situation.
   sharedMemEnabled: boolean;
+  // default: false
+  // enable this if you're disallowed from loading workers cross-origin but allowed to download assets cross-origin.
+  // we will fetch the worker asset, turn it into a blob and create a worker from the blob.
+  loadWorkerViaBlob: boolean;
 }
 
 // Combine known options with arbitrary properties

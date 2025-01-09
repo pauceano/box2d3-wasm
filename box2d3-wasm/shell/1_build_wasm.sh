@@ -159,7 +159,10 @@ case "$FLAVOUR" in
     # all of our text replacements are just for disabling/tuning deluxe functionality. compat flavour doesn't need any text replacements.
     ;;
   deluxe)
-    awk -f "$DIR/modify_emscripten_mjs.$FLAVOUR.awk" "$ES_PRECURSOR" > "$ES_FILE"
+    awk -f "$DIR/modify_emscripten_mjs.$FLAVOUR.awk" \
+    -v module_arg_template="$BUILD_DIR/module-arg.template.mjs" \
+    -v allocate_unused_worker_template="$BUILD_DIR/allocate-unused-worker.template.mjs" \
+    "$ES_PRECURSOR" > "$ES_FILE"
     ;;
 esac
 awk -f "$DIR/modify_emscripten_dts.awk" -v template="$BUILD_DIR/Box2D.template.d.ts" "$ES_TSD_PRECURSOR" > "$ES_TSD"
