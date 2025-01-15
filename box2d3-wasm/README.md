@@ -54,9 +54,11 @@ git clone --recurse-submodules https://github.com/Birch-san/box2d3-wasm.git
 
 Run the following commands:
 
+source /home/pv3/emsdk/emsdk_env.sh
+git clean -dfx build cmake-build-deluxe cmake-build-compat
 ```bash
 FLAVOUR=deluxe TARGET_TYPE=Debug ./shell/0_build_makefile.sh
-emmake make -j8 -C cmake-build
+emmake make -j8 -C cmake-build-deluxe
 FLAVOUR=deluxe TARGET_TYPE=Debug ./shell/1_build_wasm.sh
 ```
 
