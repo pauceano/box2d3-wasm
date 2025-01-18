@@ -58,7 +58,8 @@ EMCC_OPTS=(
   -s ALLOW_TABLE_GROWTH=1
   -s FILESYSTEM=0
   # -s SUPPORT_LONGJMP=0 # this causes 'undefined symbol: _emscripten_stack_restore'
-  -s EXPORTED_FUNCTIONS=_malloc,_free
+  -s EXPORTED_FUNCTIONS=_malloc,_free,_strerror
+  -s EXTRA_EXPORTED_RUNTIME_METHODS=ccall,cwrap
   -s ALLOW_MEMORY_GROWTH=1
   ${FLAVOUR_EMCC_OPTS[@]}
   )
@@ -126,6 +127,9 @@ emcc -lembind \
 -I "$ENKITS_DIR/src" \
 -I "$B2CPP_DIR/include" \
 "${EMCC_OPTS[@]}" \
+-s EXPORTED_FUNCTIONS='["_main", "_malloc", "_free", "_strerror"]' \
+-s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "cwrap"]' \
+-s ENVIRONMENT="web,worker" \
 --oformat=bare -o "$BARE_WASM"
 >&2 echo -e "${Blue}Built bare WASM${NC}"
 
@@ -146,12 +150,18 @@ LINK_OPTS=(
 ES_PRECURSOR="$ES_DIR/$BASENAME.orig.mjs"
 ES_FILE="$ES_DIR/$BASENAME.mjs"
 ES_TSD="$ES_DIR/$BASENAME.d.ts"
-ES_TSD_PRECURSOR="$ES_DIR/$BASENAME.orig.d.ts"
+
 >&2 echo -e "${Blue}Building ES module, $ES_DIR/$BASENAME.{mjs,wasm}${NC}"
 set -x
 emcc "${LINK_OPTS[@]}" -s EXPORT_ES6=1 -o "$ES_FILE" --emit-tsd "$ES_TSD"
+
+cp /home/pv3/box2d3-wasm/box2d3-wasm/build/dist/es/deluxe/Box2D.deluxe.wasm /home/pv3/box2d3-wasm/games/game1/game/frontlib/lib/Box2D/deluxe/.
+cp /home/pv3/box2d3-wasm/box2d3-wasm/build/dist/es/deluxe/Box2D.deluxe.wasm.map /home/pv3/box2d3-wasm/games/game1/game/frontlib/lib/Box2D/deluxe/.
+
 cp "$ES_FILE" "$ES_PRECURSOR"
 cp "$ES_TSD" "$ES_TSD_PRECURSOR"
+
+
 
 # TODO: make awk error if any of the text replacements fail to match anything, to protect us when emscripten updates.
 case "$FLAVOUR" in
@@ -169,3 +179,4 @@ awk -f "$DIR/modify_emscripten_dts.awk" -v template="$BUILD_DIR/Box2D.template.d
 
 set +x
 >&2 echo -e "${Green}Successfully built $ES_DIR/$BASENAME.{js,wasm}${NC}\n"
+

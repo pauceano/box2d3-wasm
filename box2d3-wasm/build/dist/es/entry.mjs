@@ -23,7 +23,7 @@ export default async (options, ...args) => {
     /** @type {{ 'default': (options?: unknown) => MainModule) }} */
     const Box2DModule = await (
       hasSIMD
-        ? import('./Box2D.simd.mjs')
+        ? import('./deluxe/Box2D.deluxe.mjs')
         : import('./compat/Box2D.compat.mjs')
     );
     const { 'default': Box2DFactory } = Box2DModule;

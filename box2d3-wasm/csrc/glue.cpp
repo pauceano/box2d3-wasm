@@ -1659,8 +1659,9 @@ EMSCRIPTEN_BINDINGS(box2d) {
     function("b2MouseJoint_GetMaxForce", &b2MouseJoint_GetMaxForce);
 
     // ------------------------------------------------------------------------
-    // Misc
+    // Misc  
     // ------------------------------------------------------------------------
+    // PAUMOD, added _count parameter becuase there was a strange error
     function("b2ComputeHull", optional_override([](const emscripten::val& pointsArray) -> b2Hull {
         int count = pointsArray["length"].as<int>();
         std::vector<b2Vec2> points(count);
@@ -1669,7 +1670,8 @@ EMSCRIPTEN_BINDINGS(box2d) {
             points[i].x = point["x"].as<float>();
             points[i].y = point["y"].as<float>();
         }
-        return b2ComputeHull(points.data(), count);
+        b2Hull hh = b2ComputeHull(points.data(), count);
+        return hh;
     }));
 
     function("B2_ID_EQUALS", +[](const emscripten::val& id1, const emscripten::val& id2) -> bool {

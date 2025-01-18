@@ -2,11 +2,11 @@
     "folders": [
       {
         "name": "box2cpp",
-        "path": "box2cpp",
+        "path": "box2cpp"
       },
       {
         "name": "box2d",
-        "path": "box2d",
+        "path": "box2d"
       },
       {
         "name": "box2d3-wasm",
@@ -23,6 +23,9 @@
       {
         "name": "gh-pages",
         "path": "gh-pages"
+      },
+      {
+        "path": "games"
       }
     ],
     "settings": {
